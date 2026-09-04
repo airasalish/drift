@@ -25,3 +25,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Local SQLite db
+*.db

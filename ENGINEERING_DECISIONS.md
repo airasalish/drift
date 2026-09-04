@@ -19,3 +19,21 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 **What we did instead**: explicit, numeric, auditable rules (volatility-adjusted price-move threshold, volume-vs-trailing-average, 52-week high/low cross), each contributing to a plain-sum attention score.
 
 **Why**: the brief explicitly says "be ready to explain why." A rule-based system can be defended line by line in front of a judge — "this fired because the move was 1.7x the stock's own daily average, here's the exact number." An LLM-scored system would have to explain itself by re-asking the LLM, which is not an explanation, it's a re-guess. Full spec in [PROJECT_BRIEF.md](PROJECT_BRIEF.md#1-what-counts-as-a-meaningful-change-rule-based-not-vibes).
+
+---
+
+### 2026-09-04 — SQLite for local dev, not a required Postgres install
+
+**The "more correct-looking" path**: require Postgres per the brief's own architecture section, matching what the research showed as the common pattern.
+**What we did instead**: SQLAlchemy against SQLite by default (`DATABASE_URL` env var), zero external services to install. Swapping to Postgres for real deployment is a one-line connection-string change — the ORM layer doesn't know or care which it's talking to.
+
+**Why**: whoever runs this from "Instructions to Run" shouldn't need to install and configure a Postgres server just to see the demo. The brief's own §6 says "keep things simple where possible" — this is that principle applied to the one place it costs a reviewer real time for zero learning value.
+
+---
+
+### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
+
+**The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.
+**What we actually built**: only symbols present on at least one watchlist are polled at all (the important half of "don't waste calls on nothing"); a `watch_count` column exists on the quote-cache table so frequency-weighting is a follow-on query change, not a rearchitecture.
+
+**Why**: real popularity-weighted scheduling needs multiple concurrent users with different watchlists to even demonstrate — not achievable credibly in a single-demo-account build under this deadline. Disclosed here rather than silently claimed as done.
