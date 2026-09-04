@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -33,6 +34,11 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
             or (datetime.datetime.utcnow() - quote.fetched_at).total_seconds()
             > STALE_AFTER_SECONDS
         )
+        try:
+            spark = json.loads(quote.spark_closes_json) if quote.spark_closes_json else []
+        except (TypeError, ValueError):
+            spark = []
+
         quote_out = QuoteOut(
             price=quote.price,
             prev_close=quote.prev_close,
@@ -42,6 +48,7 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
             fetched_at=quote.fetched_at,
             fetch_ok=quote.fetch_ok,
             is_stale=is_stale,
+            spark=spark,
         )
 
         if quote.price is not None:
@@ -105,7 +112,9 @@ def add_symbol(payload: WatchlistItemCreate, db: Session = Depends(get_db)):
         stats = fetch_symbol_stats(symbol)
         if stats is None:
             raise HTTPException(422, f"couldn't find market data for '{symbol}'")
+        spark_closes = stats.pop("spark_closes")
         quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
+        quote.spark_closes_json = json.dumps(spark_closes)
         quote.fetched_at = datetime.datetime.utcnow()
         db.add(quote)
         db.flush()

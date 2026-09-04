@@ -80,3 +80,4 @@ class SymbolQuote(Base):
     fetched_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(), nullable=True)
     fetch_ok: Mapped[bool] = mapped_column(default=True)  # false => last fetch failed, price is stale
     watch_count: Mapped[int] = mapped_column(Integer, default=0)  # ready for popularity-weighted polling
+    spark_closes_json: Mapped[str | None] = mapped_column(String, nullable=True)  # last 30 closes, JSON

@@ -23,6 +23,7 @@ class QuoteOut(BaseModel):
     fetched_at: datetime.datetime | None
     fetch_ok: bool
     is_stale: bool
+    spark: list[float]
 
 
 class WatchlistItemOut(BaseModel):

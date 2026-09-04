@@ -9,6 +9,7 @@ weighted frequency (poll heavily-watched symbols more often) is deferred —
 
 import asyncio
 import datetime
+import json
 import logging
 import os
 
@@ -46,6 +47,7 @@ def refresh_all_watched_symbols() -> None:
                 quote.avg_daily_move_pct_20d = stats["avg_daily_move_pct_20d"]
                 quote.week52_high = stats["week52_high"]
                 quote.week52_low = stats["week52_low"]
+                quote.spark_closes_json = json.dumps(stats["spark_closes"])
                 quote.fetched_at = datetime.datetime.utcnow()
                 quote.fetch_ok = True
             else:

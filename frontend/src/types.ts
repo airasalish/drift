@@ -13,6 +13,7 @@ export interface Quote {
   fetched_at: string | null;
   fetch_ok: boolean;
   is_stale: boolean;
+  spark: number[];
 }
 
 export interface WatchlistItem {
