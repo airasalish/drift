@@ -14,16 +14,31 @@ function App() {
   const [symbol, setSymbol] = useState("");
   const [note, setNote] = useState("");
   const [adding, setAdding] = useState(false);
+  const [digest, setDigest] = useState<string | null>(null);
+  const [digestLoading, setDigestLoading] = useState(false);
 
   async function refresh() {
     try {
       const data = await api.list();
       setItems(data);
       setError(null);
+      setDigest(null); // the old digest may no longer match a changed attention set
     } catch (e) {
       setError(e instanceof Error ? e.message : "failed to load");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleExplain() {
+    setDigestLoading(true);
+    try {
+      const { digest } = await api.digest();
+      setDigest(digest ?? "Couldn't generate a summary right now — the details below still apply.");
+    } catch {
+      setDigest("Couldn't generate a summary right now — the details below still apply.");
+    } finally {
+      setDigestLoading(false);
     }
   }
 
@@ -107,7 +122,15 @@ function App() {
       ) : (
         <>
           <section>
-            <h2>What changed since you last checked</h2>
+            <div className="section-head">
+              <h2>What changed since you last checked</h2>
+              {attention.length > 0 && (
+                <button className="explain-btn" onClick={handleExplain} disabled={digestLoading}>
+                  {digestLoading ? "Summarizing…" : "Explain this"}
+                </button>
+              )}
+            </div>
+            {digest && <p className="digest">{digest}</p>}
             {attention.length === 0 ? (
               <div className="empty-box">Nothing needs your attention right now.</div>
             ) : (

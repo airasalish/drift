@@ -12,6 +12,7 @@ from app.demo_user import get_or_create_demo_watchlist
 from app.models import SymbolQuote, WatchlistItem
 from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemOut
 from app.services import change_detection
+from app.services.digest import generate_digest
 from app.services.market_data import fetch_symbol_stats
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
@@ -97,6 +98,22 @@ def list_watchlist(db: Session = Depends(get_db)):
 
     out.sort(key=lambda w: w.attention_score, reverse=True)
     return out
+
+
+@router.get("/digest")
+def get_digest(db: Session = Depends(get_db)):
+    """On-demand only (see services/digest.py for why) -- reuses the same
+    rule evaluation as list_watchlist rather than recomputing it, so this
+    endpoint can never see a different set of "fired" facts than what the
+    UI already shows.
+    """
+    items = list_watchlist(db)
+    fired_facts = [
+        {"symbol": i.symbol, "fired": [f.model_dump() for f in i.fired]}
+        for i in items
+        if i.has_attention
+    ]
+    return {"digest": generate_digest(fired_facts)}
 
 
 @router.post("", response_model=WatchlistItemOut)
