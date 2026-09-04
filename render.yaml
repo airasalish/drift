@@ -1,0 +1,26 @@
+# Render Blueprint — connect this repo at render.com/select-repo and it
+# reads this file automatically ("New +" -> "Blueprint"). Both services are
+# on the free plan; nothing here costs money as long as the plan fields
+# below stay "free". See ENGINEERING_DECISIONS.md for why SQLite locally
+# but Postgres once deployed.
+services:
+  - type: web
+    name: drift-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: drift-db
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        sync: false # set this to your Vercel URL after the frontend is deployed
+      - key: POLL_INTERVAL_SECONDS
+        value: "60"
+
+databases:
+  - name: drift-db
+    plan: free

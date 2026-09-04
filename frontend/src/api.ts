@@ -1,6 +1,8 @@
 import type { WatchlistItem } from "./types";
 
-const BASE = "http://127.0.0.1:8000/api";
+// VITE_API_BASE lets the deployed frontend point at the deployed backend;
+// falls back to local dev so `npm run dev` needs zero configuration.
+const BASE = `${import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000"}/api`;
 
 async function handle<T>(res: Response): Promise<T> {
   if (!res.ok) {
