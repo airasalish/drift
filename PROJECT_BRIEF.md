@@ -34,7 +34,7 @@ Each fired rule contributes to a per-symbol **attention score** (simple sum, eac
 
 ## 3. State persistence across sessions/devices
 
-One account per user. Watchlists and a `last_viewed_at` timestamp live in Postgres, keyed to the account — not to a browser/device. `last_viewed_at` updates only on an explicit "seen" action (leaving the page / dismissing the feed), never on every background poll, so the diff always reflects a real prior visit.
+One account per user. Watchlists and a `last_viewed_at` timestamp live in Postgres, keyed to the account — not to a browser/device. `last_viewed_at` updates only on an explicit "seen" action — leaving the page (auto, via a `visibilitychange` listener + `navigator.sendBeacon` for reliable delivery even mid-unload) or dismissing a card manually — never on every background poll, so the diff always reflects a real prior visit. Only flagged or never-before-viewed items auto-anchor on leave, so a brief tab-switch doesn't churn the baseline for things the user hasn't actually reviewed.
 
 ## 4. Stale, delayed, or conflicting data
 

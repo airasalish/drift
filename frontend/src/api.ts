@@ -37,6 +37,15 @@ export const api = {
     fetch(`${BASE}/symbols/search?q=${encodeURIComponent(q)}`).then((r) =>
       handle<{ results: SymbolSearchResult[] }>(r)
     ),
+
+  // Fire-and-forget mark-seen for the "user is leaving" case (tab hidden /
+  // closed). A normal fetch can get cancelled mid-flight when the page
+  // unloads; sendBeacon is specifically designed to survive that.
+  markSeenBeacon: (id: number) => {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(`${BASE}/watchlist/${id}/seen`);
+    }
+  },
 };
 
 export interface SymbolSearchResult {

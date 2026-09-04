@@ -61,6 +61,18 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Closed a real gap between the written spec and what got built: auto-mark-seen on leave
+
+**What an external review (Antigravity) caught**: the "seen" mechanic requires a manual button click, which the reviewer called a UX gap that "breaks the core promise." Their suggested fix (auto-mark on page *load*) would have been wrong — it resets the diff before the user has even read it, defeating the point. But the underlying catch was real: `PROJECT_BRIEF.md` §3 already said the trigger should be *"leaving the page / dismissing the feed"* — two triggers were written down at the start, only one was ever built.
+
+**What we did**: a `visibilitychange` listener fires when the tab is hidden or closed, and calls the seen endpoint via `navigator.sendBeacon` (not a normal `fetch`, which can get cancelled mid-flight during unload) for every item that's currently flagged or has never been viewed. Non-flagged, already-viewed items are left alone, so a brief alt-tab doesn't quietly reset baselines the user hasn't actually acted on.
+
+**Also corrected, not adopted**: the same review claimed watchlist state is "local/session-based" with no cross-device persistence. That's factually wrong about this codebase — there's no localStorage/cookie use anywhere for watchlist data, it's 100% server-side Postgres, which is exactly why the same data shows up identically from curl, this browser, or any other device hitting the same backend. A black-box review of a live site can't see that from the outside; worth taking external feedback seriously without taking it uncritically.
+
+**Verified, not assumed**: forced a real item into a flagged state, loaded the actual page, dispatched a real `visibilitychange` event, then checked the backend directly — `has_attention` flipped false and `last_viewed_at`/`price_at_last_view` updated, entirely from the tab-hide event, no button click.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.
