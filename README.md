@@ -6,7 +6,9 @@
 
 > Not just prices — what actually drifted since you last looked, and why it deserves your attention now.
 
-Built for **Code, by Groww** (2026) — "Build a Smart Market Watchlist." Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
+Built solo by Aira Salish for Code, by Groww (2026).
+
+Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
 
 ## At a glance
 
