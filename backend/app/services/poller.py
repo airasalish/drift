@@ -23,6 +23,38 @@ logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "60"))
 
+# Nifty 50 -- fixed, single default benchmark for the watchlist-vs-market
+# comparison. Deliberately not smart-matched per stock's home exchange (a
+# US-heavy watchlist compared against Nifty is a real simplification) --
+# disclosed in ENGINEERING_DECISIONS.md, not silently assumed correct.
+BENCHMARK_SYMBOL = "^NSEI"
+
+
+def _refresh_one(db, symbol: str, watch_count: int) -> None:
+    stats = fetch_symbol_stats(symbol)
+    quote = db.get(SymbolQuote, symbol)
+    if quote is None:
+        quote = SymbolQuote(symbol=symbol)
+        db.add(quote)
+
+    quote.watch_count = watch_count
+    if stats is not None:
+        quote.currency = stats["currency"]
+        quote.price = stats["price"]
+        quote.prev_close = stats["prev_close"]
+        quote.volume = stats["volume"]
+        quote.avg_volume_20d = stats["avg_volume_20d"]
+        quote.avg_daily_move_pct_20d = stats["avg_daily_move_pct_20d"]
+        quote.week52_high = stats["week52_high"]
+        quote.week52_low = stats["week52_low"]
+        quote.spark_closes_json = json.dumps(stats["spark_closes"])
+        quote.fetched_at = datetime.datetime.utcnow()
+        quote.fetch_ok = True
+    else:
+        # fetch failed: leave last-known price in place, but mark it
+        # stale rather than silently pretending it's current
+        quote.fetch_ok = False
+
 
 def refresh_all_watched_symbols() -> None:
     db = SessionLocal()
@@ -31,30 +63,14 @@ def refresh_all_watched_symbols() -> None:
             select(WatchlistItem.symbol, func.count(WatchlistItem.id)).group_by(WatchlistItem.symbol)
         ).all()
 
+        watched_symbols = {symbol for symbol, _ in rows}
         for symbol, watch_count in rows:
-            stats = fetch_symbol_stats(symbol)
-            quote = db.get(SymbolQuote, symbol)
-            if quote is None:
-                quote = SymbolQuote(symbol=symbol)
-                db.add(quote)
+            _refresh_one(db, symbol, watch_count)
 
-            quote.watch_count = watch_count
-            if stats is not None:
-                quote.currency = stats["currency"]
-                quote.price = stats["price"]
-                quote.prev_close = stats["prev_close"]
-                quote.volume = stats["volume"]
-                quote.avg_volume_20d = stats["avg_volume_20d"]
-                quote.avg_daily_move_pct_20d = stats["avg_daily_move_pct_20d"]
-                quote.week52_high = stats["week52_high"]
-                quote.week52_low = stats["week52_low"]
-                quote.spark_closes_json = json.dumps(stats["spark_closes"])
-                quote.fetched_at = datetime.datetime.utcnow()
-                quote.fetch_ok = True
-            else:
-                # fetch failed: leave last-known price in place, but mark it
-                # stale rather than silently pretending it's current
-                quote.fetch_ok = False
+        # benchmark is fetched unconditionally, not tied to any user's
+        # watchlist -- it's global market context, not a followed symbol
+        if BENCHMARK_SYMBOL not in watched_symbols:
+            _refresh_one(db, BENCHMARK_SYMBOL, watch_count=0)
 
         db.commit()
     finally:
