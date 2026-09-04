@@ -7,22 +7,29 @@ const BASE = `${import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000"}/api`;
 const TOKEN_KEY = "drift_token";
 const USERNAME_KEY = "drift_username";
 
+// "Remember me" controls WHERE the token lives, not whether it's saved at
+// all: localStorage survives closing the browser, sessionStorage clears
+// the moment the tab/browser closes. Both are checked on read so it
+// doesn't matter which one a given login used.
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
 }
 
 export function getUsername(): string | null {
-  return localStorage.getItem(USERNAME_KEY);
+  return localStorage.getItem(USERNAME_KEY) ?? sessionStorage.getItem(USERNAME_KEY);
 }
 
-function setSession(token: string, username: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USERNAME_KEY, username);
+function setSession(token: string, username: string, remember: boolean) {
+  const store = remember ? localStorage : sessionStorage;
+  store.setItem(TOKEN_KEY, token);
+  store.setItem(USERNAME_KEY, username);
 }
 
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USERNAME_KEY);
 }
 
 async function handle<T>(res: Response): Promise<T> {
@@ -85,32 +92,32 @@ export const api = {
     }
   },
 
-  signup: async (username: string, password: string) => {
+  signup: async (username: string, password: string, remember: boolean) => {
     const res = await fetch(`${BASE}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
     const data = await handle<{ token: string; username: string }>(res);
-    setSession(data.token, data.username);
+    setSession(data.token, data.username, remember);
     return data;
   },
 
-  login: async (username: string, password: string) => {
+  login: async (username: string, password: string, remember: boolean) => {
     const res = await fetch(`${BASE}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
     const data = await handle<{ token: string; username: string }>(res);
-    setSession(data.token, data.username);
+    setSession(data.token, data.username, remember);
     return data;
   },
 
   loginDemo: async () => {
     const res = await fetch(`${BASE}/auth/demo`, { method: "POST" });
     const data = await handle<{ token: string; username: string }>(res);
-    setSession(data.token, data.username);
+    setSession(data.token, data.username, true);
     return data;
   },
 };

@@ -11,6 +11,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -20,9 +21,9 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
     setError(null);
     try {
       if (mode === "signup") {
-        await api.signup(username.trim(), password);
+        await api.signup(username.trim(), password, remember);
       } else {
-        await api.login(username.trim(), password);
+        await api.login(username.trim(), password, remember);
       }
       onLoggedIn();
     } catch (e) {
@@ -53,6 +54,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
 
         <form onSubmit={handleSubmit}>
           <input
+            name="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
@@ -60,6 +62,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
             autoComplete="username"
           />
           <input
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
@@ -67,6 +70,10 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
             disabled={busy}
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
           />
+          <label className="login-remember">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            Stay logged in on this device
+          </label>
           <button type="submit" disabled={busy || !username.trim() || !password}>
             {busy ? "…" : mode === "signup" ? "Sign up" : "Log in"}
           </button>
