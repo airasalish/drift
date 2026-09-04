@@ -1,13 +1,14 @@
 :root {
-  --bg: #0e1013;
-  --surface: #16191d;
-  --surface-2: #1d2126;
-  --border: #2a2f36;
-  --text: #e8eaed;
+  --bg: #0b0d10;
+  --surface: #14171b;
+  --surface-2: #1b1f24;
+  --border: #262b32;
+  --text: #eceef1;
   --muted: #8a919c;
-  --green: #21c67a;
-  --red: #ef5350;
-  --accent: #4f8cff;
+  --green: #22c77a;
+  --red: #f0554f;
+  --accent: #5b8cff;
+  --accent-dim: rgba(91, 140, 255, 0.14);
 }
 
 * {
@@ -21,34 +22,83 @@ body {
 }
 
 .page {
-  max-width: 960px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 40px 20px 90px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark rect {
+  fill: var(--accent);
+}
+
+.brand-mark path {
+  color: white;
 }
 
 .header h1 {
-  margin: 0 0 4px;
-  font-size: 28px;
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
 }
 
 .tagline {
   color: var(--muted);
-  margin: 0 0 28px;
+  margin: 2px 0 0;
+  font-size: 13.5px;
+}
+
+.summary-pill {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.summary-pill[data-warn="true"] {
+  background: rgba(91, 140, 255, 0.12);
+  border-color: rgba(91, 140, 255, 0.35);
+  color: var(--accent);
 }
 
 .add-form {
   display: flex;
   gap: 10px;
-  margin-bottom: 28px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
 }
 
 .add-form input {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 11px 13px;
+  border-radius: 9px;
   font-size: 14px;
+  transition: border-color 0.15s;
+}
+
+.add-form input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .add-form input:first-child {
@@ -58,76 +108,114 @@ body {
 
 .add-form input:nth-child(2) {
   flex: 1;
+  min-width: 200px;
 }
 
 .add-form button {
   background: var(--accent);
   color: white;
   border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 11px 20px;
+  border-radius: 9px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.add-form button:hover:not(:disabled) {
+  opacity: 0.88;
 }
 
 .add-form button:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: default;
 }
 
 .error {
-  background: rgba(239, 83, 80, 0.15);
+  background: rgba(240, 85, 79, 0.12);
   border: 1px solid var(--red);
   color: var(--red);
   padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .muted {
   color: var(--muted);
 }
 
+.empty-box {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.skeleton-block {
+  height: 140px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 37%, var(--surface) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
 section {
-  margin-bottom: 36px;
+  margin-bottom: 38px;
 }
 
 section h2 {
-  font-size: 15px;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--muted);
   margin-bottom: 14px;
+  font-weight: 600;
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 14px;
 }
 
 .card {
   background: var(--surface);
   border: 1px solid var(--accent);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.06), 0 8px 24px -12px rgba(91, 140, 255, 0.25);
 }
 
 .card-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
 }
 
 .symbol {
   font-weight: 700;
   font-size: 15px;
+  display: block;
 }
 
 .price {
   font-weight: 600;
+  font-size: 13.5px;
+  color: var(--muted);
 }
 
 .reasons {
@@ -143,15 +231,16 @@ section h2 {
   font-size: 13px;
   color: var(--text);
   background: var(--surface-2);
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border-left: 2px solid var(--accent);
 }
 
 .note {
   font-size: 13px;
   color: var(--muted);
   font-style: italic;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .card-actions {
@@ -162,13 +251,18 @@ section h2 {
 .card-actions button {
   flex: 1;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 7px;
   border: none;
   background: var(--accent);
   color: white;
   font-weight: 600;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12.5px;
+  transition: opacity 0.15s;
+}
+
+.card-actions button:hover {
+  opacity: 0.88;
 }
 
 .card-actions button.ghost,
@@ -176,6 +270,12 @@ section h2 {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 
 .watchlist-table {
@@ -188,17 +288,28 @@ section h2 {
   text-align: left;
   color: var(--muted);
   font-weight: 500;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  white-space: nowrap;
 }
 
 .watchlist-table td {
-  padding: 10px;
+  padding: 11px 12px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.watchlist-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .watchlist-table tr.attention-row {
-  background: rgba(79, 140, 255, 0.06);
+  background: var(--accent-dim);
+}
+
+.price-cell {
+  font-weight: 600;
 }
 
 .positive {
@@ -238,4 +349,40 @@ section h2 {
   color: var(--text);
   cursor: pointer;
   font-size: 12px;
+}
+
+.spark {
+  display: block;
+}
+
+.spark-fill {
+  fill: rgba(91, 140, 255, 0.08);
+}
+
+.spark-line {
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.spark.up .spark-line {
+  stroke: var(--green);
+}
+
+.spark.up .spark-fill {
+  fill: rgba(34, 199, 122, 0.1);
+}
+
+.spark.down .spark-line {
+  stroke: var(--red);
+}
+
+.spark.down .spark-fill {
+  fill: rgba(240, 85, 79, 0.1);
+}
+
+@media (max-width: 560px) {
+  .add-form input:first-child {
+    width: 100%;
+  }
 }

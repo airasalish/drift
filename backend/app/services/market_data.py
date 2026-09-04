@@ -37,6 +37,8 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
     avg_daily_move_pct_20d = float(daily_move_pct.mean()) if not daily_move_pct.empty else 0.0
     avg_volume_20d = float(trailing["Volume"].mean()) if not trailing.empty else latest_volume
 
+    spark_closes = [round(float(c), 4) for c in closes.tail(30).tolist()]
+
     return {
         "price": latest_price,
         "prev_close": prev_close,
@@ -45,4 +47,5 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
         "avg_daily_move_pct_20d": avg_daily_move_pct_20d,
         "week52_high": float(hist["High"].max()),
         "week52_low": float(hist["Low"].min()),
+        "spark_closes": spark_closes,
     }

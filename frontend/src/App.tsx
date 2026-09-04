@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "./api";
 import { formatPct, formatPrice, formatRelative } from "./format";
+import { Sparkline } from "./Sparkline";
 import type { WatchlistItem } from "./types";
 import "./App.css";
 
@@ -65,8 +66,20 @@ function App() {
   return (
     <div className="page">
       <header className="header">
-        <h1>Drift</h1>
-        <p className="tagline">Not just prices — what actually changed since you last looked.</p>
+        <div className="brand">
+          <BrandMark />
+          <div>
+            <h1>Drift</h1>
+            <p className="tagline">Not just prices — what actually drifted since you last looked.</p>
+          </div>
+        </div>
+        {!loading && items.length > 0 && (
+          <div className="summary-pill" data-warn={attention.length > 0}>
+            {attention.length === 0
+              ? "All quiet"
+              : `${attention.length} of ${items.length} need attention`}
+          </div>
+        )}
       </header>
 
       <form className="add-form" onSubmit={handleAdd}>
@@ -90,13 +103,13 @@ function App() {
       {error && <div className="error">{error}</div>}
 
       {loading ? (
-        <p className="muted">Loading…</p>
+        <div className="skeleton-block" />
       ) : (
         <>
           <section>
             <h2>What changed since you last checked</h2>
             {attention.length === 0 ? (
-              <p className="muted">Nothing needs your attention right now.</p>
+              <div className="empty-box">Nothing needs your attention right now.</div>
             ) : (
               <div className="cards">
                 {attention.map((item) => (
@@ -109,31 +122,43 @@ function App() {
           <section>
             <h2>Your watchlist</h2>
             {items.length === 0 ? (
-              <p className="muted">Nothing on your watchlist yet — add a symbol above.</p>
+              <div className="empty-box">Nothing on your watchlist yet — add a symbol above.</div>
             ) : (
-              <table className="watchlist-table">
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Price</th>
-                    <th>Since added</th>
-                    <th>Since last view</th>
-                    <th>Freshness</th>
-                    <th>Note</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...attention, ...rest].map((item) => (
-                    <Row key={item.id} item={item} onSeen={handleSeen} onRemove={handleRemove} />
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-scroll">
+                <table className="watchlist-table">
+                  <thead>
+                    <tr>
+                      <th>Symbol</th>
+                      <th>Price</th>
+                      <th>Trend</th>
+                      <th>Since added</th>
+                      <th>Since last view</th>
+                      <th>Freshness</th>
+                      <th>Note</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...attention, ...rest].map((item) => (
+                      <Row key={item.id} item={item} onSeen={handleSeen} onRemove={handleRemove} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </section>
         </>
       )}
     </div>
+  );
+}
+
+function BrandMark() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 34 34" className="brand-mark" aria-hidden>
+      <rect width="34" height="34" rx="9" />
+      <path d="M7 21 L13 14 L18 18 L27 8" stroke="currentColor" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -149,8 +174,11 @@ function AttentionCard({
   return (
     <div className="card">
       <div className="card-head">
-        <span className="symbol">{item.symbol}</span>
-        <span className="price">{formatPrice(item.quote?.price ?? null)}</span>
+        <div>
+          <span className="symbol">{item.symbol}</span>
+          <span className="price">{formatPrice(item.quote?.price ?? null)}</span>
+        </div>
+        <Sparkline values={item.quote?.spark ?? []} />
       </div>
       <ul className="reasons">
         {item.fired.map((f, idx) => (
@@ -183,7 +211,10 @@ function Row({
   return (
     <tr className={item.has_attention ? "attention-row" : ""}>
       <td className="symbol">{item.symbol}</td>
-      <td>{formatPrice(item.quote?.price ?? null)}</td>
+      <td className="price-cell">{formatPrice(item.quote?.price ?? null)}</td>
+      <td>
+        <Sparkline values={item.quote?.spark ?? []} />
+      </td>
       <td className={pctClass(item.change_since_added_pct)}>{formatPct(item.change_since_added_pct)}</td>
       <td className={pctClass(item.change_since_last_view_pct)}>
         {formatPct(item.change_since_last_view_pct)}

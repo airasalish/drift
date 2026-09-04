@@ -37,3 +37,12 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 **What we actually built**: only symbols present on at least one watchlist are polled at all (the important half of "don't waste calls on nothing"); a `watch_count` column exists on the quote-cache table so frequency-weighting is a follow-on query change, not a rearchitecture.
 
 **Why**: real popularity-weighted scheduling needs multiple concurrent users with different watchlists to even demonstrate — not achievable credibly in a single-demo-account build under this deadline. Disclosed here rather than silently claimed as done.
+
+---
+
+### 2026-09-04 — Deploying frontend and backend separately, not as one service
+
+**The simpler-sounding path**: deploy everything as one process somewhere.
+**What we're doing instead**: static frontend on Vercel; FastAPI backend on Render (or equivalent) with the *deployed* instance switched from SQLite to a free Postgres, while local dev keeps SQLite.
+
+**Why**: Vercel's serverless model can't host our backend as-is — its functions are short-lived and stateless, which breaks two things our design depends on: the long-running background poller (an asyncio loop that has to keep running between requests) and SQLite's on-disk file (serverless filesystems are ephemeral, so the db would reset on every cold start). Rather than redesign the backend around a platform constraint, we deploy it somewhere that supports a persistent process, and use the one-line env-var swap already built into `database.py` to point the deployed copy at real Postgres instead of a file that wouldn't survive a restart. Demo link is optional per the actual rules, but a broken/reset demo would look worse than no demo, so we don't cut this corner if we ship one at all.
