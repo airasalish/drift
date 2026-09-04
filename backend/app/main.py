@@ -1,11 +1,13 @@
 import asyncio
 import logging
 import os
+import traceback
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -41,6 +43,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# TEMPORARY diagnostic -- catches errors anywhere in the pipeline
+# (including response_model validation, which a route-level try/except
+# can't reach). Revert once the real bug is identified; never ship this.
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"debug_error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()},
+    )
+
 
 app.include_router(auth_router)
 app.include_router(watchlist_router)
