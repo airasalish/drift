@@ -55,3 +55,5 @@ React (Vite)  --polls-->  FastAPI  --reads-->  SQLite (SQLAlchemy)
 ```
 
 The API never calls yfinance on a request path — only the background poller does, once per watched symbol per interval, writing into a shared `symbol_quotes` cache table that every user's requests read from. See [PROJECT_BRIEF.md §5](PROJECT_BRIEF.md#5-scaling-for-larger-watchlists--more-users) for why, and [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md) for what's deliberately simplified for this deadline vs. built to extend cleanly later.
+
+*Repo is private during development; both Vercel and Render already have app-level access, so this doesn't affect either deployment.*
