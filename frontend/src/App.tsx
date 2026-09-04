@@ -65,7 +65,7 @@ function App() {
   return (
     <div className="page">
       <header className="header">
-        <h1>Smart Market Watchlist</h1>
+        <h1>Drift</h1>
         <p className="tagline">Not just prices — what actually changed since you last looked.</p>
       </header>
 

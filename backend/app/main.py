@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
         poll_task.cancel()
 
 
-app = FastAPI(title="Smart Market Watchlist API", lifespan=lifespan)
+app = FastAPI(title="Drift API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
