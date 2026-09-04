@@ -1,8 +1,8 @@
 # Drift
 
 <!-- badges: fill in once CI/deploy exist -->
-![status](https://img.shields.io/badge/status-in--progress-yellow)
-![stack](https://img.shields.io/badge/stack-React%20%2B%20FastAPI%20%2B%20SQLite-blue)
+![status](https://img.shields.io/badge/status-live-brightgreen)
+![stack](https://img.shields.io/badge/stack-React%20%2B%20FastAPI%20%2B%20SQLite%2FPostgres-blue)
 
 > Not just prices — what actually drifted since you last looked, and why it deserves your attention now.
 
@@ -18,7 +18,8 @@ Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGI
 | **Meaningful change** | Volatility-adjusted price move, volume spike vs. trailing average, 52-week high/low cross — see [§1](PROJECT_BRIEF.md#1-what-counts-as-a-meaningful-change-rule-based-not-vibes) |
 | **Persistence** | Per-account watchlists + `last_viewed_at` in Postgres — diffs are always "since your last real visit" |
 | **Data source** | yfinance (MVP) |
-| **Demo** | TODO link |
+| **Live demo** | https://frontend-dusky-omega-11.vercel.app |
+| **Backend API** | https://drift-api-swbj.onrender.com (free tier — first request after idle can take ~50s to wake up) |
 | **Video** | TODO link |
 
 ## Running it locally
