@@ -93,16 +93,23 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
 
 @router.get("", response_model=list[WatchlistItemOut])
 def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    watchlist = get_or_create_watchlist_for_user(db, user)
-    db.commit()
+    # TEMPORARY diagnostic wrapper -- surfaces the real exception in the
+    # response body since I don't have direct log access right now. Revert
+    # immediately once the actual bug is identified; never ship this.
+    try:
+        watchlist = get_or_create_watchlist_for_user(db, user)
+        db.commit()
 
-    out = []
-    for item in watchlist.items:
-        quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out = []
+        for item in watchlist.items:
+            quote = db.get(SymbolQuote, item.symbol)
+            out.append(_serialize(item, quote))
 
-    out.sort(key=lambda w: w.attention_score, reverse=True)
-    return out
+        out.sort(key=lambda w: w.attention_score, reverse=True)
+        return out
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, f"DEBUG: {type(e).__name__}: {e}\n{traceback.format_exc()}")
 
 
 @router.get("/digest")
@@ -132,19 +139,24 @@ def get_benchmark(db: Session = Depends(get_db), user: User = Depends(get_curren
     Reads only from the cache the poller already maintains -- no live
     yfinance call on this request path, same rule as everywhere else.
     """
-    benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
-    benchmark_pct = None
-    if benchmark and benchmark.price is not None and benchmark.prev_close:
-        benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
+    # TEMPORARY diagnostic -- see list_watchlist for why; revert together.
+    try:
+        benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
+        benchmark_pct = None
+        if benchmark and benchmark.price is not None and benchmark.prev_close:
+            benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
 
-    watchlist = get_or_create_watchlist_for_user(db, user)
-    db.commit()
+        watchlist = get_or_create_watchlist_for_user(db, user)
+        db.commit()
 
-    day_pcts = []
-    for item in watchlist.items:
-        quote = db.get(SymbolQuote, item.symbol)
-        if quote and quote.price is not None and quote.prev_close:
-            day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
+        day_pcts = []
+        for item in watchlist.items:
+            quote = db.get(SymbolQuote, item.symbol)
+            if quote and quote.price is not None and quote.prev_close:
+                day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, f"DEBUG: {type(e).__name__}: {e}\n{traceback.format_exc()}")
 
     watchlist_pct = sum(day_pcts) / len(day_pcts) if day_pcts else None
     outperformance_pct = (
