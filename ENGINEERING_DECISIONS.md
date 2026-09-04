@@ -31,6 +31,15 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Considered and declined: an LLM layer (Groq) on top of the rule engine
+
+**Available but not used**: pooled Groq API keys were offered as a free, fast inference option, and explicitly left as our call.
+**What we did instead**: nothing — the change-detection pipeline stays pure rule-based, as originally decided.
+
+**Why**: the single strongest thing this build can say in a live Q&A is that every flagged signal is a real, checkable number — "this fired because the move was 1.7x its own daily average." An LLM layered onto the *detection* logic would undermine that specific defensibility, and even layered only onto *explanation* text, it adds new failure surface (latency, rate limits even across pooled keys, another dependency to explain) at the exact moment the deadline is tightest — and it doesn't fix any gap the rule engine actually has. Revisiting only if core polish, deployment, and resilience work all land with time to spare, and only as a strictly optional, gracefully-degrading addition that never gates the core feature.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.
