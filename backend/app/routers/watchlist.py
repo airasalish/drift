@@ -56,8 +56,22 @@ def _sanitize_quote(quote: SymbolQuote | None) -> None:
             setattr(quote, field, None)
 
 
+def _sanitize_item(item: WatchlistItem) -> None:
+    """Same NaN guard as _sanitize_quote, but for the two price snapshots
+    stored directly on the watchlist item (added_price, price_at_last_view)
+    -- both were captured from quote.price at some point in the past, so
+    either can carry a NaN from before the source-level fix existed, same
+    incident, different table.
+    """
+    if item.added_price is not None and math.isnan(item.added_price):
+        item.added_price = None
+    if item.price_at_last_view is not None and math.isnan(item.price_at_last_view):
+        item.price_at_last_view = None
+
+
 def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemOut:
     _sanitize_quote(quote)
+    _sanitize_item(item)
     quote_out = None
     fired: list[FiredRule] = []
     score = 0.0
@@ -75,6 +89,9 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
         )
         try:
             spark = json.loads(quote.spark_closes_json) if quote.spark_closes_json else []
+            # old rows can have a literal NaN token baked into the JSON
+            # itself (json.loads parses it back to a real float('nan'))
+            spark = [v for v in spark if not (isinstance(v, float) and math.isnan(v))]
         except (TypeError, ValueError):
             spark = []
 
