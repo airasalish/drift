@@ -28,3 +28,6 @@ Thumbs.db
 
 # Local SQLite db
 *.db
+
+# Private running log — every step + why, kept for your own reference only
+DEV_LOG.md

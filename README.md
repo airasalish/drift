@@ -13,7 +13,7 @@ Built for CODE 2026 — "Build a Smart Market Watchlist." Full spec/rationale: [
 
 | | |
 |---|---|
-| **What it does** | TODO — one sentence |
+| **What it does** | Tracks stocks, and ranks them by what actually changed since your last visit — not just today's price |
 | **Meaningful change** | Volatility-adjusted price move, volume spike vs. trailing average, 52-week high/low cross — see [§1](PROJECT_BRIEF.md#1-what-counts-as-a-meaningful-change-rule-based-not-vibes) |
 | **Persistence** | Per-account watchlists + `last_viewed_at` in Postgres — diffs are always "since your last real visit" |
 | **Data source** | yfinance (MVP) |
@@ -22,8 +22,34 @@ Built for CODE 2026 — "Build a Smart Market Watchlist." Full spec/rationale: [
 
 ## Running it locally
 
-TODO — filled in once backend/frontend scaffolds exist.
+**Backend** (FastAPI, Python 3.11+):
+```
+cd backend
+python -m venv .venv
+.venv/Scripts/activate        # or: source .venv/bin/activate on macOS/Linux
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+Creates `watchlist.db` (SQLite) automatically on first run — no separate database install needed. Runs at http://127.0.0.1:8000.
+
+**Frontend** (React + Vite):
+```
+cd frontend
+npm install
+npm run dev
+```
+Runs at http://localhost:5173 and talks to the backend above.
+
+There's a single demo account — no signup/login required. Add a symbol (e.g. `AAPL`), optionally note why you're watching it, then use "Mark as seen" to anchor the baseline the next visit will be compared against.
 
 ## Architecture
 
-TODO — one diagram + short explanation once the shape is real.
+```
+React (Vite)  --polls-->  FastAPI  --reads-->  SQLite (SQLAlchemy)
+                              ^
+                              | background poller, once per symbol per interval
+                              v
+                          yfinance
+```
+
+The API never calls yfinance on a request path — only the background poller does, once per watched symbol per interval, writing into a shared `symbol_quotes` cache table that every user's requests read from. See [PROJECT_BRIEF.md §5](PROJECT_BRIEF.md#5-scaling-for-larger-watchlists--more-users) for why, and [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md) for what's deliberately simplified for this deadline vs. built to extend cleanly later.

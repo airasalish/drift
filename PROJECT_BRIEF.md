@@ -1,7 +1,11 @@
 # PROJECT_BRIEF.md
 
-## Challenge (verbatim intent)
-CODE 2026 — "Build a Smart Market Watchlist." Minimum: create/manage a watchlist, view latest market info, return later and see what changed. Explicitly open-ended: we decide what "meaningful change" means, what info surfaces, how state persists, how staleness/conflict is handled, how it scales, and where to keep it simple. Explicitly told not to build the obvious watchlist.
+## Challenge (verbatim intent, confirmed from the official HackerEarth page)
+"Code, by Groww" — a 72-hour solo build, **Sep 4 11:00 AM to Sep 7 11:00 AM, Asia/Kolkata**. Theme: "Build a Smart Market Watchlist." Minimum: create/manage a watchlist, view latest market info, return later and see what changed. Explicitly open-ended: we decide what "meaningful change" means, what info surfaces, how state persists, how staleness/conflict is handled, how it scales, and where to keep it simple. Explicitly told not to build the obvious watchlist.
+
+**Required submission** (per the event FAQ, verbatim): source code (ZIP or Git repo) with a README with clear setup instructions, **a 100-word product pitch** explaining what was built, how it was designed, and the thinking behind key choices — plus "submit something that actually works." Video URL / Demo Link / Repository URL fields on the submission form are not marked required — source code + README + the 100-word pitch are the load-bearing deliverables.
+
+**Evaluation criteria** (verbatim): "engineering depth, problem interpretation, resilience and edge cases, code quality, simplicity, and originality of thought." Explicitly: "Don't optimise for what you think we want to see. Build the solution you can defend. Because eventually, we're going to ask you why." AI tools are explicitly allowed — the FAQ says they're specifically interested in "what the tools can't decide for you: architecture, judgement, edge cases, trade-offs and why you made the choices you did." This directly validates the ENGINEERING_DECISIONS.md approach already in place.
 
 This document turns that into a literal spec with teeth, decided before feature code exists, so every later choice traces back to a rule written here — not a vibe argued after the fact.
 
@@ -54,6 +58,6 @@ One account per user. Watchlists and a `last_viewed_at` timestamp live in Postgr
 ## Resolved decisions
 
 1. **Auth scope — resolved**: single hardcoded demo account, no signup/login UI. Every table still carries `user_id` as a first-class column (not global/singleton state), so adding real auth later is additive, not a rearchitecture. Rationale logged in [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
-2. **Deadline — resolved**: submission window is tonight (2026-09-04) through tomorrow morning (2026-09-06). ~30-36 hours total. Moving-average crossovers and any news/sentiment signal are explicitly **v2, deferred on purpose** — MVP is price-move + volume-spike + 52-week-cross rules only.
+2. **Deadline — corrected against the official page**: the event runs Sep 4 11:00 AM → Sep 7 11:00 AM IST (72 hours). You originally told me tomorrow night/day-after morning (~Sep 5-6) — flagged back to you for which one actually governs your plan; treating the official Sep 7 11 AM IST as the hard outer bound unless told otherwise. Moving-average crossovers and any news/sentiment signal remain **v2, deferred on purpose** regardless — MVP is price-move + volume-spike + 52-week-cross rules only; extra time goes to polish/resilience/edge cases (explicitly judged) over new rule types.
 3. **Git identity — resolved**: commits authored as `airasalish` / anakhdee12@gmail.com.
 4. **Repo — resolved**: https://github.com/airasalish/groww (existing, remote wired up locally).
