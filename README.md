@@ -43,7 +43,7 @@ npm run dev
 ```
 Runs at http://localhost:5173 and talks to the backend above.
 
-There's a single demo account — no signup/login required. Add a symbol (e.g. `AAPL`), optionally note why you're watching it, then use "Mark as seen" to anchor the baseline the next visit will be compared against.
+Sign up for your own account, or click "Try the demo" for a zero-setup look with real seeded data. Add a symbol (e.g. `AAPL`), optionally note why you're watching it — it drifts back to you on the card later — then use "Mark as seen" (or just navigate away; it anchors automatically) to set the baseline the next visit compares against.
 
 ## Architecture
 

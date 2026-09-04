@@ -8,10 +8,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.demo_user import get_or_create_demo_watchlist
-from app.models import SymbolQuote, WatchlistItem
+from app.demo_user import get_or_create_watchlist_for_user
+from app.models import SymbolQuote, User, WatchlistItem
 from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemOut
 from app.services import change_detection
+from app.services.auth import get_current_user
 from app.services.digest import generate_digest
 from app.services.market_data import fetch_symbol_stats
 from app.services.poller import BENCHMARK_SYMBOL
@@ -91,8 +92,8 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
 
 
 @router.get("", response_model=list[WatchlistItemOut])
-def list_watchlist(db: Session = Depends(get_db)):
-    watchlist = get_or_create_demo_watchlist(db)
+def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    watchlist = get_or_create_watchlist_for_user(db, user)
     db.commit()
 
     out = []
@@ -105,13 +106,13 @@ def list_watchlist(db: Session = Depends(get_db)):
 
 
 @router.get("/digest")
-def get_digest(db: Session = Depends(get_db)):
+def get_digest(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """On-demand only (see services/digest.py for why) -- reuses the same
     rule evaluation as list_watchlist rather than recomputing it, so this
     endpoint can never see a different set of "fired" facts than what the
     UI already shows.
     """
-    items = list_watchlist(db)
+    items = list_watchlist(db, user)
     fired_facts = [
         {"symbol": i.symbol, "fired": [f.model_dump() for f in i.fired]}
         for i in items
@@ -121,7 +122,7 @@ def get_digest(db: Session = Depends(get_db)):
 
 
 @router.get("/benchmark")
-def get_benchmark(db: Session = Depends(get_db)):
+def get_benchmark(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """A second, independent definition of "meaningful" alongside the
     per-symbol rules: not just "unusual for this stock," but "unusual
     relative to the market." Fixed to Nifty 50 -- a real simplification for
@@ -136,7 +137,7 @@ def get_benchmark(db: Session = Depends(get_db)):
     if benchmark and benchmark.price is not None and benchmark.prev_close:
         benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
 
-    watchlist = get_or_create_demo_watchlist(db)
+    watchlist = get_or_create_watchlist_for_user(db, user)
     db.commit()
 
     day_pcts = []
@@ -160,8 +161,10 @@ def get_benchmark(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=WatchlistItemOut)
-def add_symbol(payload: WatchlistItemCreate, db: Session = Depends(get_db)):
-    watchlist = get_or_create_demo_watchlist(db)
+def add_symbol(
+    payload: WatchlistItemCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    watchlist = get_or_create_watchlist_for_user(db, user)
     symbol = payload.symbol.strip().upper()
     if not symbol:
         raise HTTPException(400, "symbol is required")
@@ -210,8 +213,8 @@ def add_symbol(payload: WatchlistItemCreate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{item_id}")
-def remove_symbol(item_id: int, db: Session = Depends(get_db)):
-    watchlist = get_or_create_demo_watchlist(db)
+def remove_symbol(item_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    watchlist = get_or_create_watchlist_for_user(db, user)
     item = next((i for i in watchlist.items if i.id == item_id), None)
     if item is None:
         raise HTTPException(404, "not found")
@@ -221,12 +224,12 @@ def remove_symbol(item_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{item_id}/seen", response_model=WatchlistItemOut)
-def mark_seen(item_id: int, db: Session = Depends(get_db)):
+def mark_seen(item_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Explicit 'I looked at this' action — the only thing that moves
     last_viewed_at / price_at_last_view forward. Never done implicitly by a
     background poll or a page load. See PROJECT_BRIEF.md §3.
     """
-    watchlist = get_or_create_demo_watchlist(db)
+    watchlist = get_or_create_watchlist_for_user(db, user)
     item = next((i for i in watchlist.items if i.id == item_id), None)
     if item is None:
         raise HTTPException(404, "not found")

@@ -11,6 +11,24 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 **Why**: with a ~30-36 hour budget, building real signup/login/session management would eat hours that should go into the actual differentiator — the change-detection engine, which is what the brief is actually judging ("don't build the obvious watchlist"). But a true global-singleton design would mean *any* future multi-user support requires touching every table and every query. Threading `user_id` through now costs almost nothing today and turns "add real auth" into a follow-on feature instead of a rewrite. This is the deliberately-harder-than-strictly-necessary choice for a demo, made because it costs little now and avoids a much worse cost later.
 
+**Update, later the same day, once the follow-on was actually worth doing**: real auth got built — see the entry below. The `user_id`-everywhere groundwork made it exactly the additive change this entry predicted, not a rewrite.
+
+---
+
+### 2026-09-04 — Real auth, built as the additive follow-on this was designed for
+
+**What**: `services/auth.py` + `routers/auth.py` add real signup/login (bcrypt-hashed passwords, an opaque bearer token in a `sessions` table — not JWT, deliberately: no signing-key management, trivially revocable by deleting a row, and the one extra DB lookup per request is negligible next to the yfinance/Groq calls already on these paths). Every `watchlist`/`digest`/`benchmark` endpoint now requires it.
+
+**Why now**: raised directly — "won't we need auth" — after a second opinion (Antigravity) flagged the single-account design as a gap. The original decision above stands on its own merits (protect build time for the actual differentiator), but the justification for *not* building it earlier — time pressure — eased once the core engine, resilience pass, and deployment were all done and verified. Worth being honest about the shape of this: this wasn't "the first decision was wrong," it was "the condition that made simple-for-now the right call stopped holding."
+
+**Kept, deliberately, alongside real accounts**: a no-password `POST /api/auth/demo` login that resolves to the exact same seeded demo account/watchlist that existed before auth. Real per-user separation and a zero-friction "click the link, see it working" first impression aren't in tension — a cold visitor still needs zero setup, and anyone can also prove genuine data isolation by creating their own account.
+
+**A real integration snag, solved rather than routed around**: `navigator.sendBeacon` (used by the auto-mark-seen-on-leave feature) cannot attach custom headers, so it can't send a normal `Authorization: Bearer` token. `get_current_user` accepts the token as a `?token=` query param as a second path, used only by that one call site — documented in both `auth.py` and `api.ts` so it doesn't look like an accidental inconsistency later.
+
+**Verified thoroughly, not just "it typechecks"**: signup, wrong-password rejection, duplicate-username rejection, weak-password rejection, and — the actual point of the whole feature — two independently signed-up users (`alice`, `bob`) confirmed to see genuinely separate watchlists (`bob`'s came back empty while `alice`'s showed the stock she added). Also verified the query-param token path works with curl before trusting the frontend beacon call to use it correctly. Then drove the real UI end-to-end in-browser: signed up, added a stock, logged out, logged back in, confirmed the exact same watchlist came back.
+
+**Split deliberately to avoid a repeat of the earlier accidental-commit incident**: backend (`models.py`, `services/auth.py`, `routers/auth.py`, `demo_user.py`, `routers/watchlist.py`) plus the thin, functional-but-unstyled `Login.tsx`/`Login.css`/`main.tsx` pieces needed to make the feature actually usable end-to-end, rather than leaving it half-wired while `App.tsx`/`App.css` were mid-edit from a concurrent session. `Login.css` is its own file specifically so there's zero line-overlap risk with `App.css`.
+
 ---
 
 ### 2026-09-04 — Rule-based change detection instead of ML/LLM scoring
