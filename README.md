@@ -1,13 +1,12 @@
-# Smart Market Watchlist
+# Drift
 
 <!-- badges: fill in once CI/deploy exist -->
 ![status](https://img.shields.io/badge/status-in--progress-yellow)
-![stack](https://img.shields.io/badge/stack-React%20%2B%20FastAPI%20%2B%20Postgres-blue)
+![stack](https://img.shields.io/badge/stack-React%20%2B%20FastAPI%20%2B%20SQLite-blue)
 
-<!-- tagline: TODO, one line, once the product POV is proven not just planned -->
-> TODO — one-line tagline
+> Not just prices — what actually drifted since you last looked, and why it deserves your attention now.
 
-Built for CODE 2026 — "Build a Smart Market Watchlist." Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
+Built for **Code, by Groww** (2026) — "Build a Smart Market Watchlist." Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
 
 ## At a glance
 
