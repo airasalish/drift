@@ -42,6 +42,15 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Symbol search uses Yahoo's real search index, not an LLM
+
+**The tempting shortcut**: the user has Groq keys sitting right there, already wired up — ask the model to resolve a company name (e.g. "TCS") to a ticker symbol.
+**What we did instead**: `routers/symbols.py` calls `yfinance`'s `Search`, which queries Yahoo's own search index of actually-listed securities.
+
+**Why**: this surfaced from a real bug report — typing "TCS" in the add-symbol field did nothing useful, because Yahoo's data needs the exchange suffix (`TCS.NS` for NSE). An LLM asked to resolve that could produce a plausible-looking wrong answer (wrong suffix, delisted ticker, a same-named but different company) with no way to tell it was wrong short of calling the real data source anyway to verify — at which point the LLM step adds latency and a hallucination risk for zero benefit. Same principle as the digest feature: don't ask a model to produce a fact a real, verifiable source already provides. Also caught two bugs building this: the symbol-length regex was capped at 10 chars, which silently rejected real symbols like `BAJFINANCE.NS` (13 chars) the moment someone selected a real search result; and every stock was labeled with a `$` regardless of what it actually traded in, which is a real correctness bug once non-US exchanges are reachable, not a cosmetic one, e.g. TCS.NS showing "$2304.00" instead of "₹2,304.00". Fixed by pulling the real currency from `yfinance` (`fast_info.currency`) and formatting with `Intl.NumberFormat`, rather than hardcoding a currency symbol.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.

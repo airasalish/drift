@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 from app.database import Base, engine
+from app.routers.symbols import router as symbols_router
 from app.routers.watchlist import router as watchlist_router
 from app.services.poller import poll_forever
 
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(watchlist_router)
+app.include_router(symbols_router)
 
 
 @app.get("/api/health")

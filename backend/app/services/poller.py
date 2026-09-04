@@ -40,6 +40,7 @@ def refresh_all_watched_symbols() -> None:
 
             quote.watch_count = watch_count
             if stats is not None:
+                quote.currency = stats["currency"]
                 quote.price = stats["price"]
                 quote.prev_close = stats["prev_close"]
                 quote.volume = stats["volume"]

@@ -18,8 +18,10 @@ from app.services.market_data import fetch_symbol_stats
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
 # real tickers are short and use a narrow character set; reject obvious
-# garbage before spending a network call on yfinance
-SYMBOL_RE = re.compile(r"^[A-Z0-9.\-]{1,10}$")
+# garbage before spending a network call on yfinance. 20 chars comfortably
+# covers exchange-suffixed symbols (e.g. "BAJFINANCE.NS" is 13) without
+# accepting arbitrary-length input.
+SYMBOL_RE = re.compile(r"^[A-Z0-9.\-]{1,20}$")
 
 POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "60"))
 STALE_AFTER_SECONDS = POLL_INTERVAL_SECONDS * 3
@@ -47,6 +49,7 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
             spark = []
 
         quote_out = QuoteOut(
+            currency=quote.currency,
             price=quote.price,
             prev_close=quote.prev_close,
             volume=quote.volume,

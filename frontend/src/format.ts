@@ -1,6 +1,15 @@
-export function formatPrice(v: number | null): string {
+export function formatPrice(v: number | null, currency: string | null = "USD"): string {
   if (v == null) return "—";
-  return `$${v.toFixed(2)}`;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "USD",
+      currencyDisplay: "narrowSymbol",
+    }).format(v);
+  } catch {
+    // unrecognized currency code -- fall back rather than crash the row
+    return `${currency ? currency + " " : "$"}${v.toFixed(2)}`;
+  }
 }
 
 export function formatPct(v: number | null): string {

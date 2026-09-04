@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api } from "./api";
 import { formatPct, formatPrice, formatRelative } from "./format";
 import { Sparkline } from "./Sparkline";
+import { SymbolInput } from "./SymbolInput";
 import type { WatchlistItem } from "./types";
 import "./App.css";
 
@@ -98,12 +99,7 @@ function App() {
       </header>
 
       <form className="add-form" onSubmit={handleAdd}>
-        <input
-          value={symbol}
-          onChange={(e) => setSymbol(e.target.value)}
-          placeholder="e.g. AAPL"
-          disabled={adding}
-        />
+        <SymbolInput value={symbol} onChange={setSymbol} disabled={adding} />
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -199,7 +195,7 @@ function AttentionCard({
       <div className="card-head">
         <div>
           <span className="symbol">{item.symbol}</span>
-          <span className="price">{formatPrice(item.quote?.price ?? null)}</span>
+          <span className="price">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</span>
         </div>
         <Sparkline values={item.quote?.spark ?? []} />
       </div>
@@ -234,7 +230,7 @@ function Row({
   return (
     <tr className={item.has_attention ? "attention-row" : ""}>
       <td className="symbol">{item.symbol}</td>
-      <td className="price-cell">{formatPrice(item.quote?.price ?? null)}</td>
+      <td className="price-cell">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</td>
       <td>
         <Sparkline values={item.quote?.spark ?? []} />
       </td>

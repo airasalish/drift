@@ -15,6 +15,10 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
     try:
         ticker = yf.Ticker(symbol)
         hist = ticker.history(period="1y", interval="1d", auto_adjust=False)
+        try:
+            currency = ticker.fast_info.currency
+        except Exception:
+            currency = None
     except Exception:
         logger.exception("yfinance fetch failed for %s", symbol)
         return None
@@ -48,4 +52,5 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
         "week52_high": float(hist["High"].max()),
         "week52_low": float(hist["Low"].min()),
         "spark_closes": spark_closes,
+        "currency": currency,
     }

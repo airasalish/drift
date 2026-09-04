@@ -101,18 +101,68 @@ body {
   border-color: var(--accent);
 }
 
-.add-form input:first-child {
-  width: 160px;
-  text-transform: uppercase;
+.symbol-input-wrap {
+  position: relative;
+  width: 220px;
 }
 
-.add-form input:first-child::placeholder {
-  text-transform: none;
+.symbol-input-wrap input {
+  width: 100%;
 }
 
 .add-form input:nth-child(2) {
   flex: 1;
   min-width: 200px;
+}
+
+.symbol-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  z-index: 10;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+.symbol-dropdown .symbol-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.symbol-dropdown .symbol-option:hover {
+  background: var(--accent-dim);
+}
+
+.symbol-option-ticker {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.symbol-option-name {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.symbol-option-exchange {
+  color: var(--muted);
+  font-size: 11px;
+  flex-shrink: 0;
 }
 
 .add-form button {

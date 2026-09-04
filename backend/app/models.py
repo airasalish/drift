@@ -70,6 +70,7 @@ class SymbolQuote(Base):
     __tablename__ = "symbol_quotes"
 
     symbol: Mapped[str] = mapped_column(String, primary_key=True)
+    currency: Mapped[str | None] = mapped_column(String, nullable=True)
     price: Mapped[float | None] = mapped_column(Float, nullable=True)
     prev_close: Mapped[float | None] = mapped_column(Float, nullable=True)
     volume: Mapped[float | None] = mapped_column(Float, nullable=True)
