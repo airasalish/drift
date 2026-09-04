@@ -83,6 +83,20 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Watchlist-vs-Nifty benchmark: a second, independent "meaningful"
+
+**What it is**: `GET /api/watchlist/benchmark` compares the watchlist's average today's-move against Nifty 50's, alongside (not instead of) the per-symbol rule engine.
+
+**Why it's a genuinely different answer, not decoration**: every rule so far judges a stock against *its own* history (its own trailing volatility, its own 52-week range). This judges the whole watchlist against *the market* — "your list is up 0.8% while Nifty is down 1.5%" is a fact none of the per-symbol rules can express, since a stock can be perfectly normal by its own standard while the whole portfolio is quietly out- or under-performing the market it sits in.
+
+**The simplification, disclosed rather than assumed away**: Nifty 50 is a single fixed benchmark, not matched per stock's home exchange. A US-heavy watchlist compared against an Indian index is a real mismatch in principle — chosen anyway because (a) this is a Groww-hosted challenge, (b) the idea's own framing used Nifty as the example, and (c) per-market-matched benchmarking would mean picking and fetching a second or third index and deciding how to blend them, which is real added complexity for a comparison that's illustrative context, not a rule that flags anything. Simple beats clever here, and the limitation is written down, not hidden.
+
+**Verified, not assumed**: checked both index symbols actually resolve via the existing `yfinance` wrapper before picking one (`^GSPC` and `^NSEI` both tested live), confirmed the benchmark is fetched even with zero watchlist items (unconditional poll, not tied to any user's list), and hand-checked the arithmetic against real numbers (AAPL+NVDA averaging -0.46% against Nifty's +0.10% correctly nets to -0.56% underperformance).
+
+**Frontend display**: not yet wired up — `App.tsx`/`App.css` are mid-edit from a separate, concurrent session (Antigravity) as of this writing, so the display piece was handed to it as a task rather than risking a conflicting edit to the same files.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.

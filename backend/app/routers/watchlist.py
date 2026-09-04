@@ -14,6 +14,7 @@ from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemO
 from app.services import change_detection
 from app.services.digest import generate_digest
 from app.services.market_data import fetch_symbol_stats
+from app.services.poller import BENCHMARK_SYMBOL
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
@@ -117,6 +118,45 @@ def get_digest(db: Session = Depends(get_db)):
         if i.has_attention
     ]
     return {"digest": generate_digest(fired_facts)}
+
+
+@router.get("/benchmark")
+def get_benchmark(db: Session = Depends(get_db)):
+    """A second, independent definition of "meaningful" alongside the
+    per-symbol rules: not just "unusual for this stock," but "unusual
+    relative to the market." Fixed to Nifty 50 -- a real simplification for
+    a US-heavy watchlist, disclosed in ENGINEERING_DECISIONS.md rather than
+    silently assumed to be the right benchmark for every symbol.
+
+    Reads only from the cache the poller already maintains -- no live
+    yfinance call on this request path, same rule as everywhere else.
+    """
+    benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
+    benchmark_pct = None
+    if benchmark and benchmark.price is not None and benchmark.prev_close:
+        benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
+
+    watchlist = get_or_create_demo_watchlist(db)
+    db.commit()
+
+    day_pcts = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        if quote and quote.price is not None and quote.prev_close:
+            day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
+
+    watchlist_pct = sum(day_pcts) / len(day_pcts) if day_pcts else None
+    outperformance_pct = (
+        watchlist_pct - benchmark_pct if watchlist_pct is not None and benchmark_pct is not None else None
+    )
+
+    return {
+        "benchmark_symbol": BENCHMARK_SYMBOL,
+        "benchmark_label": "Nifty 50",
+        "benchmark_pct": benchmark_pct,
+        "watchlist_pct": watchlist_pct,
+        "outperformance_pct": outperformance_pct,
+    }
 
 
 @router.post("", response_model=WatchlistItemOut)

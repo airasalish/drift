@@ -8,6 +8,16 @@ import "./App.css";
 
 const REFRESH_MS = 15_000;
 
+function isMarketOpen(): boolean {
+  const now = new Date();
+  const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const day = et.getDay();
+  const h = et.getHours();
+  const m = et.getMinutes();
+  const minOfDay = h * 60 + m;
+  return day >= 1 && day <= 5 && minOfDay >= 570 && minOfDay < 960; // 9:30–16:00
+}
+
 function App() {
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +27,19 @@ function App() {
   const [adding, setAdding] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(REFRESH_MS / 1000);
+  const [confirmRemove, setConfirmRemove] = useState<Record<number, boolean>>({});
   const itemsRef = useRef<WatchlistItem[]>([]);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function resetCountdown() {
+    setCountdown(REFRESH_MS / 1000);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setCountdown((c) => (c <= 1 ? REFRESH_MS / 1000 : c - 1));
+    }, 1000);
+  }
 
   async function refresh() {
     try {
@@ -25,7 +47,9 @@ function App() {
       setItems(data);
       itemsRef.current = data;
       setError(null);
-      setDigest(null); // the old digest may no longer match a changed attention set
+      setDigest(null);
+      setLastRefreshedAt(new Date());
+      resetCountdown();
     } catch (e) {
       setError(e instanceof Error ? e.message : "failed to load");
     } finally {
@@ -48,16 +72,13 @@ function App() {
   useEffect(() => {
     refresh();
     const id = setInterval(refresh, REFRESH_MS);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
   }, []);
 
   useEffect(() => {
-    // Closes the loop PROJECT_BRIEF.md already promised: "seen" resets on
-    // an explicit action, and leaving the page counts as one -- not just
-    // the manual button. Fires on tab-hide/close (visibilitychange), which
-    // works reliably on mobile too, unlike beforeunload. Only items that
-    // were actually still unseen (not already anchored) get a beacon, so
-    // this doesn't churn the baseline for things the user already reviewed.
     function handleVisibility() {
       if (document.visibilityState !== "hidden") return;
       for (const item of itemsRef.current) {
@@ -93,12 +114,22 @@ function App() {
   }
 
   async function handleRemove(id: number) {
+    setConfirmRemove((prev) => { const next = { ...prev }; delete next[id]; return next; });
     await api.remove(id);
     refresh();
   }
 
+  function requestRemove(id: number) {
+    setConfirmRemove((prev) => ({ ...prev, [id]: true }));
+  }
+
+  function cancelRemove(id: number) {
+    setConfirmRemove((prev) => { const next = { ...prev }; delete next[id]; return next; });
+  }
+
   const attention = items.filter((i) => i.has_attention).sort((a, b) => b.attention_score - a.attention_score);
   const rest = items.filter((i) => !i.has_attention);
+  const marketOpen = isMarketOpen();
 
   return (
     <div className="page">
@@ -119,6 +150,27 @@ function App() {
         )}
       </header>
 
+      {!loading && (
+        <div className="status-bar">
+          <span className={`dot${error ? " stale" : ""}`} />
+          {lastRefreshedAt
+            ? `Updated ${formatRelative(lastRefreshedAt.toISOString())}`
+            : "Loading…"}
+          <span className="sep">·</span>
+          {`Next in ${countdown}s`}
+          {items.length > 0 && (
+            <>
+              <span className="sep">·</span>
+              {`${items.length} stock${items.length !== 1 ? "s" : ""} tracked`}
+            </>
+          )}
+          <span className="sep">·</span>
+          <span style={{ color: marketOpen ? "var(--green)" : "var(--muted)" }}>
+            {marketOpen ? "Market open" : "Market closed"}
+          </span>
+        </div>
+      )}
+
       <form className="add-form" onSubmit={handleAdd}>
         <SymbolInput value={symbol} onChange={setSymbol} disabled={adding} />
         <input
@@ -132,7 +184,12 @@ function App() {
         </button>
       </form>
 
-      {error && <div className="error">{error}</div>}
+      {error && (
+        <div className="error-row">
+          <div className="error">{error}</div>
+          <button onClick={refresh}>Retry</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="skeleton-block" />
@@ -149,11 +206,19 @@ function App() {
             </div>
             {digest && <p className="digest">{digest}</p>}
             {attention.length === 0 ? (
-              <div className="empty-box">Nothing needs your attention right now.</div>
+              <div className="empty-box">✓ All clear — nothing moved meaningfully since you last checked.</div>
             ) : (
               <div className="cards">
                 {attention.map((item) => (
-                  <AttentionCard key={item.id} item={item} onSeen={handleSeen} onRemove={handleRemove} />
+                  <AttentionCard
+                    key={item.id}
+                    item={item}
+                    onSeen={handleSeen}
+                    onRemove={handleRemove}
+                    requestRemove={requestRemove}
+                    cancelRemove={cancelRemove}
+                    confirming={!!confirmRemove[item.id]}
+                  />
                 ))}
               </div>
             )}
@@ -170,7 +235,8 @@ function App() {
                     <tr>
                       <th>Symbol</th>
                       <th>Price</th>
-                      <th>Trend</th>
+                      <th>Trend (30d)</th>
+                      <th>Signal</th>
                       <th>Since added</th>
                       <th>Since last view</th>
                       <th>Freshness</th>
@@ -180,7 +246,15 @@ function App() {
                   </thead>
                   <tbody>
                     {[...attention, ...rest].map((item) => (
-                      <Row key={item.id} item={item} onSeen={handleSeen} onRemove={handleRemove} />
+                      <Row
+                        key={item.id}
+                        item={item}
+                        onSeen={handleSeen}
+                        onRemove={handleRemove}
+                        requestRemove={requestRemove}
+                        cancelRemove={cancelRemove}
+                        confirming={!!confirmRemove[item.id]}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -206,19 +280,34 @@ function AttentionCard({
   item,
   onSeen,
   onRemove,
+  requestRemove,
+  cancelRemove,
+  confirming,
 }: {
   item: WatchlistItem;
   onSeen: (id: number) => void;
   onRemove: (id: number) => void;
+  requestRemove: (id: number) => void;
+  cancelRemove: (id: number) => void;
+  confirming: boolean;
 }) {
+  const changePct = item.change_since_last_view_pct;
   return (
     <div className="card">
       <div className="card-head">
         <div>
           <span className="symbol">{item.symbol}</span>
           <span className="price">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</span>
+          {changePct != null && (
+            <span className={`price-change-badge ${changePct >= 0 ? "up" : "down"}`}>
+              {changePct >= 0 ? "▲" : "▼"} {formatPct(changePct)} since last view
+            </span>
+          )}
         </div>
-        <Sparkline values={item.quote?.spark ?? []} />
+        <div className="spark-wrap">
+          <Sparkline values={item.quote?.spark ?? []} />
+          <span className="spark-label">30d</span>
+        </div>
       </div>
       <ul className="reasons">
         {item.fired.map((f, idx) => (
@@ -230,9 +319,15 @@ function AttentionCard({
       {item.note && <p className="note">"{item.note}"</p>}
       <div className="card-actions">
         <button onClick={() => onSeen(item.id)}>Mark as seen</button>
-        <button className="ghost" onClick={() => onRemove(item.id)}>
-          Remove
-        </button>
+        {confirming ? (
+          <div className="confirm-remove">
+            <span>Remove?</span>
+            <button className="yes" onClick={() => onRemove(item.id)}>Yes</button>
+            <button className="no" onClick={() => cancelRemove(item.id)}>No</button>
+          </div>
+        ) : (
+          <button className="ghost" onClick={() => requestRemove(item.id)}>Remove</button>
+        )}
       </div>
     </div>
   );
@@ -242,18 +337,41 @@ function Row({
   item,
   onSeen,
   onRemove,
+  requestRemove,
+  cancelRemove,
+  confirming,
 }: {
   item: WatchlistItem;
   onSeen: (id: number) => void;
   onRemove: (id: number) => void;
+  requestRemove: (id: number) => void;
+  cancelRemove: (id: number) => void;
+  confirming: boolean;
 }) {
   const stale = item.quote?.is_stale;
+  const topSignal = item.fired[0];
   return (
     <tr className={item.has_attention ? "attention-row" : ""}>
       <td className="symbol">{item.symbol}</td>
       <td className="price-cell">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</td>
       <td>
-        <Sparkline values={item.quote?.spark ?? []} />
+        <div className="spark-wrap">
+          <Sparkline values={item.quote?.spark ?? []} />
+          <span className="spark-label">30d</span>
+        </div>
+      </td>
+      <td className="signal-cell">
+        {topSignal && (
+          <>
+            <span className={`rule-chip ${topSignal.rule}`}>
+              {topSignal.rule === "price_move" && "↕ Price"}
+              {topSignal.rule === "unusual_volume" && "⚡ Volume"}
+              {topSignal.rule === "week52_high" && "▲ 52w High"}
+              {topSignal.rule === "week52_low" && "▼ 52w Low"}
+            </span>
+            <span className="signal-reason">{topSignal.message}</span>
+          </>
+        )}
       </td>
       <td className={pctClass(item.change_since_added_pct)}>{formatPct(item.change_since_added_pct)}</td>
       <td className={pctClass(item.change_since_last_view_pct)}>
@@ -266,9 +384,15 @@ function Row({
       <td className="note-cell">{item.note ?? ""}</td>
       <td className="row-actions">
         <button onClick={() => onSeen(item.id)}>Seen</button>
-        <button className="ghost" onClick={() => onRemove(item.id)}>
-          ✕
-        </button>
+        {confirming ? (
+          <div className="confirm-remove">
+            <span>Sure?</span>
+            <button className="yes" onClick={() => onRemove(item.id)}>Yes</button>
+            <button className="no" onClick={() => cancelRemove(item.id)}>No</button>
+          </div>
+        ) : (
+          <button className="ghost" onClick={() => requestRemove(item.id)}>✕</button>
+        )}
       </td>
     </tr>
   );

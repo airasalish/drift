@@ -1,3 +1,12 @@
+/* ─────────────────────────────────────────────
+   Groww Smart Watchlist — App.css
+   Enhanced: Inter font, card glow, badges,
+   chips, status bar, sparkline wrappers, etc.
+   ───────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── CSS Variables ── */
 :root {
   --bg: #0b0d10;
   --surface: #14171b;
@@ -11,22 +20,27 @@
   --accent-dim: rgba(91, 140, 255, 0.14);
 }
 
+/* ── Reset ── */
 * {
   box-sizing: border-box;
 }
 
+/* ── Base ── */
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
+/* ── Layout ── */
 .page {
   max-width: 980px;
   margin: 0 auto;
   padding: 40px 20px 90px;
 }
 
+/* ── Header ── */
 .header {
   display: flex;
   align-items: center;
@@ -62,6 +76,7 @@ body {
   font-size: 13.5px;
 }
 
+/* ── Summary Pill ── */
 .summary-pill {
   font-size: 12.5px;
   font-weight: 600;
@@ -71,14 +86,22 @@ body {
   border: 1px solid var(--border);
   color: var(--muted);
   white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
 .summary-pill[data-warn="true"] {
   background: rgba(91, 140, 255, 0.12);
   border-color: rgba(91, 140, 255, 0.35);
   color: var(--accent);
+  animation: pill-warn 3s ease-in-out infinite;
 }
 
+@keyframes pill-warn {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 14px rgba(91, 140, 255, 0.35); }
+}
+
+/* ── Add Form ── */
 .add-form {
   display: flex;
   gap: 10px;
@@ -115,6 +138,7 @@ body {
   min-width: 200px;
 }
 
+/* ── Symbol Dropdown ── */
 .symbol-dropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -165,6 +189,7 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Add Button ── */
 .add-form button {
   background: var(--accent);
   color: white;
@@ -185,6 +210,7 @@ body {
   cursor: default;
 }
 
+/* ── Error ── */
 .error {
   background: rgba(240, 85, 79, 0.12);
   border: 1px solid var(--red);
@@ -195,10 +221,77 @@ body {
   font-size: 13.5px;
 }
 
+/* ── Error Row (inline error + retry button) ── */
+.error-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.error-row .error {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.error-row button {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 24px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.status-bar .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+  animation: blink 2.5s ease-in-out infinite;
+}
+
+.status-bar .dot.stale {
+  background: var(--red);
+  animation: none;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+.status-bar .sep {
+  opacity: 0.3;
+  margin: 0 2px;
+}
+
+/* ── Misc Utilities ── */
 .muted {
   color: var(--muted);
 }
 
+/* ── Empty State ── */
 .empty-box {
   border: 1px dashed var(--border);
   border-radius: 12px;
@@ -208,6 +301,7 @@ body {
   text-align: center;
 }
 
+/* ── Skeleton Loader ── */
 .skeleton-block {
   height: 140px;
   border-radius: 12px;
@@ -217,14 +311,11 @@ body {
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
+  0%   { background-position: 100% 0; }
+  100% { background-position: 0 0; }
 }
 
+/* ── Sections ── */
 section {
   margin-bottom: 38px;
 }
@@ -249,6 +340,7 @@ section h2 {
   margin-bottom: 0;
 }
 
+/* ── Explain Button ── */
 .explain-btn {
   background: transparent;
   border: 1px solid var(--accent);
@@ -267,6 +359,7 @@ section h2 {
   cursor: default;
 }
 
+/* ── AI Digest ── */
 .digest {
   font-size: 13.5px;
   line-height: 1.5;
@@ -278,20 +371,47 @@ section h2 {
   margin: -4px 0 14px;
 }
 
+/* ── Cards Grid ── */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 14px;
 }
 
+/* ── Card ── */
 .card {
   background: var(--surface);
-  border: 1px solid var(--accent);
+  border: 1px solid rgba(91, 140, 255, 0.35);
   border-radius: 14px;
   padding: 18px;
-  box-shadow: 0 0 0 1px rgba(91, 140, 255, 0.06), 0 8px 24px -12px rgba(91, 140, 255, 0.25);
+  position: relative;
+  overflow: hidden;
+  animation: pulse-glow 4s ease-in-out infinite;
 }
 
+/* Subtle gradient overlay */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(91, 140, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(91, 140, 255, 0.06),
+      0 8px 32px -8px rgba(91, 140, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(91, 140, 255, 0.12),
+      0 8px 32px -8px rgba(91, 140, 255, 0.4);
+  }
+}
+
+/* ── Card Header ── */
 .card-head {
   display: flex;
   justify-content: space-between;
@@ -300,18 +420,86 @@ section h2 {
   gap: 10px;
 }
 
+/* ── Symbol ── */
 .symbol {
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 800;
+  font-size: 18px;
   display: block;
+  letter-spacing: -0.02em;
 }
 
+/* ── Price (in card) ── */
 .price {
-  font-weight: 600;
-  font-size: 13.5px;
-  color: var(--muted);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--text);
+  display: block;
+  margin-top: 2px;
+  letter-spacing: -0.01em;
 }
 
+/* ── Price Change Badge ── */
+.price-change-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-top: 4px;
+}
+
+.price-change-badge.up {
+  background: rgba(34, 199, 122, 0.15);
+  color: var(--green);
+}
+
+.price-change-badge.down {
+  background: rgba(240, 85, 79, 0.15);
+  color: var(--red);
+}
+
+/* ── Rule Chip ── */
+.rule-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(91, 140, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(91, 140, 255, 0.2);
+  white-space: nowrap;
+}
+
+.rule-chip.price_move {
+  background: rgba(240, 85, 79, 0.1);
+  color: var(--red);
+  border-color: rgba(240, 85, 79, 0.2);
+}
+
+.rule-chip.unusual_volume {
+  background: rgba(255, 190, 11, 0.1);
+  color: #fbbe0b;
+  border-color: rgba(255, 190, 11, 0.2);
+}
+
+.rule-chip.week52_high {
+  background: rgba(34, 199, 122, 0.1);
+  color: var(--green);
+  border-color: rgba(34, 199, 122, 0.2);
+}
+
+.rule-chip.week52_low {
+  background: rgba(240, 85, 79, 0.1);
+  color: var(--red);
+  border-color: rgba(240, 85, 79, 0.2);
+}
+
+/* ── Alert Reasons List ── */
 .reasons {
   list-style: none;
   padding: 0;
@@ -322,14 +510,16 @@ section h2 {
 }
 
 .reasons li {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text);
   background: var(--surface-2);
-  padding: 7px 10px;
+  padding: 8px 11px;
   border-radius: 7px;
-  border-left: 2px solid var(--accent);
+  border-left: 2.5px solid var(--accent);
+  line-height: 1.4;
 }
 
+/* ── Note ── */
 .note {
   font-size: 13px;
   color: var(--muted);
@@ -337,6 +527,7 @@ section h2 {
   margin: 0 0 12px;
 }
 
+/* ── Card Actions ── */
 .card-actions {
   display: flex;
   gap: 8px;
@@ -366,6 +557,40 @@ section h2 {
   color: var(--muted);
 }
 
+/* ── Confirm Remove ── */
+.confirm-remove {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.confirm-remove span {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.confirm-remove button.yes {
+  background: rgba(240, 85, 79, 0.15);
+  border: 1px solid rgba(240, 85, 79, 0.3);
+  color: var(--red);
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.confirm-remove button.no {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11.5px;
+}
+
+/* ── Table ── */
 .table-scroll {
   overflow-x: auto;
   border-radius: 12px;
@@ -389,7 +614,7 @@ section h2 {
 }
 
 .watchlist-table td {
-  padding: 11px 12px;
+  padding: 13px 14px;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
@@ -398,10 +623,22 @@ section h2 {
   border-bottom: none;
 }
 
+/* Row hover (skip attention rows — they already have a background) */
+.watchlist-table tbody tr:hover:not(.attention-row) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Attention Row ── */
 .watchlist-table tr.attention-row {
   background: var(--accent-dim);
 }
 
+/* Accent left-border on first cell of attention rows */
+.watchlist-table tr.attention-row td:first-child {
+  border-left: 2px solid var(--accent);
+}
+
+/* ── Table Cells ── */
 .price-cell {
   font-weight: 600;
 }
@@ -430,6 +667,7 @@ section h2 {
   white-space: nowrap;
 }
 
+/* ── Row Actions ── */
 .row-actions {
   display: flex;
   gap: 6px;
@@ -445,6 +683,7 @@ section h2 {
   font-size: 12px;
 }
 
+/* ── Sparkline ── */
 .spark {
   display: block;
 }
@@ -475,8 +714,125 @@ section h2 {
   fill: rgba(240, 85, 79, 0.1);
 }
 
+/* ── Spark Wrapper (column layout with label) ── */
+.spark-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.spark-label {
+  font-size: 9px;
+  color: var(--muted);
+  opacity: 0.5;
+  text-align: center;
+  margin-top: 1px;
+  letter-spacing: 0.03em;
+}
+
+/* ── Responsive — small screens ── */
+@media (max-width: 768px) {
+  .add-form {
+    flex-direction: column;
+  }
+
+  .symbol-input-wrap {
+    width: 100%;
+  }
+
+  .add-form input:nth-child(2) {
+    width: 100%;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .price {
+    font-size: 17px;
+  }
+}
+
 @media (max-width: 560px) {
   .add-form input:first-child {
     width: 100%;
   }
 }
+
+/* ── Signal cell: chip + full reason message stacked ── */
+.signal-cell {
+  /* allow the cell to be wider than its neighbours so the reason text
+     doesn't crush adjacent columns; white-space is overridden to normal
+     just for this cell so the reason can wrap rather than expand the row */
+  min-width: 160px;
+  max-width: 280px;
+}
+
+.signal-cell .rule-chip {
+  display: inline-flex;
+  margin-bottom: 4px;
+}
+
+.signal-reason {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: normal;    /* allow wrapping inside this cell */
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+/* ── 375px mobile: table that actually fits ── */
+/* Strategy: keep Symbol, Price, Signal, Since-last-view, Actions.
+   Hide Trend (sparkline) — it's the widest visual column and purely
+   contextual on narrow screens where the card section already shows it.
+   Hide Freshness and Note — secondary info, available in cards. */
+@media (max-width: 480px) {
+  .table-scroll {
+    /* no horizontal scroll; we shed columns instead */
+    overflow-x: hidden;
+  }
+
+  /* hide Trend (30d) column — col index 3 in thead/tbody */
+  .watchlist-table th:nth-child(3),
+  .watchlist-table td:nth-child(3) {
+    display: none;
+  }
+
+  /* hide Freshness column — col index 7 */
+  .watchlist-table th:nth-child(7),
+  .watchlist-table td:nth-child(7) {
+    display: none;
+  }
+
+  /* hide Note column — col index 8 */
+  .watchlist-table th:nth-child(8),
+  .watchlist-table td:nth-child(8) {
+    display: none;
+  }
+
+  /* tighten cell padding at this width */
+  .watchlist-table th,
+  .watchlist-table td {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  /* signal cell: truncate the reason to one line on very narrow screens */
+  .signal-cell {
+    max-width: 120px;
+  }
+
+  .signal-reason {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* price column: tighten */
+  .price-cell {
+    font-size: 12.5px;
+  }
+}
+

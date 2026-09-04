@@ -25,6 +25,8 @@ A symbol is flagged into the "what changed" feed if **any** rule fires:
 | 52-week high/low crossed, or within 3% of it | boolean, or reduced weight (0.6×) if within 3% without crossing | Cheap, unambiguous, high signal-to-noise. The "near" tier surfaces a stock approaching an extreme before it actually crosses, at a deliberately lower weight so it doesn't rank alongside an actual new high/low. |
 | Key moving-average cross (50/200-day) | boolean | Stretch goal, not MVP — only if time allows. |
 
+A second, independent definition sits alongside the per-symbol rules above: **relative to the market**, not just relative to a stock's own history. `GET /api/watchlist/benchmark` compares the watchlist's average today's-move against Nifty 50's — a single fixed benchmark, not smart-matched per stock's home exchange (a real simplification for a mixed US/India watchlist, disclosed rather than assumed correct — see `ENGINEERING_DECISIONS.md`).
+
 Each fired rule contributes to a per-symbol **attention score** (simple sum, each rule pre-weighted). Symbols are ranked by score in the "what changed" feed. This is deliberately rule-based and explainable, not ML — a system you can defend line-by-line beats a black box when the brief says "be ready to explain why."
 
 ## 2. What information surfaces
