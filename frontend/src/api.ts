@@ -29,4 +29,7 @@ export const api = {
     fetch(`${BASE}/watchlist/${id}/seen`, { method: "POST" }).then((r) =>
       handle<WatchlistItem>(r)
     ),
+
+  digest: () =>
+    fetch(`${BASE}/watchlist/digest`).then((r) => handle<{ digest: string | null }>(r)),
 };

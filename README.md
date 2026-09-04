@@ -18,6 +18,7 @@ Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGI
 | **Meaningful change** | Volatility-adjusted price move, volume spike vs. trailing average, 52-week high/low cross — see [§1](PROJECT_BRIEF.md#1-what-counts-as-a-meaningful-change-rule-based-not-vibes) |
 | **Persistence** | Per-account watchlists + `last_viewed_at` in Postgres — diffs are always "since your last real visit" |
 | **Data source** | yfinance (MVP) |
+| **"Explain this"** | Optional, on-demand: Groq rephrases the already-computed signals into one plain-English paragraph — never decides what's flagged, never invents a cause. Degrades gracefully without an API key. |
 | **Live demo** | https://frontend-dusky-omega-11.vercel.app |
 | **Backend API** | https://drift-api-swbj.onrender.com (free tier — first request after idle can take ~50s to wake up) |
 | **Video** | TODO link |
