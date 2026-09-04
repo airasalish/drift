@@ -102,8 +102,12 @@ body {
 }
 
 .add-form input:first-child {
-  width: 140px;
+  width: 160px;
   text-transform: uppercase;
+}
+
+.add-form input:first-child::placeholder {
+  text-transform: none;
 }
 
 .add-form input:nth-child(2) {
