@@ -20,7 +20,10 @@ export function SymbolInput({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const query = value.trim();
-    if (query.length < 1) {
+    if (query.length < 2) {
+      // a single letter is too ambiguous to rank usefully (e.g. "A" is
+      // itself a real ticker -- Agilent -- so it's not "wrong" to return
+      // that over Apple, just not what most people mean by typing "A")
       setResults([]);
       return;
     }
