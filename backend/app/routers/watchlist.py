@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 import os
 import re
 
@@ -29,7 +30,34 @@ POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "60"))
 STALE_AFTER_SECONDS = POLL_INTERVAL_SECONDS * 3
 
 
+_NUMERIC_QUOTE_FIELDS = (
+    "price",
+    "prev_close",
+    "volume",
+    "avg_volume_20d",
+    "avg_daily_move_pct_20d",
+    "week52_high",
+    "week52_low",
+)
+
+
+def _sanitize_quote(quote: SymbolQuote | None) -> None:
+    """Defensive read-time NaN guard: fixes rows written before the fetch-
+    time fix in market_data.py existed (see ENGINEERING_DECISIONS.md for the
+    incident) without needing a manual DB fix or waiting for the next poll
+    to overwrite them. Mutates the in-memory object only -- never committed,
+    so the real poll cycle still owns correcting the stored row.
+    """
+    if quote is None:
+        return
+    for field in _NUMERIC_QUOTE_FIELDS:
+        value = getattr(quote, field)
+        if value is not None and math.isnan(value):
+            setattr(quote, field, None)
+
+
 def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemOut:
+    _sanitize_quote(quote)
     quote_out = None
     fired: list[FiredRule] = []
     score = 0.0
@@ -93,23 +121,16 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
 
 @router.get("", response_model=list[WatchlistItemOut])
 def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # TEMPORARY diagnostic wrapper -- surfaces the real exception in the
-    # response body since I don't have direct log access right now. Revert
-    # immediately once the actual bug is identified; never ship this.
-    try:
-        watchlist = get_or_create_watchlist_for_user(db, user)
-        db.commit()
+    watchlist = get_or_create_watchlist_for_user(db, user)
+    db.commit()
 
-        out = []
-        for item in watchlist.items:
-            quote = db.get(SymbolQuote, item.symbol)
-            out.append(_serialize(item, quote))
+    out = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        out.append(_serialize(item, quote))
 
-        out.sort(key=lambda w: w.attention_score, reverse=True)
-        return out
-    except Exception as e:
-        import traceback
-        raise HTTPException(500, f"DEBUG: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+    out.sort(key=lambda w: w.attention_score, reverse=True)
+    return out
 
 
 @router.get("/digest")
@@ -139,24 +160,21 @@ def get_benchmark(db: Session = Depends(get_db), user: User = Depends(get_curren
     Reads only from the cache the poller already maintains -- no live
     yfinance call on this request path, same rule as everywhere else.
     """
-    # TEMPORARY diagnostic -- see list_watchlist for why; revert together.
-    try:
-        benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
-        benchmark_pct = None
-        if benchmark and benchmark.price is not None and benchmark.prev_close:
-            benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
+    benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
+    _sanitize_quote(benchmark)
+    benchmark_pct = None
+    if benchmark and benchmark.price is not None and benchmark.prev_close:
+        benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
 
-        watchlist = get_or_create_watchlist_for_user(db, user)
-        db.commit()
+    watchlist = get_or_create_watchlist_for_user(db, user)
+    db.commit()
 
-        day_pcts = []
-        for item in watchlist.items:
-            quote = db.get(SymbolQuote, item.symbol)
-            if quote and quote.price is not None and quote.prev_close:
-                day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
-    except Exception as e:
-        import traceback
-        raise HTTPException(500, f"DEBUG: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+    day_pcts = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        _sanitize_quote(quote)
+        if quote and quote.price is not None and quote.prev_close:
+            day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
 
     watchlist_pct = sum(day_pcts) / len(day_pcts) if day_pcts else None
     outperformance_pct = (

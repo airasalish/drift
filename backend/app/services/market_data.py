@@ -5,10 +5,25 @@ everything the change-detection rules need: current price/volume, trailing
 """
 
 import logging
+import math
 
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
+
+
+def _clean(x: float | None) -> float | None:
+    """NaN is a real, not-rare thing yfinance returns (e.g. the still-forming
+    current bar mid-session can have incomplete OHLC) -- and it's silently
+    truthy in Python, so `if value:` guards elsewhere in this codebase don't
+    catch it, and it propagates through arithmetic with no exception until
+    it hits JSON encoding, where it's a hard error. Converting it to None at
+    the source is the same "mark it missing, don't pretend it's real" rule
+    already applied everywhere else in this app to stale/failed data.
+    """
+    if x is None:
+        return None
+    return None if math.isnan(x) else x
 
 
 def fetch_symbol_stats(symbol: str) -> dict | None:
@@ -41,16 +56,18 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
     avg_daily_move_pct_20d = float(daily_move_pct.mean()) if not daily_move_pct.empty else 0.0
     avg_volume_20d = float(trailing["Volume"].mean()) if not trailing.empty else latest_volume
 
-    spark_closes = [round(float(c), 4) for c in closes.tail(30).tolist()]
+    # drop NaN points rather than pass them through -- a gap in the sparkline
+    # is honest; a NaN reaching the frontend (or JSON encoding) is not
+    spark_closes = [round(c, 4) for c in closes.tail(30).tolist() if not math.isnan(c)]
 
     return {
-        "price": latest_price,
-        "prev_close": prev_close,
-        "volume": latest_volume,
-        "avg_volume_20d": avg_volume_20d,
-        "avg_daily_move_pct_20d": avg_daily_move_pct_20d,
-        "week52_high": float(hist["High"].max()),
-        "week52_low": float(hist["Low"].min()),
+        "price": _clean(latest_price),
+        "prev_close": _clean(prev_close),
+        "volume": _clean(latest_volume),
+        "avg_volume_20d": _clean(avg_volume_20d),
+        "avg_daily_move_pct_20d": _clean(avg_daily_move_pct_20d),
+        "week52_high": _clean(float(hist["High"].max())),
+        "week52_low": _clean(float(hist["Low"].min())),
         "spark_closes": spark_closes,
         "currency": currency,
     }
