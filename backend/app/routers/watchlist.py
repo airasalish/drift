@@ -1,8 +1,10 @@
 import datetime
 import json
 import os
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -13,6 +15,10 @@ from app.services import change_detection
 from app.services.market_data import fetch_symbol_stats
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+
+# real tickers are short and use a narrow character set; reject obvious
+# garbage before spending a network call on yfinance
+SYMBOL_RE = re.compile(r"^[A-Z0-9.\-]{1,10}$")
 
 POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "60"))
 STALE_AFTER_SECONDS = POLL_INTERVAL_SECONDS * 3
@@ -99,6 +105,8 @@ def add_symbol(payload: WatchlistItemCreate, db: Session = Depends(get_db)):
     symbol = payload.symbol.strip().upper()
     if not symbol:
         raise HTTPException(400, "symbol is required")
+    if not SYMBOL_RE.match(symbol):
+        raise HTTPException(400, f"'{symbol}' doesn't look like a valid ticker")
 
     existing = next((i for i in watchlist.items if i.symbol == symbol), None)
     if existing:
@@ -128,7 +136,14 @@ def add_symbol(payload: WatchlistItemCreate, db: Session = Depends(get_db)):
         added_price=added_price,
     )
     db.add(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # two concurrent adds of the same new symbol raced past the
+        # check above -- the unique constraint is the real guard, this
+        # just turns it into the same clean 409 instead of a 500
+        db.rollback()
+        raise HTTPException(409, f"{symbol} is already on your watchlist")
     db.refresh(item)
 
     return _serialize(item, quote)
