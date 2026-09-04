@@ -101,7 +101,7 @@ function App() {
         <input
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
-          placeholder="Symbol, e.g. AAPL"
+          placeholder="e.g. AAPL"
           disabled={adding}
         />
         <input
