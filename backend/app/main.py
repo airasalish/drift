@@ -36,9 +36,19 @@ app = FastAPI(title="Drift API", lifespan=lifespan)
 _default_origins = "http://localhost:5173,http://127.0.0.1:5173"
 allowed_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", _default_origins).split(",") if o.strip()]
 
+# Vercel gives every single deployment its own unique subdomain (in
+# addition to the stable one in ALLOWED_ORIGINS above) -- clicking "Visit"
+# on any deployment in the Vercel dashboard, a completely normal thing to
+# do, lands on one of these and would otherwise get silently CORS-blocked.
+# This regex trusts the whole project's subdomain space, not just the one
+# alias we happen to test against. Configurable so this isn't hardcoded to
+# one person's Vercel team slug.
+allowed_origin_regex = os.getenv("ALLOWED_ORIGIN_REGEX", r"https://.*-airasalishs-projects\.vercel\.app")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=allowed_origin_regex,
     allow_methods=["*"],
     allow_headers=["*"],
 )
