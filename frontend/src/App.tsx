@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api } from "./api";
 import { formatPct, formatPrice, formatRelative } from "./format";
 import { Sparkline } from "./Sparkline";
@@ -17,11 +17,13 @@ function App() {
   const [adding, setAdding] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
+  const itemsRef = useRef<WatchlistItem[]>([]);
 
   async function refresh() {
     try {
       const data = await api.list();
       setItems(data);
+      itemsRef.current = data;
       setError(null);
       setDigest(null); // the old digest may no longer match a changed attention set
     } catch (e) {
@@ -47,6 +49,25 @@ function App() {
     refresh();
     const id = setInterval(refresh, REFRESH_MS);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    // Closes the loop PROJECT_BRIEF.md already promised: "seen" resets on
+    // an explicit action, and leaving the page counts as one -- not just
+    // the manual button. Fires on tab-hide/close (visibilitychange), which
+    // works reliably on mobile too, unlike beforeunload. Only items that
+    // were actually still unseen (not already anchored) get a beacon, so
+    // this doesn't churn the baseline for things the user already reviewed.
+    function handleVisibility() {
+      if (document.visibilityState !== "hidden") return;
+      for (const item of itemsRef.current) {
+        if (item.last_viewed_at == null || item.has_attention) {
+          api.markSeenBeacon(item.id);
+        }
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   async function handleAdd(e: FormEvent) {
