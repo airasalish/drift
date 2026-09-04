@@ -5,6 +5,7 @@ export interface FiredRule {
 }
 
 export interface Quote {
+  currency: string | null;
   price: number | null;
   prev_close: number | null;
   volume: number | null;

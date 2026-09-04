@@ -1,0 +1,81 @@
+import { useEffect, useRef, useState } from "react";
+import { api, type SymbolSearchResult } from "./api";
+
+const DEBOUNCE_MS = 300;
+
+export function SymbolInput({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [results, setResults] = useState<SymbolSearchResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const query = value.trim();
+    if (query.length < 1) {
+      setResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const { results } = await api.searchSymbols(query);
+        setResults(results);
+        setOpen(results.length > 0);
+      } catch {
+        setResults([]);
+      }
+    }, DEBOUNCE_MS);
+  }, [value]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function select(symbol: string) {
+    onChange(symbol);
+    setOpen(false);
+  }
+
+  return (
+    <div className="symbol-input-wrap" ref={wrapRef}>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder="Search company or ticker"
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && (
+        <div className="symbol-dropdown">
+          {results.map((r) => (
+            <button
+              key={r.symbol}
+              type="button"
+              className="symbol-option"
+              onClick={() => select(r.symbol)}
+            >
+              <span className="symbol-option-ticker">{r.symbol}</span>
+              <span className="symbol-option-name">{r.name}</span>
+              {r.exchange && <span className="symbol-option-exchange">{r.exchange}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

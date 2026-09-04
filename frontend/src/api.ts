@@ -32,4 +32,15 @@ export const api = {
 
   digest: () =>
     fetch(`${BASE}/watchlist/digest`).then((r) => handle<{ digest: string | null }>(r)),
+
+  searchSymbols: (q: string) =>
+    fetch(`${BASE}/symbols/search?q=${encodeURIComponent(q)}`).then((r) =>
+      handle<{ results: SymbolSearchResult[] }>(r)
+    ),
 };
+
+export interface SymbolSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string | null;
+}

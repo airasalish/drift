@@ -15,6 +15,7 @@ class FiredRule(BaseModel):
 
 
 class QuoteOut(BaseModel):
+    currency: str | None
     price: float | None
     prev_close: float | None
     volume: float | None
