@@ -205,6 +205,11 @@ function App() {
               )}
             </div>
             {digest && <p className="digest">{digest}</p>}
+            {!loading && rest.length > 0 && (
+              <p className="filtered-note">
+                {rest.length} other stock{rest.length !== 1 ? "s" : ""} checked — nothing unusual
+              </p>
+            )}
             {attention.length === 0 ? (
               <div className="empty-box">✓ All clear — nothing moved meaningfully since you last checked.</div>
             ) : (
@@ -237,8 +242,8 @@ function App() {
                       <th>Price</th>
                       <th>Trend (30d)</th>
                       <th>Signal</th>
+                      <th className="since-last-view-head">Since last view</th>
                       <th>Since added</th>
-                      <th>Since last view</th>
                       <th>Freshness</th>
                       <th>Note</th>
                       <th></th>
@@ -373,10 +378,10 @@ function Row({
           </>
         )}
       </td>
-      <td className={pctClass(item.change_since_added_pct)}>{formatPct(item.change_since_added_pct)}</td>
-      <td className={pctClass(item.change_since_last_view_pct)}>
+      <td className={`since-last-view-cell ${pctClass(item.change_since_last_view_pct)}`}>
         {formatPct(item.change_since_last_view_pct)}
       </td>
+      <td className={pctClass(item.change_since_added_pct)}>{formatPct(item.change_since_added_pct)}</td>
       <td className={stale ? "stale" : "fresh"}>
         {stale ? "stale · " : ""}
         {formatRelative(item.quote?.fetched_at ?? null)}
