@@ -51,6 +51,16 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Production broke on this exact currency-column change, and here's the real fix
+
+**What happened**: adding the `currency` column above broke production with a real 500 on `GET /api/watchlist`. Root cause: `Base.metadata.create_all()` only creates tables that don't exist yet — it does nothing for a column added to a model whose table is already there. Every local test always ran against a freshly-deleted SQLite file, so this exact failure mode never got exercised until it hit Postgres, which has been running continuously since before the column existed.
+
+**The honest-but-limited fix**: `database.py:ensure_schema()` now diffs each model's columns against the live database and issues `ALTER TABLE ... ADD COLUMN` for anything missing, on top of `create_all()`. This is deliberately *not* a real migration system — no down-migrations, no handling for a renamed or retyped column, nothing versioned. It only covers the one thing this project has actually ever done to its schema: add a new nullable column. That's the honest scope, not an oversight — a hackathon project doesn't need Alembic, but it does need to not silently 500 in production the next time a column gets added, which is exactly what happened once already.
+
+**Verified properly, not just patched and hoped**: reproduced the exact drift locally — created a fresh DB, manually dropped the `currency` column to simulate production's actual state, confirmed the endpoint 500s, ran the fix, confirmed the column gets added back and the endpoint returns 200. Didn't just push a plausible-looking fix at production a second time.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.
