@@ -18,8 +18,27 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
+    # nullable on purpose: the one seeded demo account has no password and
+    # is reached via a separate no-password "try the demo" login, not
+    # real credential auth -- see ENGINEERING_DECISIONS.md
+    password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
 
     watchlists: Mapped[list["Watchlist"]] = relationship(back_populates="user")
+
+
+class Session(Base):
+    """Opaque bearer token -> user. Deliberately not JWT: a random token in
+    a DB table is simpler here (no signing-key management, trivially
+    revocable by deleting the row) for the login-lifetime this project
+    actually needs, at the cost of a DB lookup per request -- a real
+    tradeoff, not a limitation we didn't notice.
+    """
+
+    __tablename__ = "sessions"
+
+    token: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(), default=utcnow)
 
 
 class Watchlist(Base):

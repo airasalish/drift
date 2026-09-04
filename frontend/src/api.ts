@@ -4,7 +4,33 @@ import type { WatchlistItem } from "./types";
 // falls back to local dev so `npm run dev` needs zero configuration.
 const BASE = `${import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000"}/api`;
 
+const TOKEN_KEY = "drift_token";
+const USERNAME_KEY = "drift_username";
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getUsername(): string | null {
+  return localStorage.getItem(USERNAME_KEY);
+}
+
+function setSession(token: string, username: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USERNAME_KEY, username);
+}
+
+export function logout() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USERNAME_KEY);
+}
+
 async function handle<T>(res: Response): Promise<T> {
+  if (res.status === 401) {
+    // token is gone/expired server-side -- clear it so the app falls back
+    // to the login screen instead of looping on 401s forever
+    logout();
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `request failed (${res.status})`);
@@ -12,39 +38,80 @@ async function handle<T>(res: Response): Promise<T> {
   return res.json();
 }
 
+function authHeaders(): HeadersInit {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export const api = {
-  list: () => fetch(`${BASE}/watchlist`).then((r) => handle<WatchlistItem[]>(r)),
+  list: () => fetch(`${BASE}/watchlist`, { headers: authHeaders() }).then((r) => handle<WatchlistItem[]>(r)),
 
   add: (symbol: string, note: string) =>
     fetch(`${BASE}/watchlist`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ symbol, note: note || null }),
     }).then((r) => handle<WatchlistItem>(r)),
 
   remove: (id: number) =>
-    fetch(`${BASE}/watchlist/${id}`, { method: "DELETE" }).then((r) => handle(r)),
+    fetch(`${BASE}/watchlist/${id}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
 
   markSeen: (id: number) =>
-    fetch(`${BASE}/watchlist/${id}/seen`, { method: "POST" }).then((r) =>
+    fetch(`${BASE}/watchlist/${id}/seen`, { method: "POST", headers: authHeaders() }).then((r) =>
       handle<WatchlistItem>(r)
     ),
 
   digest: () =>
-    fetch(`${BASE}/watchlist/digest`).then((r) => handle<{ digest: string | null }>(r)),
+    fetch(`${BASE}/watchlist/digest`, { headers: authHeaders() }).then((r) => handle<{ digest: string | null }>(r)),
+
+  benchmark: () =>
+    fetch(`${BASE}/watchlist/benchmark`, { headers: authHeaders() }).then((r) => handle<BenchmarkOut>(r)),
 
   searchSymbols: (q: string) =>
+    // no auth needed -- search isn't user-specific data
     fetch(`${BASE}/symbols/search?q=${encodeURIComponent(q)}`).then((r) =>
       handle<{ results: SymbolSearchResult[] }>(r)
     ),
 
   // Fire-and-forget mark-seen for the "user is leaving" case (tab hidden /
   // closed). A normal fetch can get cancelled mid-flight when the page
-  // unloads; sendBeacon is specifically designed to survive that.
+  // unloads; sendBeacon is specifically designed to survive that -- but it
+  // can't attach custom headers, so the token rides in the URL instead
+  // (backend accepts either, see services/auth.py).
   markSeenBeacon: (id: number) => {
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(`${BASE}/watchlist/${id}/seen`);
+    const token = getToken();
+    if (navigator.sendBeacon && token) {
+      navigator.sendBeacon(`${BASE}/watchlist/${id}/seen?token=${encodeURIComponent(token)}`);
     }
+  },
+
+  signup: async (username: string, password: string) => {
+    const res = await fetch(`${BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await handle<{ token: string; username: string }>(res);
+    setSession(data.token, data.username);
+    return data;
+  },
+
+  login: async (username: string, password: string) => {
+    const res = await fetch(`${BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await handle<{ token: string; username: string }>(res);
+    setSession(data.token, data.username);
+    return data;
+  },
+
+  loginDemo: async () => {
+    const res = await fetch(`${BASE}/auth/demo`, { method: "POST" });
+    const data = await handle<{ token: string; username: string }>(res);
+    setSession(data.token, data.username);
+    return data;
   },
 };
 
@@ -52,4 +119,12 @@ export interface SymbolSearchResult {
   symbol: string;
   name: string;
   exchange: string | null;
+}
+
+export interface BenchmarkOut {
+  benchmark_symbol: string;
+  benchmark_label: string;
+  benchmark_pct: number | null;
+  watchlist_pct: number | null;
+  outperformance_pct: number | null;
 }
