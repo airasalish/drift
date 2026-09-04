@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
-from app.database import Base, engine
+from app.database import ensure_schema
 from app.routers.symbols import router as symbols_router
 from app.routers.watchlist import router as watchlist_router
 from app.services.poller import poll_forever
@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    ensure_schema()
     poll_task = asyncio.create_task(poll_forever())
     try:
         yield
