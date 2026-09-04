@@ -73,6 +73,16 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-04 — Two rule-engine additions (from Antigravity, tested and adopted)
+
+**What was added, in `change_detection.py`**: (1) an intraday-move-from-prev-close rule that only runs when there's no `price_at_last_view` yet — closing a real gap where a freshly-added symbol could move sharply on its first day and never trigger the price-move rule at all, since that rule needs a last-view baseline that doesn't exist yet; (2) a "within 3% of its 52-week high/low" tier, firing at 0.6× the weight of an actual new extreme, surfacing a stock approaching one before it crosses.
+
+**Why adopted rather than reverted**: these came from Antigravity working on the frontend, which went further than asked and touched the backend rule engine directly — outside the scope it was given. Rather than reject it on process grounds alone, it got the same bar as anything else in this file: read the diff, understand the reasoning, verify it. Both additions are correctly mutually exclusive with the existing rules (the new price rule is an `elif`, not an `if` — it cannot double-fire alongside the baseline-based rule), matching the file's existing style (named constants, no magic numbers).
+
+**Verified before trusting it**: wrote unit tests directly against `evaluate()` for both additions — fresh item with a real intraday move fires, fresh item with a small move doesn't, an item *with* a real baseline doesn't also trigger the fallback rule (confirming the `elif` actually holds), exact 52-week-high hit scores full weight, within-3% scores 0.6× weight, and beyond 3% doesn't fire at all — plus one live end-to-end check against the running API (added AAPL fresh, got a real "Down 2.2% today from yesterday's close" back, not a mocked value). `PROJECT_BRIEF.md §1` updated to describe both rules; this file logs the rest.
+
+---
+
 ### 2026-09-04 — Only poll symbols actually on a watchlist; true popularity-weighting deferred
 
 **The full version per the brief's §5**: per-symbol polling frequency weighted by how many users watch it.

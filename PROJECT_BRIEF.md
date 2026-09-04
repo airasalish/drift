@@ -19,9 +19,10 @@ A symbol is flagged into the "what changed" feed if **any** rule fires:
 
 | Rule | Threshold | Why this shape |
 |---|---|---|
-| Abnormal price move | `\|% change since last_viewed\|` ≥ `max(1%, 1.5 × that symbol's own trailing-20-day avg daily \|move\|)` | Volatility-adjusted on purpose — a 2% move is huge for a stable blue chip and noise for a stock that swings 5% daily. A flat threshold would either spam on volatile names or miss quiet ones. |
+| Abnormal price move (has a last-view baseline) | `\|% change since last_viewed\|` ≥ `max(1%, 1.5 × that symbol's own trailing-20-day avg daily \|move\|)` | Volatility-adjusted on purpose — a 2% move is huge for a stable blue chip and noise for a stock that swings 5% daily. A flat threshold would either spam on volatile names or miss quiet ones. |
+| Intraday move from prev close (no last-view baseline yet) | `\|% change vs prev close\|` ≥ `max(2%, 1.5 × avg daily move)`, at 0.8× the weight | A freshly-added symbol has no `price_at_last_view` yet, so the rule above can never fire for it even if it moved sharply today — this closes that gap without conflating "since you looked" with "since yesterday" (the two stay mutually exclusive: this only runs when the first doesn't apply). |
 | Unusual volume | current volume ≥ `2 × trailing-20-day avg volume` | Volume spikes precede/confirm price moves and catch stocks that haven't moved yet but are being accumulated. |
-| 52-week high/low crossed | boolean | Cheap, unambiguous, high signal-to-noise. |
+| 52-week high/low crossed, or within 3% of it | boolean, or reduced weight (0.6×) if within 3% without crossing | Cheap, unambiguous, high signal-to-noise. The "near" tier surfaces a stock approaching an extreme before it actually crosses, at a deliberately lower weight so it doesn't rank alongside an actual new high/low. |
 | Key moving-average cross (50/200-day) | boolean | Stretch goal, not MVP — only if time allows. |
 
 Each fired rule contributes to a per-symbol **attention score** (simple sum, each rule pre-weighted). Symbols are ranked by score in the "what changed" feed. This is deliberately rule-based and explainable, not ML — a system you can defend line-by-line beats a black box when the brief says "be ready to explain why."
