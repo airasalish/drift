@@ -836,3 +836,20 @@ section h2 {
   }
 }
 
+/* "Since last view" is the number the whole product is about -- give it
+   real visual weight instead of treating it as equal to "since added" */
+.since-last-view-head {
+  color: var(--accent);
+}
+
+.since-last-view-cell {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.filtered-note {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin: -6px 0 14px;
+}
+
