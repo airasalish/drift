@@ -49,6 +49,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     switchWatchlist,
   } = useWatchlist();
   const [adding, setAdding] = useState(false);
+  const [demoResetting, setDemoResetting] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<WatchlistItem | null>(null);
@@ -267,6 +268,19 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             <span>{workspaceNotice}</span>
             <button type="button" onClick={() => setWorkspaceNotice(null)} aria-label="Dismiss notice">×</button>
           </div>
+        )}
+
+        {username?.toLowerCase() === "demo" && view === "watchlist" && (
+          <section className="demo-start-card" data-tour="demo-reset">
+            <div>
+              <span className="demo-start-kicker">FIRST LOOK / SHARED DEMO</span>
+              <h3>Start with a clean signal</h3>
+              <p>The demo account is shared, so someone may have already marked symbols as seen. Reset once to load the curated sample and make Drift’s “things drifted” view meaningful for you.</p>
+            </div>
+            <button type="button" disabled={demoResetting} onClick={async () => { setDemoResetting(true); try { await resetToSample(); setTourOpen(true); } finally { setDemoResetting(false); } }}>
+              {demoResetting ? "Preparing…" : "Reset & start tour →"}
+            </button>
+          </section>
         )}
 
         {error && (

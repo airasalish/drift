@@ -2,6 +2,11 @@ import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 const STEPS: { selector: string; title: string; body: string }[] = [
   {
+    selector: "[data-tour='demo-reset']",
+    title: "Start with a clean signal",
+    body: "The demo is shared. Resetting loads the curated sample and clears someone else’s old baseline, so your first Drift session actually has context.",
+  },
+  {
     selector: "[data-tour='hero']",
     title: "Since you checked",
     body: "This is what changed while you were away, not just your stock prices.",
@@ -157,7 +162,7 @@ export function FirstLookTour({
               else setStepIndex((i) => i + 1);
             }}
           >
-            {last ? "Try Drift →" : "Next"}
+            {last ? "Start tracking →" : "Next signal →"}
           </button>
         </div>
       </div>
