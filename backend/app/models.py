@@ -70,6 +70,11 @@ class WatchlistItem(Base):
     watchlist_id: Mapped[int] = mapped_column(ForeignKey("watchlists.id"))
     symbol: Mapped[str] = mapped_column(String, index=True)
     note: Mapped[str | None] = mapped_column(String, nullable=True)  # user's "why I added this"
+    # captured once at add time from the symbol-search result the user
+    # actually picked -- best-effort display only (ticker+company, not a
+    # second source of truth), so a stale/missing value here never breaks
+    # anything, it just falls back to showing the ticker alone
+    company_name: Mapped[str | None] = mapped_column(String, nullable=True)
     added_at: Mapped[datetime.datetime] = mapped_column(DateTime(), default=utcnow)
     added_price: Mapped[float | None] = mapped_column(Float, nullable=True)
 

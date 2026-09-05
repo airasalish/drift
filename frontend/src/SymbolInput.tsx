@@ -6,10 +6,15 @@ const DEBOUNCE_MS = 300;
 export function SymbolInput({
   value,
   onChange,
+  onSelect,
   disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
+  // fires with the full search result (symbol + company name) when the
+  // user picks a dropdown option, not just its ticker -- lets the caller
+  // capture the company name at add time without a second lookup
+  onSelect?: (result: SymbolSearchResult) => void;
   disabled?: boolean;
 }) {
   const [results, setResults] = useState<SymbolSearchResult[]>([]);
@@ -48,8 +53,9 @@ export function SymbolInput({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  function select(symbol: string) {
-    onChange(symbol);
+  function select(result: SymbolSearchResult) {
+    onChange(result.symbol);
+    onSelect?.(result);
     setOpen(false);
   }
 
@@ -70,7 +76,7 @@ export function SymbolInput({
               key={r.symbol}
               type="button"
               className="symbol-option"
-              onClick={() => select(r.symbol)}
+              onClick={() => select(r)}
             >
               <span className="symbol-option-ticker">{r.symbol}</span>
               <span className="symbol-option-name">{r.name}</span>
