@@ -2104,3 +2104,24 @@ button:disabled { cursor: not-allowed; }
 .workspace-shortcut b { color: #74dcb0; font-size: 21px; font-weight: 300; transition: transform .16s ease; }
 .workspace-shortcut:hover b { transform: translateX(3px); }
 @media (max-width: 760px) { .workspace-shortcuts { grid-template-columns: 1fr; } .workspace-shortcut { min-height: 62px; } }
+
+
+/* Authenticated workspace polish: navigational clarity and calm motion. */
+html { scroll-behavior: smooth; }
+.rail-nav-item { gap: 9px; }
+.rail-nav-icon { display: inline-grid; place-items: center; width: 16px; color: #6e7b78; font-size: 15px; line-height: 1; }
+.rail-nav-item.selected .rail-nav-icon { color: var(--green); }
+.rail-brand { margin-bottom: 5px; }
+.page { animation: workspace-in .42s var(--ease-snappy) both; }
+@keyframes workspace-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.header-right .account { align-items: center; }
+.workspace-shortcuts { animation: workspace-in .5s .08s var(--ease-snappy) both; }
+.dashboard-cover { animation: workspace-in .38s var(--ease-snappy) both; }
+.dashboard-cover:hover .dashboard-cover-art { transform: scale(1.025); filter: saturate(1.12); }
+.dashboard-cover-art { transition: transform .5s var(--ease-snappy), filter .5s ease; }
+.dashboard-cover-signal i { animation: cover-pulse 2.2s ease-in-out infinite; }
+@keyframes cover-pulse { 50% { box-shadow: 0 0 0 7px rgba(91,255,195,0); } }
+.rail-item { transition: background .16s ease, color .16s ease, padding-left .16s var(--ease-snappy); }
+.rail-item:hover { padding-left: 13px; }
+.rail-item.selected { box-shadow: inset 2px 0 var(--green); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .page, .workspace-shortcuts, .dashboard-cover { animation: none; } .dashboard-cover-signal i { animation: none; } }
