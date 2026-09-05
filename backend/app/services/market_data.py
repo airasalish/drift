@@ -169,24 +169,26 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
 
     closes = hist["Close"]
 
-    # Convert to list of (date, close) pairs
-    chart_data = []
+    # Drop NaN/unparseable points entirely rather than pass a null through --
+    # same rule `spark_closes` above already follows: a gap in the chart is
+    # honest, a null reaching the frontend (or failing response validation,
+    # since ChartRangeOut's dates/closes aren't optional) is not.
+    dates: list[str] = []
+    chart_closes: list[float] = []
     for idx, close in enumerate(closes):
+        if math.isnan(close):
+            continue
+        date = hist.index[idx]
         try:
-            date = hist.index[idx]
-            if hasattr(date, 'strftime'):
-                date_str = date.strftime('%Y-%m-%d')
-            else:
-                date_str = str(date)
-            chart_data.append({
-                "date": date_str,
-                "close": float(close) if not math.isnan(close) else None
-            })
+            date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+            close_val = float(close)
         except (ValueError, TypeError):
             continue
+        dates.append(date_str)
+        chart_closes.append(close_val)
 
     return {
-        "dates": [d["date"] for d in chart_data],
-        "closes": [d["close"] for d in chart_data],
+        "dates": dates,
+        "closes": chart_closes,
         "currency": currency,
     }
