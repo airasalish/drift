@@ -34,8 +34,8 @@ export function QuickAccessRail({
   onShowHistory: () => void;
   watchlists: Watchlist[];
   activeWatchlistId: number | null;
-  onCreateWatchlist: (name: string) => Promise<void>;
-  onRenameWatchlist: (id: number, name: string) => Promise<void>;
+  onCreateWatchlist: (name: string) => Promise<Watchlist>;
+  onRenameWatchlist: (id: number, name: string) => Promise<Watchlist>;
   onDeleteWatchlist: (id: number) => Promise<void>;
   onSwitchWatchlist: (id: number) => void;
 }) {
