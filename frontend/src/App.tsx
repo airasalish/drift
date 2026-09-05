@@ -56,6 +56,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [watchlistQuery, setWatchlistQuery] = useState("");
+  const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
   // per-viewer display preference only -- never a source of truth, the
   // rule engine's output is identical either way, this just rewords it
   const [beginnerMode, setBeginnerMode] = useState(() => {
@@ -103,6 +104,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   }, [refresh]);
 
   const marketOpen = isMarketOpen();
+  const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
 
   const attentionItems = items.filter((i) => i.has_attention).sort((a, b) => b.attention_score - a.attention_score);
   const quietItems = items.filter((i) => attentionTier(i) === "quiet");
@@ -218,6 +220,20 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           onRefresh={refresh}
         />
 
+        <section className="command-center-head">
+          <div>
+            <span className="command-kicker">DRIFT / COMMAND CENTER</span>
+            <h2>{greeting}{username ? `, ${username}` : ""}.</h2>
+            <p>Here is what changed while you were away.</p>
+          </div>
+          <div className="command-nav" aria-label="Workspace sections">
+            <button type="button" className="active" onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
+            <button type="button" onClick={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Insights</button>
+            <button type="button" onClick={() => setWorkspaceNotice("News is a planned extension. Drift currently stays focused on price, volume, and range signals.")}>News <span>preview</span></button>
+            <button type="button" onClick={() => setWorkspaceNotice("Alerts will build on Drift's existing explainable rules. The current attention feed is the live version.")}>Alerts <span>preview</span></button>
+          </div>
+        </section>
+
         <nav className="mobile-workspace-nav" aria-label="Workspace navigation">
           <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Home <span>{items.length}</span></button>
           <button type="button" className={view === "history" ? "active" : ""} onClick={handleShowHistory}>History</button>
@@ -243,6 +259,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             <span className="shortcut-icon">▥</span><span><strong>Make better decisions</strong><small>See what changed after you looked.</small></span><b>›</b>
           </button>
         </div>
+
+        {workspaceNotice && (
+          <div className="workspace-notice" role="status">
+            <span>{workspaceNotice}</span>
+            <button type="button" onClick={() => setWorkspaceNotice(null)} aria-label="Dismiss notice">×</button>
+          </div>
+        )}
 
         {error && (
           <div className="error-row">
