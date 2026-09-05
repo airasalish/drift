@@ -16,6 +16,10 @@ MOVE_SENSITIVITY = 1.5  # multiplier on the symbol's own trailing average move
 VOLUME_SPIKE_MULTIPLE = 2.0
 NEAR_52W_PCT = 0.03  # within 3% counts as "near" the extreme
 
+# Portfolio-level rule thresholds
+PORTFOLIO_MOVE_THRESHOLD = 0.02  # 2% move required to count as "moved"
+PORTFOLIO_MIN_SYMBOLS = 3  # minimum number of symbols moving together
+
 
 def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fired: frozenset[str] | None = None) -> dict:
     """Returns fired rules (each with a human-readable message and the raw
@@ -88,7 +92,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
                 fired.append(
                     {
                         "rule": "unusual_volume",
-                        "message": f"Volume is {volume_ratio:.1f}× its 20-day average",
+                        "message": f"Volume is {volume_ratio:.1f}× its 20-day average ({quote.volume:,.0f} vs {quote.avg_volume_20d:,.0f})",
                         "value": volume_ratio,
                     }
                 )
@@ -101,7 +105,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
             if "week52_high_exact" not in previously_fired:
                 fired.append({
                     "rule": "week52_high",
-                    "message": "At a new 52-week high",
+                    "message": f"At a new 52-week high ({quote.price:.2f}, was {quote.week52_high:.2f})",
                     "value": quote.price,
                 })
                 score += WEEK52_WEIGHT
@@ -122,7 +126,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
             if "week52_low_exact" not in previously_fired:
                 fired.append({
                     "rule": "week52_low",
-                    "message": "At a new 52-week low",
+                    "message": f"At a new 52-week low ({quote.price:.2f}, was {quote.week52_low:.2f})",
                     "value": quote.price,
                 })
                 score += WEEK52_WEIGHT
@@ -138,3 +142,62 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
                 score += WEEK52_WEIGHT * 0.6
 
     return {"fired": fired, "score": score, "attention": len(fired) > 0, "keys": keys}
+
+
+def evaluate_portfolio(quotes: list[SymbolQuote]) -> dict:
+    """Portfolio-level rule: checks if 3+ symbols moved in the same direction
+    by more than 2% today (from prev_close).
+
+    Returns a fired rule with the count, direction, and symbols if the threshold
+    is met, otherwise returns empty.
+    """
+    if not quotes:
+        return {"fired": [], "score": 0.0, "attention": False, "keys": []}
+
+    # Track up and down movements
+    up_symbols = []
+    down_symbols = []
+
+    for quote in quotes:
+        if quote.price is None or quote.prev_close is None or quote.prev_close <= 0:
+            continue
+
+        day_pct = (quote.price - quote.prev_close) / quote.prev_close
+
+        if abs(day_pct) >= PORTFOLIO_MOVE_THRESHOLD:
+            if day_pct > 0:
+                up_symbols.append((quote.symbol, day_pct))
+            else:
+                down_symbols.append((quote.symbol, day_pct))
+
+    # Check if we have enough symbols moving in the same direction
+    fired: list[dict] = []
+    score = 0.0
+
+    if len(up_symbols) >= PORTFOLIO_MIN_SYMBOLS:
+        direction = "up"
+        symbols_str = ", ".join([s[0] for s in up_symbols])
+        avg_move = sum(s[1] for s in up_symbols) / len(up_symbols)
+        fired.append({
+            "rule": "portfolio_move",
+            "message": (
+                f"{len(up_symbols)} symbols moved {direction} today (avg {avg_move * 100:.1f}%): {symbols_str}"
+            ),
+            "value": avg_move,
+        })
+        score += VOLUME_WEIGHT  # Use same weight as volume for portfolio events
+
+    elif len(down_symbols) >= PORTFOLIO_MIN_SYMBOLS:
+        direction = "down"
+        symbols_str = ", ".join([s[0] for s in down_symbols])
+        avg_move = sum(s[1] for s in down_symbols) / len(down_symbols)
+        fired.append({
+            "rule": "portfolio_move",
+            "message": (
+                f"{len(down_symbols)} symbols moved {direction} today (avg {abs(avg_move) * 100:.1f}%): {symbols_str}"
+            ),
+            "value": avg_move,
+        })
+        score += VOLUME_WEIGHT  # Use same weight as volume for portfolio events
+
+    return {"fired": fired, "score": score, "attention": len(fired) > 0, "keys": []}
