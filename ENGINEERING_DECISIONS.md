@@ -121,6 +121,29 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
+### 2026-09-05 — Multiple watchlists per user, additive API design
+
+**The easy/obvious path**: replace the existing `/api/watchlist/*` routes with `/api/watchlists/{id}/*` — one canonical watchlist-scoped surface, delete the old single-watchlist endpoints. This is what a clean-slate design would do, and it's what most projects would ship.
+
+**What we did instead**: kept the existing `/api/watchlist/*` routes exactly as they are (they resolve to the user's default watchlist, the first one ever created), and added new `/api/watchlists` (CRUD) and `/api/watchlists/{id}/*` (watchlist-scoped items/digest/benchmark/history/reset) endpoints alongside them. The frontend uses the new multi-watchlist-aware endpoints when an active watchlist is set, and falls back to the single-watchlist endpoints for single-watchlist users (including brand-new users who still see exactly one watchlist with zero extra UI).
+
+**Why**: this touches nearly every route in the file. A breaking change would mean any incomplete frontend migration — a missing watchlist_id parameter, a forgotten update to a digest call — fully breaks the app. An additive approach means if anything in the frontend migration is incomplete or buggy, the app doesn't fully break — it just doesn't show multiple watchlists yet. The old routes still work, the single-watchlist experience still works, and the only observable gap is "the new feature isn't visible yet," not "the app is 500ing." Given the scope of this change (every watchlist-scoped route), that safety margin is worth the small API surface cost.
+
+**Additional invariant enforcement**: the deletion endpoint explicitly blocks deleting a user's last remaining watchlist — there must always be at least one. This matches the invariant `get_or_create_watchlist_for_user` previously guaranteed implicitly (it always resolved to exactly one watchlist), and the new guard makes that invariant explicit and enforced at the API level.
+
+**Ownership validation**: watchlist ownership is enforced via 404, not 403 — if a watchlist exists but belongs to another user, accessing it returns "not found." This matches the existing pattern used elsewhere in this router (missing items also 404), keeping the error surface consistent.
+
+**Frontend placement decision**: the watchlist switcher lives in the QuickAccessRail (the left-side context navigation), not the Header. The rail is already the "context navigation" surface (Watching/History live there), while the Header is account chrome. This keeps watchlist switching with the other context choices, not with logout/settings.
+
+**Verified thoroughly**: 
+- Backend: 53 tests pass (47 existing + 6 new). The new tests cover watchlist CRUD operations, ownership validation (404 for cross-user access), and the delete guard (can't delete last watchlist).
+- Frontend: 20 tests pass (all existing). No new frontend tests were added — the existing attention/format/beginner tests still pass, confirming the multi-watchlist changes didn't break the core display logic.
+- Manual browser test: created a second watchlist, added different symbols to each, switched between them, deleted one (with the confirm-remove dialog pattern matching the existing codebase convention), and verified the single-watchlist experience is unchanged for users with only one watchlist.
+
+**Zero-friction default preserved**: a brand-new or demo user still sees exactly one watchlist with no extra UI to understand first. The watchlist switcher only appears when a user has >1 watchlist — multiple watchlists is an opt-in power feature, not a forced upgrade to the onboarding flow.
+
+---
+
 ### 2026-09-04 — Watchlist-vs-Nifty benchmark: a second, independent "meaningful"
 
 **What it is**: `GET /api/watchlist/benchmark` compares the watchlist's average today's-move against Nifty 50's, alongside (not instead of) the per-symbol rule engine.
