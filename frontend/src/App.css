@@ -2374,3 +2374,34 @@ body::after { z-index: 0; }
 .tour-next { background: #5bffc3; color: #032219; border-color: #5bffc3; }
 .tour-next:hover { background: #9bffda; }
 .tour-spot { box-shadow: 0 0 0 2px #5bffc3, 0 0 32px rgba(91,255,195,.2); }
+
+
+/* Explainable company suggestions: useful starter paths, never disguised advice. */
+.suggested-companies { margin: 0 0 20px; padding: 16px; border: 1px solid rgba(89,190,153,.18); border-radius: 5px; background: rgba(3,18,13,.82); }
+.suggested-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 13px; }
+.suggested-kicker { color: #62eab4; font-size: 8px; font-weight: 800; letter-spacing: .18em; }
+.suggested-head h2 { margin: 6px 0 4px; color: #e8f8f0; font-size: 18px; letter-spacing: -.035em; }
+.suggested-head p { max-width: 650px; margin: 0; color: #789a8c; font-size: 10px; line-height: 1.45; }
+.suggested-count { flex: 0 0 auto; color: #618477; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+.suggested-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.suggested-card { min-width: 0; padding: 11px; border: 1px solid #263932; border-radius: 4px; background: linear-gradient(135deg, rgba(8,39,28,.78), rgba(3,15,11,.78)); }
+.suggested-card:hover { border-color: rgba(99,234,180,.48); }
+.suggested-card-top { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+.suggested-card-top strong { color: #effcf5; font-size: 12px; }
+.suggested-card-top button { border: 1px solid rgba(96,227,177,.45); border-radius: 3px; padding: 4px 6px; background: transparent; color: #6be9b3; font-size: 9px; font-weight: 700; cursor: pointer; }
+.suggested-card-top button:hover:not(:disabled) { background: rgba(91,255,195,.12); }
+.suggested-card-top button:disabled { opacity: .55; cursor: wait; }
+.suggested-name { display: block; overflow: hidden; margin-top: 4px; color: #7f9e92; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.suggested-card p { min-height: 41px; margin: 9px 0 0; color: #8eafa0; font-size: 9px; line-height: 1.45; }
+.suggested-card p b { color: #b5d8c9; }
+@media (min-width: 981px) { .suggested-companies { grid-column: 1 / -1; grid-row: 6; } .add-form { grid-row: 7; } .workspace-shortcuts { grid-row: 8; } .demo-start-card { grid-row: 9; } .workspace-notice, .error-row { grid-row: 10; } .watchlist-panel { grid-row: 11; } .ignored-disclosure { grid-row: 12; } }
+@media (max-width: 900px) { .suggested-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 500px) { .suggested-head { display: block; } .suggested-count { display: block; margin-top: 7px; } .suggested-grid { grid-template-columns: 1fr; } .suggested-card p { min-height: 0; } }
+
+/* Quiet scrollbars: the browser default white thumb was overpowering the dark workspace. */
+html { scrollbar-color: #29483e #07100d; scrollbar-width: thin; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: #07100d; }
+*::-webkit-scrollbar-thumb { border: 2px solid #07100d; border-radius: 999px; background: #29483e; }
+*::-webkit-scrollbar-thumb:hover { background: #4f806d; }
+*::-webkit-scrollbar-corner { background: #07100d; }
