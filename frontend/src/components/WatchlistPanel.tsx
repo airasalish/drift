@@ -87,7 +87,9 @@ export function WatchlistPanel({
       ) : grouped.length === 0 ? (
         <div className="empty-box filter-empty">No tracked symbols match “{query}”. <button type="button" onClick={() => onQueryChange("")}>Clear filter</button></div>
       ) : (
-        grouped.map((g) => (
+        <>
+          <div className="watchlist-columns" aria-hidden="true"><span>SYMBOL / COMPANY</span><span>MOVE</span><span>SINCE LAST VIEW</span><span>SINCE ADDED</span><span>PRICE</span></div>
+          {grouped.map((g) => (
           <div key={g.tier} className={`tier-group tier-${g.tier}`}>
             <div className="tier-label">
               <span className={`tier-dot tier-${g.tier}`} />
@@ -106,7 +108,8 @@ export function WatchlistPanel({
               ))}
             </div>
           </div>
-        ))
+          ))}
+        </>
       )}
     </section>
   );
