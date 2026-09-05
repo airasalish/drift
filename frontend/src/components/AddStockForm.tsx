@@ -45,6 +45,10 @@ export function AddStockForm({
 
   return (
     <form className="add-form" onSubmit={handleSubmit}>
+      <div className="add-form-heading">
+        <div><strong>Add a company</strong><span>Track it to see what changes next.</span></div>
+        <kbd>/</kbd>
+      </div>
       <div className="add-form-row">
         {picked && picked.symbol.toUpperCase() === symbol.trim().toUpperCase() ? (
           <div className="symbol-selected-chip">
