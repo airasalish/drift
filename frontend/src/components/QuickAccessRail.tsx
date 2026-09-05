@@ -20,7 +20,7 @@ export function QuickAccessRail({
   onShowHome,
   onShowHistory,
   onShowInsights,
-  onShowPreview,
+  onShowPro,
   watchlists,
   activeWatchlistId,
   onCreateWatchlist,
@@ -35,7 +35,7 @@ export function QuickAccessRail({
   onShowHome: () => void;
   onShowHistory: () => void;
   onShowInsights: () => void;
-  onShowPreview: (label: string) => void;
+  onShowPro: () => void;
   watchlists: Watchlist[];
   activeWatchlistId: number | null;
   onCreateWatchlist: (name: string) => Promise<Watchlist>;
@@ -199,15 +199,6 @@ export function QuickAccessRail({
         <span className="rail-nav-icon" aria-hidden="true">⌁</span>
         Insights
       </button>
-      <button type="button" className="rail-nav-item" onClick={() => onShowPreview("News")}>
-        <span className="rail-nav-icon" aria-hidden="true">▤</span>
-        News <span className="rail-preview-label">preview</span>
-      </button>
-      <button type="button" className="rail-nav-item" onClick={() => onShowPreview("Alerts")}>
-        <span className="rail-nav-icon" aria-hidden="true">♧</span>
-        Alerts <span className="rail-preview-label">preview</span>
-      </button>
-
       {sorted.length > 0 && (
         <div className="rail-list">
           <span className="rail-label">Watching</span>
@@ -228,7 +219,7 @@ export function QuickAccessRail({
         </div>
       )}
 
-      <button type="button" className="rail-upgrade" onClick={() => onShowPreview("Pro") }>
+      <button type="button" className="rail-upgrade" onClick={onShowPro}>
         <span className="rail-upgrade-title">Upgrade to Pro <b>→</b></span>
         <span className="rail-upgrade-copy">Get real-time alerts, advanced insights and more.</span>
         <span className="rail-upgrade-glow" aria-hidden="true" />

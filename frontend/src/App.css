@@ -2410,3 +2410,12 @@ html { scrollbar-color: #29483e #07100d; scrollbar-width: thin; }
 .hero-summary { margin: 15px 0 0; max-width: 760px; color: #c3ded2; font-size: 14px; line-height: 1.55; letter-spacing: -.01em; }
 .hero-summary strong { color: #f2fff8; font-weight: 800; }
 .hero-summary span { color: #82aa9a; }
+
+
+.add-form { padding: 14px 16px 12px; border: 1px solid rgba(89,190,153,.16); border-radius: 5px; background: rgba(3,18,13,.72); }
+.add-form-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.add-form-heading > div { display: flex; align-items: baseline; gap: 9px; }
+.add-form-heading strong { color: #e7f8ef; font-size: 12px; }
+.add-form-heading span { color: #739488; font-size: 10px; }
+.add-form-heading kbd { border: 1px solid #345247; border-bottom-color: #527b6b; border-radius: 3px; padding: 2px 5px; color: #789d8d; font-size: 9px; font-family: inherit; }
+@media (max-width: 520px) { .add-form-heading > div { display: block; } .add-form-heading span { display: block; margin-top: 3px; } }

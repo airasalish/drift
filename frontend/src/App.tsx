@@ -179,7 +179,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         }}
         onShowHistory={handleShowHistory}
         onShowInsights={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        onShowPreview={(label) => setWorkspaceNotice(`${label} is a planned extension. Drift currently stays focused on explainable price, volume, and range signals.`)}
+        onShowPro={() => setWorkspaceNotice("Pro is planned for a future release. The current Drift workspace is free to use with live watchlist signals.")}
         watchlists={watchlists}
         activeWatchlistId={activeWatchlistId}
         onCreateWatchlist={createWatchlist}
@@ -219,8 +219,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <div className="command-nav" aria-label="Workspace sections">
             <button type="button" className="active" onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
             <button type="button" onClick={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Insights</button>
-            <button type="button" onClick={() => setWorkspaceNotice("News is a planned extension. Drift currently stays focused on price, volume, and range signals.")}>News <span>preview</span></button>
-            <button type="button" onClick={() => setWorkspaceNotice("Alerts will build on Drift's existing explainable rules. The current attention feed is the live version.")}>Alerts <span>preview</span></button>
           </div>
         </section>
 
