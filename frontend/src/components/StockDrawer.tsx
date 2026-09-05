@@ -81,9 +81,12 @@ export function StockDrawer({
   const secondary = stats.filter((_, i) => i !== primaryIdx);
 
   return (
-    <>
-      <div className="drawer-scrim" onClick={onClose} />
-      <aside className="drawer" role="dialog" aria-label={`${item.symbol} detail`}>
+    // Non-modal by design: no dimming scrim over the rest of the page.
+    // The watchlist (and the quick-jump rail) stay fully interactive while
+    // the drawer is open, so switching between stocks is a single click
+    // instead of close-then-reopen -- Koyfin's "persistent context"
+    // principle, not a dialog. Closed via the ✕ button or Escape.
+    <aside className="drawer" role="dialog" aria-label={`${item.symbol} detail`}>
         <div className="drawer-head">
           <div className="drawer-head-main">
             <span className="drawer-symbol">
@@ -199,6 +202,5 @@ export function StockDrawer({
           )}
         </div>
       </aside>
-    </>
   );
 }

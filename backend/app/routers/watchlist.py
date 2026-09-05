@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.demo_user import get_or_create_watchlist_for_user
+from app.demo_user import get_or_create_watchlist_for_user, seed_default_watchlist
 from app.models import SymbolQuote, User, WatchlistItem
 from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemNoteUpdate, WatchlistItemOut
 from app.services import change_detection
@@ -215,6 +215,34 @@ def get_benchmark(db: Session = Depends(get_db), user: User = Depends(get_curren
         "watchlist_pct": watchlist_pct,
         "outperformance_pct": outperformance_pct,
     }
+
+
+@router.post("/reset", response_model=list[WatchlistItemOut])
+def reset_to_sample(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Clears the caller's current watchlist and repopulates it with the
+    curated sample set -- lets a demo/exploration session always get back
+    to a clean, populated starting point rather than staying empty or
+    cluttered after experimenting. Available to any account, not demo-only.
+    """
+    watchlist = get_or_create_watchlist_for_user(db, user)
+    for item in list(watchlist.items):
+        db.delete(item)
+    db.flush()
+    # deleting children directly (rather than via watchlist.items.remove())
+    # doesn't refresh the parent's in-memory `items` collection -- without
+    # this, seed_default_watchlist's "already on the list?" check would see
+    # the just-deleted objects still sitting in that stale collection and
+    # skip re-adding them, silently dropping symbols from the reset result.
+    db.expire(watchlist, ["items"])
+    seed_default_watchlist(db, watchlist)
+    db.commit()
+
+    out = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        out.append(_serialize(item, quote))
+    out.sort(key=lambda w: w.attention_score, reverse=True)
+    return out
 
 
 @router.post("", response_model=WatchlistItemOut)

@@ -45,6 +45,10 @@ export function WatchlistRow({
         {formatPrice(item.quote?.price ?? null, item.quote?.currency)}
         {stale && <span className="wr-stale-dot" title="Price may be stale" />}
       </div>
+
+      <span className="wr-chevron" aria-hidden>
+        ›
+      </span>
     </button>
   );
 }

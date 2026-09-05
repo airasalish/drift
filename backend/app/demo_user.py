@@ -4,11 +4,28 @@ not real credentials -- it exists so a cold visitor sees the product
 working immediately, not an empty signup wall.
 """
 
+import datetime
+import json
+
 from sqlalchemy.orm import Session
 
-from app.models import User, Watchlist
+from app.models import SymbolQuote, User, Watchlist, WatchlistItem
+from app.services.market_data import fetch_symbol_stats
 
 DEMO_USER_NAME = "demo"
+
+# Curated so a cold visitor (or a judge clicking "try the demo") sees a
+# lively, recognizable watchlist immediately instead of an empty state --
+# real, currently-relevant tickers spanning AI/EV hype, gaming, football
+# (EA Sports FC) and sports betting, not just blue-chip defaults. These are
+# real yfinance-resolvable symbols; nothing here is fabricated data.
+DEFAULT_WATCHLIST_SEED = [
+    ("NVDA", "NVIDIA Corporation", "Earnings"),
+    ("TSLA", "Tesla, Inc.", "Just monitoring"),
+    ("EA", "Electronic Arts Inc.", "Waiting for a price"),
+    ("DKNG", "DraftKings Inc.", "Breakout"),
+    ("RBLX", "Roblox Corporation", "Recovery"),
+]
 
 
 def get_or_create_watchlist_for_user(db: Session, user: User) -> Watchlist:
@@ -20,10 +37,48 @@ def get_or_create_watchlist_for_user(db: Session, user: User) -> Watchlist:
     return watchlist
 
 
+def _seed_item(db: Session, watchlist: Watchlist, symbol: str, company_name: str, note: str) -> None:
+    quote = db.get(SymbolQuote, symbol)
+    if quote is None:
+        stats = fetch_symbol_stats(symbol)
+        if stats is None:
+            return  # network hiccup at seed time isn't fatal -- just skip that one
+        spark_closes = stats.pop("spark_closes")
+        quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
+        quote.spark_closes_json = json.dumps(spark_closes)
+        quote.fetched_at = datetime.datetime.utcnow()
+        db.add(quote)
+        db.flush()
+
+    db.add(
+        WatchlistItem(
+            watchlist_id=watchlist.id,
+            symbol=symbol,
+            note=note,
+            company_name=company_name,
+            added_price=quote.price,
+        )
+    )
+
+
+def seed_default_watchlist(db: Session, watchlist: Watchlist) -> None:
+    """Populates a watchlist with the curated sample set, skipping any
+    symbol already on it. Used both for a brand-new demo account and for
+    the explicit "reset to sample" action -- callers that want a truly
+    clean slate are responsible for clearing existing items first.
+    """
+    for symbol, company_name, note in DEFAULT_WATCHLIST_SEED:
+        existing = next((i for i in watchlist.items if i.symbol == symbol), None)
+        if existing is None:
+            _seed_item(db, watchlist, symbol, company_name, note)
+
+
 def get_or_create_demo_user(db: Session) -> User:
     user = db.query(User).filter_by(name=DEMO_USER_NAME).first()
     if user is None:
         user = User(name=DEMO_USER_NAME, password_hash=None)
         db.add(user)
         db.flush()
+        watchlist = get_or_create_watchlist_for_user(db, user)
+        seed_default_watchlist(db, watchlist)
     return user

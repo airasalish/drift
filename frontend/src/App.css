@@ -77,10 +77,98 @@ button {
 }
 
 /* ── Layout ── */
+.app-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
 .page {
+  flex: 1;
+  min-width: 0;
   max-width: 1040px;
   margin: 0 auto;
   padding: 36px 20px 100px;
+}
+
+/* ── Quick-access rail ── */
+.rail {
+  width: 176px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border-soft);
+  padding: var(--sp-5) var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.rail-brand {
+  display: flex;
+  padding: 0 var(--sp-2);
+}
+
+.rail-label {
+  display: block;
+  font-size: 10px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 var(--sp-2) var(--sp-2);
+}
+
+.rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 7px var(--sp-2);
+  cursor: pointer;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  letter-spacing: -0.01em;
+}
+
+.rail-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail-item.selected {
+  background: var(--accent-dim);
+  color: var(--text);
+}
+
+.rail-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rail-dot.tier-needs-attention { background: var(--accent); }
+.rail-dot.tier-worth-checking { background: var(--amber); }
+.rail-dot.tier-quiet { background: var(--faint); }
+
+@media (max-width: 980px) {
+  .rail {
+    display: none;
+  }
 }
 
 /* ── Header ── */
@@ -356,6 +444,55 @@ button {
   flex-shrink: 0;
 }
 
+.symbol-dropdown-status {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* the confirmed-selection chip that replaces the search input once a
+   result has been picked -- makes "what did I just select" unambiguous */
+.symbol-selected-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: 9px;
+  padding: 10px 14px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.ssc-ticker {
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.ssc-name {
+  color: var(--text-dim);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ssc-clear {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.ssc-clear:hover {
+  color: var(--red);
+}
+
 /* ── Error ── */
 .error {
   background: var(--red-dim);
@@ -415,6 +552,32 @@ section h2 {
   color: var(--muted);
   margin: 0 0 14px;
   font-weight: 700;
+}
+
+.wp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.wp-head h2 {
+  margin: 0;
+}
+
+.wp-reset-link {
+  background: transparent;
+  border: none;
+  color: var(--faint);
+  font-size: 11.5px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wp-reset-link:hover {
+  color: var(--text-dim);
+  text-decoration: underline;
 }
 
 .empty-box {
@@ -609,6 +772,23 @@ section h2 {
   letter-spacing: 0;
 }
 
+.dc-head-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dc-chevron {
+  color: var(--faint);
+  font-size: 16px;
+  transition: color 0.12s, transform 0.12s;
+}
+
+.drift-card:hover .dc-chevron {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
 /* the hero number: since-last-view (or since-added fallback) dominates --
    price is demoted to a small "now" line below it */
 .dc-primary {
@@ -728,7 +908,7 @@ section h2 {
 
 .watchlist-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) 60px minmax(84px, 0.9fr) minmax(76px, 0.8fr) 88px;
+  grid-template-columns: minmax(120px, 1.5fr) 60px minmax(84px, 0.9fr) minmax(76px, 0.8fr) 88px 14px;
   align-items: center;
   gap: var(--sp-3);
   width: 100%;
@@ -870,6 +1050,22 @@ section h2 {
   flex-shrink: 0;
 }
 
+/* a persistent, always-visible affordance that the row opens something --
+   not just a hover reveal, since the whole point is a first-time user
+   discovering this without having to hover-hunt for it */
+.wr-chevron {
+  color: var(--faint);
+  font-size: 15px;
+  text-align: center;
+  transition: color 0.12s, transform 0.12s;
+}
+
+.watchlist-row:hover .wr-chevron,
+.watchlist-row.selected .wr-chevron {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
 /* ── Ignored disclosure ── */
 .ignored-disclosure {
   margin-bottom: 34px;
@@ -978,19 +1174,6 @@ section h2 {
 }
 
 /* ── Drawer ── */
-.drawer-scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 6, 8, 0.55);
-  z-index: 200;
-  animation: scrim-in 0.18s ease;
-}
-
-@keyframes scrim-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 .drawer {
   position: fixed;
   top: 0;
@@ -999,6 +1182,7 @@ section h2 {
   width: min(400px, 100vw);
   background: var(--surface);
   border-left: 1px solid var(--border);
+  box-shadow: -24px 0 48px -16px rgba(0, 0, 0, 0.5);
   z-index: 201;
   padding: 22px 22px 24px;
   overflow-y: auto;
@@ -1275,7 +1459,7 @@ section h2 {
 /* ── Responsive ── */
 @media (max-width: 860px) {
   .watchlist-row {
-    grid-template-columns: minmax(90px, 1.2fr) 56px minmax(70px, 1fr) 80px;
+    grid-template-columns: minmax(90px, 1.2fr) 56px minmax(70px, 1fr) 80px 14px;
   }
 
   .wr-since-added {
@@ -1314,15 +1498,16 @@ section h2 {
   }
 
   .watchlist-row {
-    grid-template-columns: 1fr 52px auto;
+    grid-template-columns: 1fr 52px auto 14px;
     grid-template-areas:
-      "symbol spark price"
-      "since  since  since";
+      "symbol spark price  chevron"
+      "since  since since  since";
   }
 
   .wr-identity { grid-area: symbol; }
   .wr-spark { grid-area: spark; }
   .wr-price { grid-area: price; }
+  .wr-chevron { grid-area: chevron; }
   .wr-since {
     grid-area: since;
   }
