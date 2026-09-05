@@ -21,6 +21,7 @@ from app.schemas import (
     HistoryEventOut,
     QuoteOut,
     RelatedStockOut,
+    SimilarMoveOut,
     SimilarMovesOut,
     WatchlistCreate,
     WatchlistItemCreate,
@@ -606,19 +607,25 @@ def get_chart_range(
     if chart_data is None:
         raise HTTPException(422, f"couldn't fetch chart data for '{symbol}' with range '{range_name}'")
 
-    # Convert date strings to datetime objects
+    # Convert date strings to datetime objects, dropping any point whose date
+    # fails to parse -- paired with its close, not left as a null in a
+    # non-optional list (dates/closes must stay the same length or the chart
+    # misaligns its own x-axis from its y-values).
     dates = []
-    for date_str in chart_data["dates"]:
+    closes = []
+    for date_str, close in zip(chart_data["dates"], chart_data["closes"]):
         try:
-            dates.append(datetime.datetime.strptime(date_str, "%Y-%m-%d"))
+            parsed = datetime.datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            dates.append(None)
+            continue
+        dates.append(parsed)
+        closes.append(close)
 
     return ChartRangeOut(
         symbol=symbol,
         range_name=range_name,
         dates=dates,
-        closes=chart_data["closes"],
+        closes=closes,
         currency=chart_data["currency"],
     )
 
