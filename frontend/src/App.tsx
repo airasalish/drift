@@ -277,6 +277,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               onQueryChange={setWatchlistQuery}
               onOpenDetail={setDetailItem}
               attentionCount={attentionItems.length}
+              lastRefreshedAt={lastRefreshedAt}
               onResetSample={async () => {
                 await resetToSample();
                 setTourOpen(true);
