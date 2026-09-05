@@ -13,6 +13,8 @@ Rule constants from change_detection (re-imported here for readability):
   MOVE_SENSITIVITY   = 1.5
   VOLUME_SPIKE_MULTIPLE = 2.0
   NEAR_52W_PCT       = 0.03
+  PORTFOLIO_MOVE_THRESHOLD = 0.02
+  PORTFOLIO_MIN_SYMBOLS = 3
 """
 
 import pytest
@@ -23,6 +25,8 @@ from app.services.change_detection import (
     MIN_MOVE_THRESHOLD,
     MOVE_SENSITIVITY,
     NEAR_52W_PCT,
+    PORTFOLIO_MIN_SYMBOLS,
+    PORTFOLIO_MOVE_THRESHOLD,
     PRICE_MOVE_WEIGHT,
     VOLUME_SPIKE_MULTIPLE,
     VOLUME_WEIGHT,
@@ -217,6 +221,8 @@ class TestUnusualVolume:
         result = change_detection.evaluate(None, quote)
         fired = next(r for r in result["fired"] if r["rule"] == "unusual_volume")
         assert "3.0×" in fired["message"]
+        assert "3,000,000" in fired["message"]
+        assert "1,000,000" in fired["message"]
 
     def test_no_fire_when_volume_is_none(self):
         quote = make_quote(volume=None, avg_volume_20d=1_000_000.0)
@@ -245,6 +251,7 @@ class TestWeek52High:
         fired = [r for r in result["fired"] if r["rule"] == "week52_high"]
         assert len(fired) == 1
         assert "new 52-week high" in fired[0]["message"]
+        assert "150.00" in fired[0]["message"]
         assert result["score"] == pytest.approx(WEEK52_WEIGHT)
 
     def test_above_high_fires_exact_message(self):
@@ -254,6 +261,7 @@ class TestWeek52High:
         fired = [r for r in result["fired"] if r["rule"] == "week52_high"]
         assert len(fired) == 1
         assert "new 52-week high" in fired[0]["message"]
+        assert "152.00" in fired[0]["message"]
 
     def test_near_high_within_3pct_fires_near_message(self):
         # Within 3% of 150 → 150 * 0.97 = 145.5; price=146 qualifies
@@ -293,6 +301,7 @@ class TestWeek52Low:
         fired = [r for r in result["fired"] if r["rule"] == "week52_low"]
         assert len(fired) == 1
         assert "new 52-week low" in fired[0]["message"]
+        assert "50.00" in fired[0]["message"]
         assert result["score"] == pytest.approx(WEEK52_WEIGHT)
 
     def test_below_low_fires_exact_message(self):
@@ -301,6 +310,7 @@ class TestWeek52Low:
         fired = [r for r in result["fired"] if r["rule"] == "week52_low"]
         assert len(fired) == 1
         assert "new 52-week low" in fired[0]["message"]
+        assert "48.00" in fired[0]["message"]
 
     def test_near_low_within_3pct_fires_near_message(self):
         # Within 3% of 50 → 50 * 1.03 = 51.5; price=51 qualifies
@@ -429,3 +439,112 @@ class TestPreviouslyFiredSuppression:
         result = change_detection.evaluate(100.0, quote, frozenset(["price_move"]))
         assert "price_move" in fired_rules(result)
         assert result["attention"] is True
+
+
+# ─── Portfolio-level rule tests ────────────────────────────────────────────────
+
+class TestPortfolioRule:
+    """Tests for the portfolio-level rule that checks if 3+ symbols
+    moved in the same direction by more than 2% today.
+    """
+
+    def test_empty_quotes_returns_empty(self):
+        result = change_detection.evaluate_portfolio([])
+        assert result == {"fired": [], "score": 0.0, "attention": False, "keys": []}
+
+    def test_three_symbols_up_fires(self):
+        # 3 symbols up by >2% should fire
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),  # +5%
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),  # +4%
+            make_quote(symbol="GOOGL", price=103.0, prev_close=100.0),  # +3%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        assert result["attention"] is True
+        assert len(result["fired"]) == 1
+        assert result["fired"][0]["rule"] == "portfolio_move"
+        assert "up" in result["fired"][0]["message"]
+        assert "3 symbols" in result["fired"][0]["message"]
+        assert result["score"] == pytest.approx(VOLUME_WEIGHT)
+
+    def test_three_symbols_down_fires(self):
+        # 3 symbols down by >2% should fire
+        quotes = [
+            make_quote(symbol="AAPL", price=95.0, prev_close=100.0),  # -5%
+            make_quote(symbol="MSFT", price=96.0, prev_close=100.0),  # -4%
+            make_quote(symbol="GOOGL", price=97.0, prev_close=100.0),  # -3%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        assert result["attention"] is True
+        assert len(result["fired"]) == 1
+        assert result["fired"][0]["rule"] == "portfolio_move"
+        assert "down" in result["fired"][0]["message"]
+        assert "3 symbols" in result["fired"][0]["message"]
+
+    def test_two_symbols_up_does_not_fire(self):
+        # Only 2 symbols up, below threshold of 3
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),  # +5%
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),  # +4%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        assert result["attention"] is False
+        assert len(result["fired"]) == 0
+
+    def test_symbols_below_threshold_does_not_fire(self):
+        # 3 symbols but only 1.5% moves, below 2% threshold
+        quotes = [
+            make_quote(symbol="AAPL", price=101.5, prev_close=100.0),  # +1.5%
+            make_quote(symbol="MSFT", price=101.5, prev_close=100.0),  # +1.5%
+            make_quote(symbol="GOOGL", price=101.5, prev_close=100.0),  # +1.5%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        assert result["attention"] is False
+        assert len(result["fired"]) == 0
+
+    def test_mixed_direction_up_takes_priority(self):
+        # If both up and down have 3+, up wins (or both could fire)
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),  # +5%
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),  # +4%
+            make_quote(symbol="GOOGL", price=103.0, prev_close=100.0),  # +3%
+            make_quote(symbol="AMZN", price=95.0, prev_close=100.0),  # -5%
+            make_quote(symbol="TSLA", price=96.0, prev_close=100.0),  # -4%
+            make_quote(symbol="META", price=97.0, prev_close=100.0),  # -3%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        # Since we check up first, up fires first and we return
+        assert result["attention"] is True
+        assert result["fired"][0]["rule"] == "portfolio_move"
+
+    def test_quotes_with_none_prev_close_ignored(self):
+        # Symbols without prev_close should be ignored
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),  # +5%
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),  # +4%
+            make_quote(symbol="GOOGL", price=103.0, prev_close=None),  # ignored
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        assert result["attention"] is False  # Only 2 valid symbols
+
+    def test_message_includes_symbol_names(self):
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),
+            make_quote(symbol="GOOGL", price=103.0, prev_close=100.0),
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        msg = result["fired"][0]["message"]
+        assert "AAPL" in msg
+        assert "MSFT" in msg
+        assert "GOOGL" in msg
+
+    def test_message_includes_average_move(self):
+        quotes = [
+            make_quote(symbol="AAPL", price=105.0, prev_close=100.0),  # +5%
+            make_quote(symbol="MSFT", price=104.0, prev_close=100.0),  # +4%
+            make_quote(symbol="GOOGL", price=103.0, prev_close=100.0),  # +3%
+        ]
+        result = change_detection.evaluate_portfolio(quotes)
+        msg = result["fired"][0]["message"]
+        assert "4.0%" in msg  # Average of 5%, 4%, 3% = 4%

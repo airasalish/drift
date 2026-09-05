@@ -246,12 +246,41 @@ def list_watchlist_items(
 ):
     """List items in a specific watchlist owned by the current user."""
     watchlist = _get_watchlist_or_404(db, id, user)
-    
+
     out = []
+    quotes_for_portfolio = []
+
     for item in watchlist.items:
         quote = db.get(SymbolQuote, item.symbol)
         out.append(_serialize(item, quote))
-    
+        if quote is not None:
+            quotes_for_portfolio.append(quote)
+
+    # Evaluate portfolio-level rule
+    portfolio_result = change_detection.evaluate_portfolio(quotes_for_portfolio)
+
+    # If portfolio rule fired, add it as a special attention item
+    if portfolio_result["attention"]:
+        # Create a synthetic watchlist item for the portfolio signal
+        portfolio_item = WatchlistItemOut(
+            id=-1,  # Special ID to indicate portfolio-level item
+            symbol="PORTFOLIO",
+            note=None,
+            company_name="Portfolio-wide signal",
+            company_website=None,
+            added_at=datetime.datetime.utcnow(),
+            added_price=None,
+            last_viewed_at=None,
+            price_at_last_view=None,
+            quote=None,
+            change_since_added_pct=None,
+            change_since_last_view_pct=None,
+            fired=[FiredRule(**f) for f in portfolio_result["fired"]],
+            attention_score=portfolio_result["score"],
+            has_attention=True,
+        )
+        out.append(portfolio_item)
+
     out.sort(key=lambda w: w.attention_score, reverse=True)
     return out
 
