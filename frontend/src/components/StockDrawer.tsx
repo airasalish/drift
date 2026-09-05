@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { CompanyFavicon } from "./CompanyFavicon";
 import { simplifyRuleMessage } from "../lib/beginner";
@@ -31,6 +31,7 @@ export function StockDrawer({
   const [digestLoading, setDigestLoading] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [hoverPrice, setHoverPrice] = useState<number | null>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   // reset local UI state whenever the open item changes (including close)
   useEffect(() => {
@@ -38,6 +39,10 @@ export function StockDrawer({
     setEditingThesis(false);
     setConfirmingRemove(false);
     setDraftNote(item?.note ?? "");
+  }, [item?.id]);
+
+  useEffect(() => {
+    if (item) drawerRef.current?.focus({ preventScroll: true });
   }, [item?.id]);
 
   useEffect(() => {
@@ -90,7 +95,7 @@ export function StockDrawer({
     // the drawer is open, so switching between stocks is a single click
     // instead of close-then-reopen -- Koyfin's "persistent context"
     // principle, not a dialog. Closed via the ✕ button or Escape.
-    <aside className="drawer" role="dialog" aria-label={`${item.symbol} detail`}>
+    <aside ref={drawerRef} className="drawer" role="dialog" aria-label={`${item.symbol} detail`} tabIndex={-1}>
         <div className="drawer-head">
           <div className="drawer-head-main">
             <span className="drawer-symbol">
