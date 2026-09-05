@@ -28,7 +28,6 @@ SYMBOL_SECTORS = {
     "INTC": "tech",
     "TSM": "tech",
     "ASML": "tech",
-    "TSLA": "tech",  # Also auto-ev, but tech classification makes sense
 
     # Auto & EV
     "TSLA": "auto-ev",

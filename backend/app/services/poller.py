@@ -48,6 +48,7 @@ def _refresh_one(db, symbol: str, watch_count: int) -> None:
         quote.week52_high = stats["week52_high"]
         quote.week52_low = stats["week52_low"]
         quote.spark_closes_json = json.dumps(stats["spark_closes"])
+        quote.similar_moves_json = json.dumps(stats.get("similar_moves", []))
         quote.fetched_at = datetime.datetime.utcnow()
         quote.fetch_ok = True
     else:
