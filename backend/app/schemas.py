@@ -32,6 +32,17 @@ class QuoteOut(BaseModel):
     spark: list[float]
 
 
+class HistoryEventOut(BaseModel):
+    id: int
+    symbol: str
+    company_name: str | None
+    seen_at: datetime.datetime
+    price_at_seen: float | None
+    current_price: float | None
+    currency: str | None
+    change_since_pct: float | None
+
+
 class WatchlistItemOut(BaseModel):
     id: int
     symbol: str

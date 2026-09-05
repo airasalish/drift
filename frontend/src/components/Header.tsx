@@ -10,6 +10,8 @@ export function Header({
   countdown,
   loading,
   error,
+  beginnerMode,
+  onToggleBeginnerMode,
 }: {
   username: string | null;
   onLogout: () => void;
@@ -19,6 +21,8 @@ export function Header({
   countdown: number;
   loading: boolean;
   error: string | null;
+  beginnerMode: boolean;
+  onToggleBeginnerMode: () => void;
 }) {
   return (
     <header className="header">
@@ -49,13 +53,21 @@ export function Header({
             </span>
           </div>
         )}
-        {username && (
-          <div className="account">
+        <div className="account">
+          <button
+            type="button"
+            className={`beginner-toggle${beginnerMode ? " on" : ""}`}
+            onClick={onToggleBeginnerMode}
+            title="Simplify the wording used to explain why something was flagged"
+          >
+            {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
+          </button>
+          {username && (
             <button className="logout-btn" onClick={onLogout}>
               Log out
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

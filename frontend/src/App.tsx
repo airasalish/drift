@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "./api";
 import { AddStockForm } from "./components/AddStockForm";
 import { Header } from "./components/Header";
+import { HistoryPanel } from "./components/HistoryPanel";
 import { IgnoredDisclosure } from "./components/IgnoredDisclosure";
 import { QuickAccessRail } from "./components/QuickAccessRail";
 import { SinceYouLeft } from "./components/SinceYouLeft";
@@ -9,8 +10,10 @@ import { StockDrawer } from "./components/StockDrawer";
 import { WatchlistPanel } from "./components/WatchlistPanel";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { attentionTier, latestViewedAt } from "./lib/attention";
-import type { WatchlistItem } from "./types";
+import type { HistoryEvent, WatchlistItem } from "./types";
 import "./App.css";
+
+const BEGINNER_MODE_KEY = "drift_beginner_mode";
 
 function isMarketOpen(): boolean {
   const now = new Date();
@@ -41,6 +44,18 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<WatchlistItem | null>(null);
+  const [view, setView] = useState<"watchlist" | "history">("watchlist");
+  const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  // per-viewer display preference only -- never a source of truth, the
+  // rule engine's output is identical either way, this just rewords it
+  const [beginnerMode, setBeginnerMode] = useState(() => {
+    try {
+      return localStorage.getItem(BEGINNER_MODE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
 
   const marketOpen = isMarketOpen();
 
@@ -78,9 +93,45 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     await remove(id);
   }
 
+  function handleSelect(item: WatchlistItem) {
+    setView("watchlist");
+    setDetailItem(item);
+  }
+
+  async function handleShowHistory() {
+    setView("history");
+    setHistoryLoading(true);
+    try {
+      setHistoryEvents(await api.history());
+    } catch {
+      setHistoryEvents([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function toggleBeginnerMode() {
+    setBeginnerMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(BEGINNER_MODE_KEY, next ? "1" : "0");
+      } catch {
+        // localStorage unavailable (private mode, etc.) -- the toggle
+        // still works for this session, it just won't persist
+      }
+      return next;
+    });
+  }
+
   return (
     <div className="app-shell">
-      <QuickAccessRail items={items} selectedId={selectedId} onSelect={setDetailItem} />
+      <QuickAccessRail
+        items={items}
+        selectedId={selectedId}
+        view={view}
+        onSelect={handleSelect}
+        onShowHistory={handleShowHistory}
+      />
 
       <div className="page">
         <Header
@@ -92,6 +143,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           countdown={countdown}
           loading={loading}
           error={error}
+          beginnerMode={beginnerMode}
+          onToggleBeginnerMode={toggleBeginnerMode}
         />
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
@@ -103,7 +156,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           </div>
         )}
 
-        {loading ? (
+        {view === "history" ? (
+          <HistoryPanel events={historyEvents} loading={historyLoading} />
+        ) : loading ? (
           <div className="skeleton-block" />
         ) : (
           <>
@@ -114,6 +169,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               benchmark={benchmark}
               digest={digest}
               digestLoading={digestLoading}
+              beginnerMode={beginnerMode}
               onExplain={handleExplain}
               onSeen={markSeen}
               onOpenDetail={setDetailItem}
@@ -132,6 +188,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <StockDrawer
           item={liveDetailItem}
+          beginnerMode={beginnerMode}
           onClose={() => setDetailItem(null)}
           onSeen={markSeen}
           onRemove={handleRemove}

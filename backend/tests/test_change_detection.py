@@ -62,7 +62,7 @@ def fired_rules(result: dict) -> list[str]:
 def test_no_price_returns_empty():
     quote = make_quote(price=None)
     result = change_detection.evaluate(None, quote)
-    assert result == {"fired": [], "score": 0.0, "attention": False}
+    assert result == {"fired": [], "score": 0.0, "attention": False, "keys": []}
 
 
 # ─── Rule 1: Price move vs last-view baseline ─────────────────────────────────
@@ -377,3 +377,55 @@ class TestMultiRuleStacking:
         assert result["attention"] is False
         assert result["fired"] == []
         assert result["score"] == 0.0
+
+
+class TestPreviouslyFiredSuppression:
+    """Covers the reported bug: 'mark as seen' visibly did nothing for a
+    stock sitting near its 52-week high or trading on unusual volume,
+    because those rules aren't anchored to price_at_last_view the way
+    price_move is -- they'd fire again on every refresh regardless of
+    whether the user had already seen them. `previously_fired` is the
+    snapshot taken at mark-seen time; these tests confirm it actually
+    suppresses a standing fact, but still re-fires the moment something
+    genuinely new happens.
+    """
+
+    def test_near_52w_high_suppressed_once_already_seen(self):
+        # prev_close pinned to price so the intraday price-move fallback
+        # (unrelated to what this test covers) doesn't also fire
+        quote = make_quote(price=98.0, prev_close=98.0, week52_high=100.0)  # within 3%
+        first = change_detection.evaluate(None, quote)
+        assert "week52_high" in fired_rules(first)
+        assert "week52_high_near" in first["keys"]
+
+        # simulate "mark as seen" snapshotting that key, then re-evaluating
+        # against the identical, unchanged quote
+        second = change_detection.evaluate(None, quote, frozenset(first["keys"]))
+        assert "week52_high" not in fired_rules(second)
+        assert second["attention"] is False
+
+    def test_upgrading_from_near_to_new_high_still_fires(self):
+        # previously only "near" the high -- now it's broken through to a
+        # genuine new high, which is new information and must still fire
+        previously_fired = frozenset(["week52_high_near"])
+        quote = make_quote(price=101.0, week52_high=100.0)  # now at/above it
+        result = change_detection.evaluate(None, quote, previously_fired)
+        assert "week52_high" in fired_rules(result)
+        assert result["attention"] is True
+
+    def test_unusual_volume_suppressed_once_already_seen(self):
+        quote = make_quote(price=100.0, volume=3_000_000.0, avg_volume_20d=1_000_000.0)
+        first = change_detection.evaluate(None, quote)
+        assert "unusual_volume" in fired_rules(first)
+
+        second = change_detection.evaluate(None, quote, frozenset(first["keys"]))
+        assert "unusual_volume" not in fired_rules(second)
+        assert second["attention"] is False
+
+    def test_price_move_ignores_previously_fired(self):
+        # price_move is already anchored to price_at_last_view -- it must
+        # never be suppressed by a structural-rule snapshot
+        quote = make_quote(price=110.0, avg_daily_move_pct_20d=0.01)
+        result = change_detection.evaluate(100.0, quote, frozenset(["price_move"]))
+        assert "price_move" in fired_rules(result)
+        assert result["attention"] is True

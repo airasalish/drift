@@ -82,8 +82,34 @@ class WatchlistItem(Base):
         DateTime(), nullable=True
     )
     price_at_last_view: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # JSON array of structural rule keys (see change_detection.evaluate) that
+    # were already true the moment the user last marked this seen -- lets
+    # "mark as seen" actually dismiss a standing fact like "near its 52-week
+    # high" instead of it firing again on every single refresh regardless of
+    # whether anything changed.
+    fired_rules_at_last_view: Mapped[str | None] = mapped_column(String, nullable=True)
 
     watchlist: Mapped["Watchlist"] = relationship(back_populates="items")
+
+
+class SeenEvent(Base):
+    """One row per "mark as seen" action -- a real timeline of when the
+    user looked at each symbol and what it was doing then. WatchlistItem
+    only ever holds the LATEST seen snapshot (needed for the live "since
+    last view" comparison); this is what lets Drift show an actual history
+    of your own attention over time, not just the most recent baseline.
+    Denormalized (symbol/company_name copied, not joined) so a symbol
+    removed from the watchlist later doesn't erase its own history.
+    """
+
+    __tablename__ = "seen_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    symbol: Mapped[str] = mapped_column(String)
+    company_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    seen_at: Mapped[datetime.datetime] = mapped_column(DateTime(), default=utcnow, index=True)
+    price_at_seen: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class SymbolQuote(Base):
