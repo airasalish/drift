@@ -11,6 +11,7 @@ import { StockDrawer } from "./components/StockDrawer";
 import { WatchlistPanel } from "./components/WatchlistPanel";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { attentionTier, latestViewedAt } from "./lib/attention";
+import { formatPct } from "./format";
 import type { HistoryEvent, WatchlistItem } from "./types";
 import "./App.css";
 
@@ -211,6 +212,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           onToggleBeginnerMode={toggleBeginnerMode}
           onRefresh={refresh}
         />
+
+        <section className="workspace-metrics" aria-label="Workspace metrics">
+          <div className="workspace-metric metric-attention"><span>ATTENTION</span><strong>{attentionItems.length}</strong><small>{attentionItems.length ? "things worth checking" : "all quiet right now"}</small></div>
+          <div className="workspace-metric"><span>WATCHLIST</span><strong>{items.length}</strong><small>tracked symbols</small></div>
+          <div className="workspace-metric"><span>FILTERED OUT</span><strong>{quietItems.length}</strong><small>normal movements</small></div>
+          <div className="workspace-metric metric-benchmark"><span>{benchmark?.benchmark_label ?? "BENCHMARK"}</span><strong>{benchmark?.benchmark_pct != null ? formatPct(benchmark.benchmark_pct) : "—"}</strong><small>{benchmark ? "market context" : "updating context"}</small></div>
+        </section>
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
 
