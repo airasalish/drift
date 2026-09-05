@@ -2151,3 +2151,15 @@ html { scroll-behavior: smooth; }
 .tier-label { margin-top: 22px; }
 .tier-group:first-child .tier-label { margin-top: 0; }
 @media (max-width: 560px) { .section-context { display: none; } .wp-head h2 { display: block; } .wp-head { padding-bottom: 10px; } }
+
+
+.mobile-workspace-nav { display: none; }
+@media (max-width: 980px) {
+  .mobile-workspace-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: -8px 0 18px; padding: 4px; border: 1px solid #252c2c; border-radius: 5px; background: #080b0b; }
+  .mobile-workspace-nav button { border: 0; border-radius: 3px; padding: 9px 10px; background: transparent; color: #82918d; font-size: 11px; font-weight: 700; cursor: pointer; }
+  .mobile-workspace-nav button.active { background: rgba(52,211,153,.13); color: #69eab3; }
+  .mobile-workspace-nav button span { margin-left: 5px; color: #587069; font-size: 10px; }
+}
+
+.wp-summary-hint { color: #53635f; }
+@media (max-width: 560px) { .wp-summary-hint, .wp-summary-hint + .wp-summary-sep { display: none; } }
