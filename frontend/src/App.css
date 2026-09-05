@@ -2290,3 +2290,16 @@ html { scroll-behavior: smooth; }
 .watchlist-columns span:nth-child(2) { grid-column: 2; }
 @media (min-width: 981px) { .watchlist-row { min-height: 61px; padding-top: 11px; padding-bottom: 11px; } .tier-label { padding-left: 2px; } }
 @media (max-width: 860px) { .watchlist-columns { display: none; } }
+
+
+.wp-reset-control { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 230px; }
+.wp-reset-copy { color: #6d8179; font-size: 9px; line-height: 1.4; text-align: right; }
+.wp-reset-button { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(92,224,175,.45); border-radius: 4px; padding: 9px 12px; background: rgba(22,77,57,.35); color: #a9f5d2; font-size: 10px; font-weight: 800; letter-spacing: .03em; cursor: pointer; box-shadow: 0 0 0 1px rgba(0,0,0,.15), 0 8px 22px rgba(0,0,0,.12); }
+.wp-reset-button span { font-size: 15px; line-height: 1; }
+.wp-reset-button:hover { border-color: #70f2bb; background: rgba(30,105,76,.5); transform: translateY(-1px); }
+.confirm-remove { padding: 8px 10px; border: 1px solid rgba(234,166,77,.35); border-radius: 4px; background: rgba(71,45,15,.28); }
+body::after { content: ""; position: fixed; z-index: -1; right: -8vw; bottom: -12vh; width: 65vw; height: 56vh; pointer-events: none; opacity: .075; background: url('/drift-dashboard-cover.png') right bottom / cover no-repeat; mask-image: linear-gradient(135deg, transparent 0%, #000 54%, transparent 100%); }
+@media (max-width: 680px) { .wp-reset-control { align-items: stretch; max-width: 170px; } .wp-reset-copy { text-align: left; } body::after { width: 100vw; height: 38vh; opacity: .05; } }
+
+body::after { z-index: 0; }
+.app-shell { position: relative; z-index: 1; }
