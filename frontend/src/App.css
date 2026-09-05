@@ -2195,3 +2195,17 @@ html { scroll-behavior: smooth; }
 .workspace-notice button { flex: 0 0 auto; border: 0; background: transparent; color: #82b9a4; font-size: 19px; line-height: 1; cursor: pointer; }
 .workspace-notice button:hover { color: #fff; }
 @media (max-width: 760px) { .command-center-head { display: block; } .command-nav { margin-top: 18px; overflow-x: auto; } .command-nav button { flex: 0 0 auto; } }
+
+
+/* Reference alignment: the artwork brands the workspace, while the live signal owns the page. */
+.dashboard-cover { height: 118px; margin: -8px 0 22px; border-radius: 5px; }
+.dashboard-cover-art { background: linear-gradient(90deg, rgba(2,10,8,.95) 0%, rgba(2,10,8,.7) 48%, rgba(2,10,8,.25)), url('/drift-dashboard-cover.png') center 48% / cover no-repeat; opacity: .72; }
+.dashboard-cover-copy { justify-content: flex-end; padding: 18px 22px; }
+.dashboard-cover-copy strong { font-size: 20px; letter-spacing: -.04em; }
+.dashboard-cover-copy > span:last-child { font-size: 9px; }
+.dashboard-cover-kicker { font-size: 10px; }
+.dashboard-cover-signal { top: 15px; right: 18px; }
+.command-center-head { margin-top: 0; }
+@media (max-width: 680px) { .dashboard-cover { height: 96px; margin-bottom: 18px; } .dashboard-cover-copy { padding: 14px 16px; } .dashboard-cover-copy strong { font-size: 17px; } .dashboard-cover-signal { font-size: 7px; } }
+
+.rail-preview-label { margin-left: auto; color: #4e7064; font-size: 8px; letter-spacing: .04em; text-transform: uppercase; }

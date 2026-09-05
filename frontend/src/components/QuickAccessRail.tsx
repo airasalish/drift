@@ -19,6 +19,8 @@ export function QuickAccessRail({
   onSelect,
   onShowHome,
   onShowHistory,
+  onShowInsights,
+  onShowPreview,
   watchlists,
   activeWatchlistId,
   onCreateWatchlist,
@@ -32,6 +34,8 @@ export function QuickAccessRail({
   onSelect: (item: WatchlistItem) => void;
   onShowHome: () => void;
   onShowHistory: () => void;
+  onShowInsights: () => void;
+  onShowPreview: (label: string) => void;
   watchlists: Watchlist[];
   activeWatchlistId: number | null;
   onCreateWatchlist: (name: string) => Promise<Watchlist>;
@@ -189,6 +193,19 @@ export function QuickAccessRail({
       >
         <span className="rail-nav-icon" aria-hidden="true">◷</span>
         History
+      </button>
+
+      <button type="button" className="rail-nav-item" onClick={onShowInsights}>
+        <span className="rail-nav-icon" aria-hidden="true">⌁</span>
+        Insights
+      </button>
+      <button type="button" className="rail-nav-item" onClick={() => onShowPreview("News")}>
+        <span className="rail-nav-icon" aria-hidden="true">▤</span>
+        News <span className="rail-preview-label">preview</span>
+      </button>
+      <button type="button" className="rail-nav-item" onClick={() => onShowPreview("Alerts")}>
+        <span className="rail-nav-icon" aria-hidden="true">♧</span>
+        Alerts <span className="rail-preview-label">preview</span>
       </button>
 
       {sorted.length > 0 && (
