@@ -228,6 +228,12 @@ export function QuickAccessRail({
         </div>
       )}
 
+      <button type="button" className="rail-upgrade" onClick={() => onShowPreview("Pro") }>
+        <span className="rail-upgrade-title">Upgrade to Pro <b>→</b></span>
+        <span className="rail-upgrade-copy">Get real-time alerts, advanced insights and more.</span>
+        <span className="rail-upgrade-glow" aria-hidden="true" />
+      </button>
+
       {/* Create Watchlist Dialog */}
       {showCreateDialog && (
         <div className="rail-dialog-overlay" onClick={() => setShowCreateDialog(false)}>
