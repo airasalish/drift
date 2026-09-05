@@ -52,7 +52,7 @@ export function SinceYouLeft({
       </div>
 
       {!hasAttention && (
-        <p className="hero-calm-copy">
+        <p className="hero-calm-copy" data-tour="calm-state">
           Nothing moved meaningfully across your watchlist.
           {quietCount > 0 && ` ${quietCount} normal movement${quietCount !== 1 ? "s" : ""} filtered out.`}
         </p>

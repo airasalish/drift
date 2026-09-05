@@ -11,6 +11,19 @@ const STEPS: { selector: string; title: string; body: string }[] = [
     title: "The % is the point",
     body: "On a drift card, the large number is the move since you last looked — the price underneath is just context.",
   },
+  // Mutually exclusive with the step above -- exactly one of the two
+  // selectors exists in the DOM at a time (SinceYouLeft.tsx renders drift
+  // cards OR the calm-state paragraph, never both), so `visible` below
+  // naturally picks whichever is real right now. Real market data means
+  // there's no guarantee anything is flagged when this tour runs -- "all
+  // quiet" is a genuine, designed outcome of the product, not an empty
+  // demo, and it deserves its own explanation rather than silently
+  // dropping the tour's core idea when nothing happens to be drifting.
+  {
+    selector: "[data-tour='calm-state']",
+    title: "Quiet is a real feature",
+    body: "When nothing meaningfully changed, Drift says so directly — filtering out normal noise is the point, not a fallback for an empty demo.",
+  },
   {
     selector: "[data-tour='rail']",
     title: "Jump anywhere",
