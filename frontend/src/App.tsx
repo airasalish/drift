@@ -8,6 +8,7 @@ import { IgnoredDisclosure } from "./components/IgnoredDisclosure";
 import { QuickAccessRail } from "./components/QuickAccessRail";
 import { SinceYouLeft } from "./components/SinceYouLeft";
 import { StockDrawer } from "./components/StockDrawer";
+import { SuggestedCompanies } from "./components/SuggestedCompanies";
 import { WatchlistPanel } from "./components/WatchlistPanel";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { attentionTier, latestViewedAt } from "./lib/attention";
@@ -248,6 +249,11 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("S&P 500 coverage is queued next. This card is intentionally not presenting invented market data.")}><span>S&amp;P 500 <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
           <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("NASDAQ coverage is queued next. This card is intentionally not presenting invented market data.")}><span>NASDAQ <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
         </section>
+
+        <SuggestedCompanies
+          trackedSymbols={new Set(items.map((item) => item.symbol))}
+          onAdd={(symbol, companyName) => handleAdd(symbol, "", companyName)}
+        />
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
 
