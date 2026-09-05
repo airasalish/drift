@@ -61,7 +61,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
   // per-viewer display preference only -- never a source of truth, the
   // rule engine's output is identical either way, this just rewords it
-  const [beginnerMode, setBeginnerMode] = useState(() => {
+  const [beginnerMode] = useState(() => {
     try {
       return localStorage.getItem(BEGINNER_MODE_KEY) === "1";
     } catch {
@@ -165,19 +165,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     }
   }
 
-  function toggleBeginnerMode() {
-    setBeginnerMode((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(BEGINNER_MODE_KEY, next ? "1" : "0");
-      } catch {
-        // localStorage unavailable (private mode, etc.) -- the toggle
-        // still works for this session, it just won't persist
-      }
-      return next;
-    });
-  }
-
   return (
     <div className="app-shell">
       <QuickAccessRail
@@ -220,8 +207,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           countdown={countdown}
           loading={loading}
           error={error}
-          beginnerMode={beginnerMode}
-          onToggleBeginnerMode={toggleBeginnerMode}
           onRefresh={refresh}
         />
 
@@ -261,8 +246,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
             <span className="shortcut-icon">⌁</span><span><strong>Track what matters</strong><small>Focus on real moves, not noise.</small></span><b>›</b>
           </button>
-          <button type="button" className="workspace-shortcut" onClick={toggleBeginnerMode}>
-            <span className="shortcut-icon">◌</span><span><strong>Get clearer explanations</strong><small>{beginnerMode ? "Beginner mode is on." : "Translate signals into plain language."}</small></span><b>›</b>
+          <button type="button" className="workspace-shortcut" onClick={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+            <span className="shortcut-icon">◌</span><span><strong>Understand the signal</strong><small>See the exact rule that caused attention.</small></span><b>›</b>
           </button>
           <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
             <span className="shortcut-icon">▥</span><span><strong>Make better decisions</strong><small>See what changed after you looked.</small></span><b>›</b>
