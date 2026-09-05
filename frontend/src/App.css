@@ -2137,3 +2137,17 @@ html { scroll-behavior: smooth; }
 .workspace-metric:hover { border-color: #4e9279; transform: translateY(-1px); }
 @media (max-width: 760px) { .workspace-metrics { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 420px) { .workspace-metrics { gap: 7px; } .workspace-metric { min-height: 72px; padding: 10px; } .workspace-metric strong { font-size: 21px; } }
+
+
+/* Coherence pass: one clear hierarchy from context → action → evidence. */
+.section-context { color: #5f7770; font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.wp-head h2 { display: flex; align-items: baseline; gap: 8px; }
+.wp-head { padding-bottom: 12px; border-bottom: 1px solid #202827; margin-bottom: 16px; }
+.workspace-metrics + .add-form { margin-top: 4px; }
+.workspace-shortcuts + .error-row { margin-top: -18px; }
+.hero { scroll-margin-top: 20px; }
+.hero-eyebrow { color: #72a291; letter-spacing: .13em; }
+.hero-headline { letter-spacing: -.065em; }
+.tier-label { margin-top: 22px; }
+.tier-group:first-child .tier-label { margin-top: 0; }
+@media (max-width: 560px) { .section-context { display: none; } .wp-head h2 { display: block; } .wp-head { padding-bottom: 10px; } }

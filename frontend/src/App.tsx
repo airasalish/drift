@@ -89,6 +89,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         event.preventDefault();
         document.querySelector<HTMLInputElement>('input[placeholder="Search company or ticker"]')?.focus();
       }
+      if (event.key.toLowerCase() === "f" && !typing) {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus();
+      }
       if (event.key === "r" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         refresh();
@@ -179,6 +183,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         onShowHome={() => {
           setView("watchlist");
           setDetailItem(null);
+          setWatchlistQuery("");
         }}
         onShowHistory={handleShowHistory}
         watchlists={watchlists}
