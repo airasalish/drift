@@ -64,10 +64,13 @@ export function WatchlistPanel({
             </button>
           </div>
         ) : (
-          <button type="button" className="wp-reset-link" onClick={() => setConfirmingReset(true)}>
-            Reset to sample
-          </button>
-          )}
+          <div className="wp-reset-control">
+            <span className="wp-reset-copy">Load the curated demo symbols to see Drift's signals in action.</span>
+            <button type="button" className="wp-reset-button" onClick={() => setConfirmingReset(true)}>
+              <span aria-hidden="true">↻</span> Reset to sample
+            </button>
+          </div>
+        )}
       </div>
       {items.length > 0 && (
         <div className="watchlist-filter-wrap">
