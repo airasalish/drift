@@ -48,6 +48,28 @@ DEFAULT_WATCHLIST_SEED = [
 ]
 
 
+def backfill_company_websites(db: Session) -> None:
+    """One-time, idempotent catch-up for items added before company_website
+    existed as a field (or added through an older deploy that predated the
+    lookup). New adds (routers/watchlist.py add_symbol) and fresh reseeds
+    (_seed_item below) already capture this at write time -- this just lets
+    already-stored rows catch up instead of silently showing no favicon
+    forever, or requiring someone to delete and re-add every old item.
+    Cheap by construction: the filter only ever selects rows still missing
+    a value, so once a row resolves it's never looked at again on a later
+    boot. A symbol whose lookup genuinely returns nothing (no website info
+    on file, or a transient fetch failure) does get retried on the next
+    boot -- an accepted, disclosed cost at this project's scale (a handful
+    of watchlist rows), not something worth a "don't retry" flag for.
+    """
+    items = db.query(WatchlistItem).filter(WatchlistItem.company_website.is_(None)).all()
+    if not items:
+        return
+    for item in items:
+        item.company_website = lookup_company_website(item.symbol)
+    db.commit()
+
+
 def get_or_create_watchlist_for_user(db: Session, user: User) -> Watchlist:
     watchlist = db.query(Watchlist).filter_by(user_id=user.id).first()
     if watchlist is None:
