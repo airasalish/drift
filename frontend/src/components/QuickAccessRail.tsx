@@ -15,12 +15,14 @@ export function QuickAccessRail({
   selectedId,
   view,
   onSelect,
+  onShowHome,
   onShowHistory,
 }: {
   items: WatchlistItem[];
   selectedId: number | null;
   view: "watchlist" | "history";
   onSelect: (item: WatchlistItem) => void;
+  onShowHome: () => void;
   onShowHistory: () => void;
 }) {
   const sorted = [...items].sort((a, b) => b.attention_score - a.attention_score);
@@ -33,11 +35,23 @@ export function QuickAccessRail({
 
       <button
         type="button"
+        className={`rail-nav-item${view === "watchlist" ? " selected" : ""}`}
+        onClick={onShowHome}
+        aria-label="Open home"
+        aria-current={view === "watchlist" ? "page" : undefined}
+      >
+        <span className="rail-nav-icon" aria-hidden="true">⌂</span>
+        Home
+      </button>
+
+      <button
+        type="button"
         className={`rail-nav-item${view === "history" ? " selected" : ""}`}
         onClick={onShowHistory}
         aria-label="Open history"
         aria-current={view === "history" ? "page" : undefined}
       >
+        <span className="rail-nav-icon" aria-hidden="true">◷</span>
         History
       </button>
 

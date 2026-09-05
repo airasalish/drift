@@ -134,6 +134,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
   async function handleShowHistory() {
     setView("history");
+    setDetailItem(null);
     setHistoryLoading(true);
     try {
       setHistoryEvents(await api.history());
@@ -164,6 +165,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         selectedId={selectedId}
         view={view}
         onSelect={handleSelect}
+        onShowHome={() => {
+          setView("watchlist");
+          setDetailItem(null);
+        }}
         onShowHistory={handleShowHistory}
       />
 
