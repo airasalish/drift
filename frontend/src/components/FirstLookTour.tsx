@@ -14,7 +14,7 @@ const STEPS: { selector: string; title: string; body: string }[] = [
   {
     selector: "[data-tour='drift-pct']",
     title: "The % is the point",
-    body: "On a drift card, the large number is the move since you last looked — the price underneath is just context.",
+    body: "On a drift card, the large number is the move since you last looked, the price underneath is just context.",
   },
   // Mutually exclusive with the step above -- exactly one of the two
   // selectors exists in the DOM at a time (SinceYouLeft.tsx renders drift
@@ -27,12 +27,12 @@ const STEPS: { selector: string; title: string; body: string }[] = [
   {
     selector: "[data-tour='calm-state']",
     title: "Quiet is a real feature",
-    body: "When nothing meaningfully changed, Drift says so directly — filtering out normal noise is the point, not a fallback for an empty demo.",
+    body: "When nothing meaningfully changed, Drift says so directly, filtering out normal noise is the point, not a fallback for an empty demo.",
   },
   {
     selector: "[data-tour='rail']",
     title: "Jump anywhere",
-    body: "The rail lists every watched symbol and History — your own timeline of when you last checked.",
+    body: "The rail lists every watched symbol and History, your own timeline of when you last checked.",
   },
   {
     selector: "[data-tour='watchlist-row']",

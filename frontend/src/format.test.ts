@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { formatPct, formatPrice, formatRelative, pctClass } from "./format";
 
 describe("formatPct", () => {
-  it("returns an em dash for null", () => {
-    expect(formatPct(null)).toBe("—");
+  it("returns N/A for null", () => {
+    expect(formatPct(null)).toBe("N/A");
   });
 
   it("adds a plus sign for non-negative values", () => {
@@ -17,8 +17,8 @@ describe("formatPct", () => {
 });
 
 describe("formatPrice", () => {
-  it("returns an em dash for null", () => {
-    expect(formatPrice(null)).toBe("—");
+  it("returns N/A for null", () => {
+    expect(formatPrice(null)).toBe("N/A");
   });
 
   it("falls back instead of throwing on an unknown currency code", () => {

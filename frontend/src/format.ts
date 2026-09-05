@@ -1,5 +1,5 @@
 export function formatPrice(v: number | null, currency: string | null = "USD"): string {
-  if (v == null) return "—";
+  if (v == null) return "N/A";
   try {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
@@ -13,7 +13,7 @@ export function formatPrice(v: number | null, currency: string | null = "USD"): 
 }
 
 export function formatPct(v: number | null): string {
-  if (v == null) return "—";
+  if (v == null) return "N/A";
   const sign = v >= 0 ? "+" : "";
   return `${sign}${(v * 100).toFixed(1)}%`;
 }
@@ -42,7 +42,7 @@ export function formatTimeOfDay(iso: string | null): string {
 // flips sign in confusing ways when the benchmark's own move is near zero.
 // Points of difference stays well-defined and honest in every case.
 export function formatPoints(v: number | null): string {
-  if (v == null) return "—";
+  if (v == null) return "N/A";
   return `${(v * 100).toFixed(1)} pts`;
 }
 

@@ -60,9 +60,9 @@ export function StockDrawer({
     setDigestLoading(true);
     try {
       const { digest } = await api.digest(item!.symbol);
-      setDigest(digest ?? "Couldn't generate a summary right now — the details below still apply.");
+      setDigest(digest ?? "Couldn't generate a summary right now, the details below still apply.");
     } catch {
-      setDigest("Couldn't generate a summary right now — the details below still apply.");
+      setDigest("Couldn't generate a summary right now, the details below still apply.");
     } finally {
       setDigestLoading(false);
     }
@@ -133,7 +133,7 @@ export function StockDrawer({
             {hoverPrice != null
               ? formatPrice(hoverPrice, item.quote?.currency)
               : item.price_at_last_view != null
-                ? "Dashed line — price when you last checked"
+                ? "Dashed line, price when you last checked"
                 : "Last 30 sessions"}
           </p>
         </div>

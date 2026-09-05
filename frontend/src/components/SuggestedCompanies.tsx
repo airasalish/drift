@@ -34,7 +34,7 @@ export function SuggestedCompanies({
         <div>
           <span className="suggested-kicker">IDEAS TO EXPLORE</span>
           <h2 id="suggested-title">Build a more useful watchlist</h2>
-          <p>Starter ideas based on coverage gaps—not financial advice. Each symbol still runs through Drift’s live rules after you add it.</p>
+          <p>Starter ideas based on coverage gaps, not financial advice. Each symbol still runs through Drift’s live rules after you add it.</p>
         </div>
         <span className="suggested-count">{available.length} available</span>
       </div>
