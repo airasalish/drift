@@ -2263,3 +2263,30 @@ html { scroll-behavior: smooth; }
 /* Shared supplied Drift D mark. */
 .brand-mark { display: block; width: 34px; height: 34px; object-fit: cover; border-radius: 9px; box-shadow: 0 0 18px rgba(83,236,178,.16); }
 .brand:hover .brand-mark { transform: rotate(-3deg) scale(1.04); }
+
+
+/* Exact composition pass: contextual hero left, market cards right, actions below. */
+@media (min-width: 981px) {
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 340px); column-gap: 24px; align-content: start; }
+  .dashboard-cover, .header, .command-center-head, .mobile-workspace-nav, .add-form, .workspace-shortcuts, .workspace-notice, .error-row, .watchlist-panel, .ignored-disclosure { grid-column: 1 / -1; }
+  .dashboard-cover { grid-row: 1; }
+  .header { grid-row: 2; }
+  .command-center-head { grid-row: 3; display: flex; }
+  .mobile-workspace-nav { grid-row: 4; }
+  .hero { grid-column: 1; grid-row: 5; min-width: 0; }
+  .workspace-metrics { grid-column: 2; grid-row: 5; align-self: start; width: 100%; max-width: none; margin: 8px 0 0; display: grid; grid-template-columns: 1fr; }
+  .add-form { grid-row: 6; }
+  .workspace-shortcuts { grid-row: 7; }
+  .workspace-notice, .error-row { grid-row: 8; }
+  .watchlist-panel { grid-row: 9; }
+  .ignored-disclosure { grid-row: 10; }
+  .command-center-head { padding-bottom: 14px; margin-bottom: 0; }
+  .command-center-head .command-nav { margin-left: auto; }
+  .workspace-metric { min-height: 74px; }
+}
+
+
+.watchlist-columns { display: grid; grid-template-columns: minmax(180px, 1.7fr) 74px minmax(105px, 1fr) minmax(90px, .8fr) 76px; gap: 12px; padding: 0 16px 7px; color: #5e716b; font-size: 8px; font-weight: 700; letter-spacing: .13em; }
+.watchlist-columns span:nth-child(2) { grid-column: 2; }
+@media (min-width: 981px) { .watchlist-row { min-height: 61px; padding-top: 11px; padding-bottom: 11px; } .tier-label { padding-left: 2px; } }
+@media (max-width: 860px) { .watchlist-columns { display: none; } }
