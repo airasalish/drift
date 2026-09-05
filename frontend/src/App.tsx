@@ -168,6 +168,15 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
       />
 
       <div className="page">
+        <section className="dashboard-cover" aria-label="Drift workspace introduction">
+          <div className="dashboard-cover-art" aria-hidden="true" />
+          <div className="dashboard-cover-copy">
+            <span className="dashboard-cover-kicker">DRIFT / MARKET WORKSPACE</span>
+            <strong>Markets move.<br />So do you.</strong>
+            <span>Track what matters. Return with context.</span>
+          </div>
+          <span className="dashboard-cover-signal">LIVE CONTEXT <i /></span>
+        </section>
         <Header
           username={username}
           onLogout={onLogout}

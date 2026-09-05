@@ -2062,3 +2062,34 @@ button:disabled { cursor: not-allowed; }
   .wp-summary { margin-top: -4px; }
   .watchlist-filter-wrap kbd { display: none; }
 }
+
+
+/* Authenticated workspace cover: the brand image lives inside the product, not before auth. */
+.dashboard-cover {
+  position: relative;
+  height: 164px;
+  margin: -8px 0 28px;
+  overflow: hidden;
+  border: 1px solid rgba(106, 225, 180, .22);
+  border-radius: 5px;
+  background: #03100d;
+  box-shadow: 0 18px 48px rgba(0,0,0,.2);
+}
+.dashboard-cover-art { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,10,8,.9) 0%, rgba(2,10,8,.52) 46%, rgba(2,10,8,.18)), url('/drift-dashboard-cover.png') center 48% / cover no-repeat; opacity: .88; }
+.dashboard-cover-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center; padding: 24px 28px; }
+.dashboard-cover-kicker { color: #62eab4; font-size: 9px; letter-spacing: .18em; font-weight: 700; }
+.dashboard-cover-copy strong { color: #f2faf6; font-size: clamp(24px, 3vw, 38px); line-height: .98; letter-spacing: -.06em; font-weight: 600; }
+.dashboard-cover-copy > span:last-child { color: #a3c0b5; font-size: 11px; letter-spacing: .04em; }
+.dashboard-cover-signal { position: absolute; z-index: 1; right: 22px; top: 18px; display: inline-flex; align-items: center; gap: 7px; color: #a2c8b9; font-size: 9px; letter-spacing: .13em; }
+.dashboard-cover-signal i { width: 5px; height: 5px; border-radius: 50%; background: #5bffc3; box-shadow: 0 0 0 4px rgba(91,255,195,.12); }
+
+/* More structured brokerage workspace rhythm. */
+.page > .header { margin-top: 0; }
+.watchlist-panel { position: relative; }
+.wp-head h2 { font-size: 20px; }
+.wp-head { align-items: flex-end; }
+@media (max-width: 680px) {
+  .dashboard-cover { height: 142px; margin-top: 0; }
+  .dashboard-cover-copy { padding: 18px 20px; }
+  .dashboard-cover-signal { right: 15px; top: 14px; font-size: 8px; }
+}
