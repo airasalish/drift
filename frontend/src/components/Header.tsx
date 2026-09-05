@@ -32,7 +32,7 @@ export function Header({
         <BrandMark />
         <div>
           <h1>Drift</h1>
-          <p className="tagline">Not just prices — what actually drifted since you last looked.</p>
+          <p className="tagline">Not just prices, what actually drifted since you last looked.</p>
         </div>
       </div>
 

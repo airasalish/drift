@@ -25,7 +25,7 @@ function isMarketOpen(): boolean {
   const h = et.getHours();
   const m = et.getMinutes();
   const minOfDay = h * 60 + m;
-  return day >= 1 && day <= 5 && minOfDay >= 570 && minOfDay < 960; // 9:30–16:00
+  return day >= 1 && day <= 5 && minOfDay >= 570 && minOfDay < 960; // 9:30 to 16:00
 }
 
 function App({ username, onLogout }: { username: string | null; onLogout: () => void }) {
@@ -132,9 +132,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
       const { digest } = activeWatchlistId 
         ? await api.watchlists.digest(activeWatchlistId)
         : await api.digest();
-      setDigest(digest ?? "Couldn't generate a summary right now — the details below still apply.");
+      setDigest(digest ?? "Couldn't generate a summary right now, the details below still apply.");
     } catch {
-      setDigest("Couldn't generate a summary right now — the details below still apply.");
+      setDigest("Couldn't generate a summary right now, the details below still apply.");
     } finally {
       setDigestLoading(false);
     }
@@ -243,9 +243,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         </nav>
 
         <section className="workspace-metrics" aria-label="Workspace metrics">
-          <div className="workspace-metric metric-benchmark"><span>{benchmark?.benchmark_label ?? "NIFTY 50"}</span><strong>{benchmark?.benchmark_pct != null ? formatPct(benchmark.benchmark_pct) : "—"}</strong><small>{benchmark ? "live market context" : "updating context"}</small></div>
-          <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("S&P 500 coverage is queued next. This card is intentionally not presenting invented market data.")}><span>S&amp;P 500 <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
-          <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("NASDAQ coverage is queued next. This card is intentionally not presenting invented market data.")}><span>NASDAQ <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
+          <div className="workspace-metric metric-benchmark"><span>{benchmark?.benchmark_label ?? "NIFTY 50"}</span><strong>{benchmark?.benchmark_pct != null ? formatPct(benchmark.benchmark_pct) : "N/A"}</strong><small>{benchmark ? "live market context" : "updating context"}</small></div>
+          <div className="workspace-metric"><span>TRACKED</span><strong>{items.length}</strong><small>symbols in your workspace</small></div>
+          <div className="workspace-metric"><span>QUIET TODAY</span><strong>{quietItems.length}</strong><small>normal moves filtered out</small></div>
         </section>
 
         <SuggestedCompanies

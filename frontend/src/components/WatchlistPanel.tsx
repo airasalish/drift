@@ -86,7 +86,7 @@ export function WatchlistPanel({
         </div>
       )}
       {items.length === 0 ? (
-        <div className="empty-box">Nothing on your watchlist yet — add a symbol above.</div>
+        <div className="empty-box">Nothing on your watchlist yet, add a symbol above.</div>
       ) : grouped.length === 0 ? (
         <div className="empty-box filter-empty">No tracked symbols match “{query}”. <button type="button" onClick={() => onQueryChange("")}>Clear filter</button></div>
       ) : (

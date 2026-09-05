@@ -12,7 +12,7 @@ export function HistoryPanel({ events, loading }: { events: HistoryEvent[]; load
         <div className="skeleton-block" />
       ) : events.length === 0 ? (
         <div className="empty-box">
-          Nothing here yet — mark a stock as seen and it'll show up as a point in your history.
+          Nothing here yet, mark a stock as seen and it'll show up as a point in your history.
         </div>
       ) : (
         <div className="history-list">
