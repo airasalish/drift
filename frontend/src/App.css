@@ -2321,3 +2321,19 @@ body::after { z-index: 0; }
 
 .app-shell { background: linear-gradient(90deg, rgba(1,9,7,.91), rgba(1,10,8,.64) 56%, rgba(1,8,7,.74)), linear-gradient(0deg, rgba(1,8,7,.8), transparent 42%, rgba(1,8,7,.24)), url('/drift-dashboard-cover.png') center / cover fixed no-repeat; }
 .app-shell::before, .app-shell::after { display: none; }
+
+
+/* Correct reference treatment: contained cinematic canvas, not wallpaper. */
+.app-shell { background: #020a08; }
+.app-shell::before, .app-shell::after { display: none; }
+.rail { background: rgba(2,10,8,.96); backdrop-filter: none; }
+.dashboard-cover { height: 276px; margin: -8px 0 22px; border: 1px solid rgba(99,224,176,.22); background: #020c09; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+.dashboard-cover-art { opacity: 1; mix-blend-mode: normal; background: linear-gradient(90deg, rgba(1,9,7,.82) 0%, rgba(1,9,7,.38) 42%, rgba(1,9,7,.08) 78%), linear-gradient(0deg, rgba(1,8,7,.78) 0%, transparent 48%), url('/drift-dashboard-cover.png') center 52% / cover no-repeat; }
+.dashboard-cover-copy { justify-content: center; padding: 28px 34px; }
+.dashboard-cover-copy strong { font-size: clamp(26px, 4vw, 48px); }
+.dashboard-cover-copy > span:last-child { display: block; font-size: 11px; }
+.page { background: transparent; }
+.hero, .watchlist-panel { background: rgba(3,15,12,.9); backdrop-filter: blur(8px); }
+.workspace-shortcut, .workspace-metric { background: rgba(4,22,16,.9); backdrop-filter: blur(7px); }
+@media (min-width: 981px) { .dashboard-cover { grid-row: 1; height: 276px; } .header { grid-row: 2; } }
+@media (max-width: 680px) { .dashboard-cover { height: 210px; } .dashboard-cover-copy { padding: 22px; } .dashboard-cover-copy strong { font-size: 29px; } }
