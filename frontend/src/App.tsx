@@ -168,6 +168,15 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
       />
 
       <div className="page">
+        <section className="dashboard-cover" aria-label="Drift workspace introduction">
+          <div className="dashboard-cover-art" aria-hidden="true" />
+          <div className="dashboard-cover-copy">
+            <span className="dashboard-cover-kicker">DRIFT / MARKET WORKSPACE</span>
+            <strong>Markets move.<br />So do you.</strong>
+            <span>Track what matters. Return with context.</span>
+          </div>
+          <span className="dashboard-cover-signal">LIVE CONTEXT <i /></span>
+        </section>
         <Header
           username={username}
           onLogout={onLogout}
@@ -183,6 +192,18 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         />
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
+
+        <div className="workspace-shortcuts" aria-label="Workspace shortcuts">
+          <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
+            <span className="shortcut-icon">⌁</span><span><strong>Track what matters</strong><small>Focus on real moves, not noise.</small></span><b>›</b>
+          </button>
+          <button type="button" className="workspace-shortcut" onClick={toggleBeginnerMode}>
+            <span className="shortcut-icon">◌</span><span><strong>Get clearer explanations</strong><small>{beginnerMode ? "Beginner mode is on." : "Translate signals into plain language."}</small></span><b>›</b>
+          </button>
+          <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
+            <span className="shortcut-icon">▥</span><span><strong>Make better decisions</strong><small>See what changed after you looked.</small></span><b>›</b>
+          </button>
+        </div>
 
         {error && (
           <div className="error-row">
