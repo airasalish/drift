@@ -2303,3 +2303,21 @@ body::after { content: ""; position: fixed; z-index: -1; right: -8vw; bottom: -1
 
 body::after { z-index: 0; }
 .app-shell { position: relative; z-index: 1; }
+
+
+/* Full reference artwork mode: the authenticated app sits inside the artwork, not beside it. */
+.app-shell { isolation: isolate; background: #03100d; }
+.app-shell::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: url('/drift-dashboard-cover.png') center / cover no-repeat; transform: scale(1.02); }
+.app-shell::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(1,9,7,.93) 0%, rgba(1,9,7,.78) 25%, rgba(1,10,8,.62) 58%, rgba(1,8,7,.7) 100%), linear-gradient(0deg, rgba(1,8,7,.78) 0%, transparent 38%, rgba(1,8,7,.3) 100%); }
+.rail { background: rgba(3,15,12,.82); backdrop-filter: blur(16px); border-right-color: rgba(93,190,155,.18); }
+.page { position: relative; }
+.dashboard-cover { background: rgba(3,16,13,.42); border-color: rgba(105,225,180,.28); box-shadow: 0 14px 50px rgba(0,0,0,.18); }
+.dashboard-cover-art { opacity: .42; mix-blend-mode: screen; }
+.header, .workspace-shortcuts, .workspace-metrics, .watchlist-panel, .hero, .add-form { position: relative; }
+.workspace-shortcut, .workspace-metric, .watchlist-panel, .watchlist-filter-wrap, .drift-card, .history-panel { background-color: rgba(3,20,15,.68); backdrop-filter: blur(12px); }
+.hero { padding: 16px 18px 20px; border: 1px solid rgba(89,190,153,.16); border-radius: 5px; background: linear-gradient(135deg, rgba(4,28,20,.44), rgba(2,11,9,.38)); backdrop-filter: blur(9px); }
+.watchlist-panel { padding: 18px; border: 1px solid rgba(89,190,153,.16); border-radius: 5px; }
+@media (max-width: 680px) { .app-shell::before { background-position: 58% center; } .app-shell::after { background: linear-gradient(180deg, rgba(1,9,7,.9), rgba(1,10,8,.74) 50%, rgba(1,8,7,.9)); } .hero, .watchlist-panel { padding: 14px; } }
+
+.app-shell { background: linear-gradient(90deg, rgba(1,9,7,.91), rgba(1,10,8,.64) 56%, rgba(1,8,7,.74)), linear-gradient(0deg, rgba(1,8,7,.8), transparent 42%, rgba(1,8,7,.24)), url('/drift-dashboard-cover.png') center / cover fixed no-repeat; }
+.app-shell::before, .app-shell::after { display: none; }
