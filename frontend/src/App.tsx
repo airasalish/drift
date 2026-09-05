@@ -73,6 +73,23 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     }
   }, []);
 
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const typing = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>('input[placeholder="Search company or ticker"]')?.focus();
+      }
+      if (event.key === "r" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        refresh();
+      }
+    }
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [refresh]);
+
   const marketOpen = isMarketOpen();
 
   const attentionItems = items.filter((i) => i.has_attention).sort((a, b) => b.attention_score - a.attention_score);
@@ -161,6 +178,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           error={error}
           beginnerMode={beginnerMode}
           onToggleBeginnerMode={toggleBeginnerMode}
+          onRefresh={refresh}
         />
 
         <AddStockForm onAdd={handleAdd} adding={adding} />

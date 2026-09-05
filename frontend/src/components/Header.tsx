@@ -12,6 +12,7 @@ export function Header({
   error,
   beginnerMode,
   onToggleBeginnerMode,
+  onRefresh,
 }: {
   username: string | null;
   onLogout: () => void;
@@ -23,6 +24,7 @@ export function Header({
   error: string | null;
   beginnerMode: boolean;
   onToggleBeginnerMode: () => void;
+  onRefresh: () => void;
 }) {
   return (
     <header className="header">
@@ -54,6 +56,17 @@ export function Header({
           </div>
         )}
         <div className="account">
+          <button
+            type="button"
+            className="refresh-btn"
+            onClick={onRefresh}
+            disabled={loading}
+            title="Refresh market data now"
+            aria-label="Refresh market data now"
+          >
+            <span className={loading ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
+            <span>{loading ? "Updating" : "Refresh"}</span>
+          </button>
           <button
             type="button"
             className={`beginner-toggle${beginnerMode ? " on" : ""}`}
