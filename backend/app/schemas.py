@@ -48,6 +48,7 @@ class WatchlistItemOut(BaseModel):
     symbol: str
     note: str | None
     company_name: str | None
+    company_website: str | None
     added_at: datetime.datetime
     added_price: float | None
     last_viewed_at: datetime.datetime | None

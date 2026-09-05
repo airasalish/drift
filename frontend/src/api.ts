@@ -141,6 +141,11 @@ export const api = {
     const res = await fetch(`${BASE}/auth/demo`, { method: "POST" });
     const data = await handle<{ token: string; username: string }>(res);
     setSession(data.token, data.username, true);
+    try {
+      sessionStorage.setItem("drift_pending_tour", "1");
+    } catch {
+      // private mode -- tour just won't auto-start
+    }
     return data;
   },
 };

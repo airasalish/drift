@@ -1,3 +1,4 @@
+import { CompanyFavicon } from "./CompanyFavicon";
 import { Sparkline } from "../Sparkline";
 import { formatPct, formatPrice, pctClass } from "../format";
 import type { WatchlistItem } from "../types";
@@ -6,17 +7,26 @@ export function WatchlistRow({
   item,
   selected,
   onClick,
+  tourAnchor,
 }: {
   item: WatchlistItem;
   selected: boolean;
   onClick: () => void;
+  tourAnchor?: boolean;
 }) {
   const stale = item.quote?.is_stale;
 
   return (
-    <button type="button" className={`watchlist-row${selected ? " selected" : ""}`} onClick={onClick}>
+    <button
+      type="button"
+      className={`watchlist-row${selected ? " selected" : ""}`}
+      onClick={onClick}
+      aria-label={`Open ${item.symbol} detail`}
+      data-tour={tourAnchor ? "watchlist-row" : undefined}
+    >
       <div className="wr-identity">
         <div className="wr-identity-top">
+          <CompanyFavicon domain={item.company_website} symbol={item.symbol} />
           <span className="wr-symbol">{item.symbol}</span>
           {item.note && <span className="wr-thesis-pill">{item.note}</span>}
         </div>
