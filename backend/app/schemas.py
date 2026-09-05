@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class WatchlistItemCreate(BaseModel):
     symbol: str
     note: str | None = None
+    company_name: str | None = None
 
 
 class WatchlistItemNoteUpdate(BaseModel):
@@ -35,6 +36,7 @@ class WatchlistItemOut(BaseModel):
     id: int
     symbol: str
     note: str | None
+    company_name: str | None
     added_at: datetime.datetime
     added_price: float | None
     last_viewed_at: datetime.datetime | None

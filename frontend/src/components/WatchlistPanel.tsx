@@ -10,9 +10,11 @@ const TIER_ORDER: AttentionTier[] = ["needs-attention", "worth-checking", "quiet
 // engine's own score -- this component only renders the grouping.
 export function WatchlistPanel({
   items,
+  selectedId,
   onOpenDetail,
 }: {
   items: WatchlistItem[];
+  selectedId: number | null;
   onOpenDetail: (item: WatchlistItem) => void;
 }) {
   const grouped = TIER_ORDER.map((tier) => ({
@@ -35,7 +37,12 @@ export function WatchlistPanel({
             </div>
             <div className="watchlist-rows">
               {g.items.map((item) => (
-                <WatchlistRow key={item.id} item={item} onClick={() => onOpenDetail(item)} />
+                <WatchlistRow
+                  key={item.id}
+                  item={item}
+                  selected={item.id === selectedId}
+                  onClick={() => onOpenDetail(item)}
+                />
               ))}
             </div>
           </div>

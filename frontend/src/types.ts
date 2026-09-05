@@ -21,6 +21,7 @@ export interface WatchlistItem {
   id: number;
   symbol: string;
   note: string | null;
+  company_name: string | null;
   added_at: string;
   added_price: number | null;
   last_viewed_at: string | null;

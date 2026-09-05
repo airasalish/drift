@@ -70,8 +70,9 @@ button {
 }
 
 /* numerals never jitter as digits change */
-.price, .price-cell, .dc-price, .wr-price, .wr-stat-value,
-.drawer-price, .ds-value, .mc-value, .since-last-view-cell {
+.price, .price-cell, .wr-price, .wr-since-value, .wr-since-added,
+.dc-primary-value, .dc-secondary-price, .drawer-primary-value, .drawer-now,
+.ds-value, .mc-value {
   font-variant-numeric: tabular-nums;
 }
 
@@ -591,44 +592,60 @@ section h2 {
 .dc-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
 .dc-symbol {
   font-weight: 800;
-  font-size: 17px;
-  display: block;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.dc-company {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+/* the hero number: since-last-view (or since-added fallback) dominates --
+   price is demoted to a small "now" line below it */
+.dc-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: var(--sp-3);
+}
+
+.dc-primary-value {
+  font-size: 26px;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
-.dc-price {
-  font-weight: 700;
-  font-size: 19px;
-  color: var(--text);
-  display: block;
+.dc-primary-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dc-secondary-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
   margin-top: 2px;
 }
 
-.dc-change-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 999px;
-  margin-top: 10px;
-}
-
-.dc-change-badge.positive {
-  background: var(--green-dim);
-  color: var(--green);
-}
-
-.dc-change-badge.negative {
-  background: var(--red-dim);
-  color: var(--red);
+.dc-now-label {
+  font-size: 10.5px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .dc-thesis {
@@ -711,15 +728,15 @@ section h2 {
 
 .watchlist-row {
   display: grid;
-  grid-template-columns: minmax(110px, 1.4fr) 76px minmax(90px, 1fr) minmax(90px, 1fr) 100px;
+  grid-template-columns: minmax(120px, 1.5fr) 60px minmax(84px, 0.9fr) minmax(76px, 0.8fr) 88px;
   align-items: center;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   width: 100%;
   text-align: left;
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border-soft);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
   color: inherit;
   font-family: inherit;
@@ -739,33 +756,61 @@ section h2 {
   outline-offset: -2px;
 }
 
-.tier-needs-attention .watchlist-row {
+/* subtle selected-row treatment (Koyfin-style) -- a left rail + faint
+   background, never a glowing border or a second card around the row */
+.watchlist-row.selected {
+  background: var(--surface-2);
   box-shadow: inset 2.5px 0 0 var(--accent);
 }
 
-.tier-worth-checking .watchlist-row {
+.tier-needs-attention .watchlist-row:not(.selected) {
+  box-shadow: inset 2.5px 0 0 var(--accent);
+}
+
+.tier-worth-checking .watchlist-row:not(.selected) {
   box-shadow: inset 2.5px 0 0 var(--amber);
 }
 
-.wr-symbol-block {
+.wr-identity {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wr-identity-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
 }
 
 .wr-symbol {
   font-weight: 700;
-  font-size: 14.5px;
+  font-size: 13.5px;
   letter-spacing: -0.01em;
+  flex-shrink: 0;
 }
 
-.wr-thesis {
-  font-size: 11.5px;
-  color: var(--muted);
+.wr-company {
+  font-size: 11px;
+  color: var(--faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.wr-thesis-pill {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-3);
+  border-radius: 999px;
+  padding: 1px 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
 }
 
 .wr-spark {
@@ -773,32 +818,43 @@ section h2 {
   justify-content: center;
 }
 
-.wr-stat {
+/* the hero number in the row: bolder and larger than price, which is
+   demoted to plain supporting text at the far right */
+.wr-since {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0;
 }
 
-.wr-stat-label {
-  font-size: 10px;
+.wr-since-label {
+  font-size: 9px;
   color: var(--faint);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.wr-stat-value {
-  font-weight: 700;
-  font-size: 13.5px;
+.wr-since-value {
+  font-weight: 800;
+  font-size: 14.5px;
 }
 
-.wr-stat-muted .wr-stat-value {
-  font-weight: 600;
-  opacity: 0.85;
+.wr-since-added {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.wr-since-added .wr-since-label {
+  font-size: 9px;
 }
 
 .wr-price {
-  font-weight: 700;
-  font-size: 13.5px;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--text-dim);
   text-align: right;
   display: flex;
   align-items: center;
@@ -972,20 +1028,54 @@ section h2 {
 
 .drawer-symbol {
   font-weight: 800;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  letter-spacing: -0.01em;
 }
 
-.drawer-price {
+.drawer-company {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+/* the hero number: since-last-look (or the next-best fallback) -- this is
+   the number Drift exists to answer, so it dominates the header */
+.drawer-primary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.drawer-primary-value {
+  font-size: 34px;
   font-weight: 800;
-  font-size: 30px;
   letter-spacing: -0.02em;
 }
 
-.drawer-day-change {
+.drawer-primary-label {
   font-size: 12.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.drawer-now {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 16px;
   font-weight: 600;
-  width: fit-content;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.drawer-now-label {
+  font-size: 11px;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .drawer-close {
@@ -1185,10 +1275,10 @@ section h2 {
 /* ── Responsive ── */
 @media (max-width: 860px) {
   .watchlist-row {
-    grid-template-columns: minmax(90px, 1.2fr) 60px minmax(70px, 1fr) 90px;
+    grid-template-columns: minmax(90px, 1.2fr) 56px minmax(70px, 1fr) 80px;
   }
 
-  .wr-stat-muted {
+  .wr-since-added {
     display: none;
   }
 }
@@ -1224,16 +1314,16 @@ section h2 {
   }
 
   .watchlist-row {
-    grid-template-columns: 1fr 56px auto;
+    grid-template-columns: 1fr 52px auto;
     grid-template-areas:
       "symbol spark price"
       "since  since  since";
   }
 
-  .wr-symbol-block { grid-area: symbol; }
+  .wr-identity { grid-area: symbol; }
   .wr-spark { grid-area: spark; }
   .wr-price { grid-area: price; }
-  .wr-stat:not(.wr-stat-muted) {
+  .wr-since {
     grid-area: since;
   }
 

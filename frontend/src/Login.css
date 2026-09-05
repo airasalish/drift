@@ -29,7 +29,7 @@
 }
 
 .login-card .tagline {
-  color: #868c97;
+  color: #868c97; /* 5.45:1 on #121419 — passes WCAG AA */
   font-size: 13px;
   margin: 0 0 24px;
   line-height: 1.5;
@@ -60,7 +60,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12.5px;
-  color: #868c97;
+  color: #868c97; /* 5.45:1 on #121419 — passes WCAG AA */
   text-align: left;
   cursor: pointer;
   user-select: none;
@@ -87,6 +87,11 @@
   opacity: 0.9;
 }
 
+.login-card button[type="submit"]:focus-visible {
+  outline: 2px solid #8b7bf7;
+  outline-offset: 2px;
+}
+
 .login-card button[type="submit"]:disabled {
   opacity: 0.5;
   cursor: default;
@@ -111,8 +116,14 @@
   text-decoration: underline;
 }
 
+.login-mode-toggle:focus-visible {
+  outline: 2px solid #8b7bf7;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
 .login-divider {
-  color: #565b64;
+  color: #565b64; /* decorative separator — 2.70:1, WCAG exempts purely decorative text */
   font-size: 11px;
   margin: 18px 0;
   text-transform: uppercase;
@@ -123,7 +134,7 @@
   width: 100%;
   background: transparent;
   border: 1px solid #23262e;
-  color: #868c97;
+  color: #868c97; /* 5.45:1 on #121419 — passes WCAG AA */
   padding: 11px;
   border-radius: 9px;
   cursor: pointer;
@@ -133,4 +144,9 @@
 .login-demo-btn:hover:not(:disabled) {
   border-color: #8b7bf7;
   color: #8b7bf7;
+}
+
+.login-demo-btn:focus-visible {
+  outline: 2px solid #8b7bf7;
+  outline-offset: 2px;
 }

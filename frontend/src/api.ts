@@ -53,11 +53,11 @@ function authHeaders(): HeadersInit {
 export const api = {
   list: () => fetch(`${BASE}/watchlist`, { headers: authHeaders() }).then((r) => handle<WatchlistItem[]>(r)),
 
-  add: (symbol: string, note: string) =>
+  add: (symbol: string, note: string, companyName?: string) =>
     fetch(`${BASE}/watchlist`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ symbol, note: note || null }),
+      body: JSON.stringify({ symbol, note: note || null, company_name: companyName || null }),
     }).then((r) => handle<WatchlistItem>(r)),
 
   remove: (id: number) =>

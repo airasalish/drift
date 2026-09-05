@@ -68,17 +68,38 @@ export function StockDrawer({
       ? (item.quote.price - item.quote.prev_close) / item.quote.prev_close
       : null;
 
+  // "Since last look" is Drift's headline metric -- current price is
+  // supporting context, not the primary number. Falls back down the chain
+  // only when the stronger signal genuinely isn't available yet.
+  const stats = [
+    { label: "Since last view", value: item.change_since_last_view_pct },
+    { label: "Since added", value: item.change_since_added_pct },
+    { label: "Today", value: dayChangePct },
+  ];
+  const primaryIdx = stats.findIndex((s) => s.value != null);
+  const primary = primaryIdx >= 0 ? stats[primaryIdx] : null;
+  const secondary = stats.filter((_, i) => i !== primaryIdx);
+
   return (
     <>
       <div className="drawer-scrim" onClick={onClose} />
       <aside className="drawer" role="dialog" aria-label={`${item.symbol} detail`}>
         <div className="drawer-head">
           <div className="drawer-head-main">
-            <span className="drawer-symbol">{item.symbol}</span>
-            <span className="drawer-price">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</span>
-            {dayChangePct != null && (
-              <span className={`drawer-day-change ${pctClass(dayChangePct)}`}>{formatPct(dayChangePct)} today</span>
+            <span className="drawer-symbol">
+              {item.symbol}
+              {item.company_name && <span className="drawer-company"> · {item.company_name}</span>}
+            </span>
+            {primary && (
+              <div className="drawer-primary">
+                <span className={`drawer-primary-value ${pctClass(primary.value)}`}>{formatPct(primary.value)}</span>
+                <span className="drawer-primary-label">{primary.label.toLowerCase()}</span>
+              </div>
             )}
+            <div className="drawer-now">
+              {formatPrice(item.quote?.price ?? null, item.quote?.currency)}
+              <span className="drawer-now-label">now</span>
+            </div>
           </div>
           <button className="drawer-close" onClick={onClose} aria-label="Close">
             ✕
@@ -105,17 +126,13 @@ export function StockDrawer({
 
         <div className="drawer-stats">
           <div className="drawer-stat">
-            <span className="ds-label">Since last view</span>
-            <span className={`ds-value ${pctClass(item.change_since_last_view_pct)}`}>
-              {formatPct(item.change_since_last_view_pct)}
-            </span>
+            <span className="ds-label">{secondary[0].label}</span>
+            <span className={`ds-value ${pctClass(secondary[0].value)}`}>{formatPct(secondary[0].value)}</span>
           </div>
           <div className="drawer-stat-divider" />
           <div className="drawer-stat">
-            <span className="ds-label">Since added</span>
-            <span className={`ds-value ${pctClass(item.change_since_added_pct)}`}>
-              {formatPct(item.change_since_added_pct)}
-            </span>
+            <span className="ds-label">{secondary[1].label}</span>
+            <span className={`ds-value ${pctClass(secondary[1].value)}`}>{formatPct(secondary[1].value)}</span>
           </div>
         </div>
 

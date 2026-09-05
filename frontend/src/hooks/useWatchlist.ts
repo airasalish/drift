@@ -66,9 +66,9 @@ export function useWatchlist() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
-  async function add(symbol: string, note: string) {
+  async function add(symbol: string, note: string, companyName?: string) {
     try {
-      await api.add(symbol, note);
+      await api.add(symbol, note, companyName);
       setError(null);
       await refresh();
     } catch (e) {

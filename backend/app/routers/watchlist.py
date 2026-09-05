@@ -123,6 +123,7 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
         id=item.id,
         symbol=item.symbol,
         note=item.note,
+        company_name=item.company_name,
         added_at=item.added_at,
         added_price=item.added_price,
         last_viewed_at=item.last_viewed_at,
@@ -252,6 +253,7 @@ def add_symbol(
         watchlist_id=watchlist.id,
         symbol=symbol,
         note=payload.note,
+        company_name=payload.company_name.strip() if payload.company_name else None,
         added_price=added_price,
     )
     db.add(item)

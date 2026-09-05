@@ -11,8 +11,13 @@ export function DriftCard({
   onOpenDetail: (item: WatchlistItem) => void;
   onSeen: (id: number) => void;
 }) {
-  const changePct = item.change_since_last_view_pct;
   const topReasons = item.fired.slice(0, 2);
+
+  // "since last view" is the hero number here -- price is supporting
+  // information, not the headline. Falls back to "since added" only for a
+  // symbol that's never had an explicit view yet.
+  const primaryPct = item.change_since_last_view_pct ?? item.change_since_added_pct;
+  const primaryLabel = item.change_since_last_view_pct != null ? "since last view" : "since added";
 
   return (
     <div
@@ -25,18 +30,24 @@ export function DriftCard({
       }}
     >
       <div className="dc-head">
-        <div>
-          <span className="dc-symbol">{item.symbol}</span>
-          <span className="dc-price">{formatPrice(item.quote?.price ?? null, item.quote?.currency)}</span>
-        </div>
-        <Sparkline values={item.quote?.spark ?? []} markerValue={item.price_at_last_view} width={88} height={30} />
+        <span className="dc-symbol">
+          {item.symbol}
+          {item.company_name && <span className="dc-company"> · {item.company_name}</span>}
+        </span>
+        <Sparkline values={item.quote?.spark ?? []} markerValue={item.price_at_last_view} width={80} height={28} />
       </div>
 
-      {changePct != null && (
-        <span className={`dc-change-badge ${pctClass(changePct)}`}>
-          {changePct >= 0 ? "▲" : "▼"} {formatPct(changePct)} since last view
-        </span>
+      {primaryPct != null && (
+        <div className="dc-primary">
+          <span className={`dc-primary-value ${pctClass(primaryPct)}`}>{formatPct(primaryPct)}</span>
+          <span className="dc-primary-label">{primaryLabel}</span>
+        </div>
       )}
+
+      <div className="dc-secondary-price">
+        {formatPrice(item.quote?.price ?? null, item.quote?.currency)}
+        <span className="dc-now-label">now</span>
+      </div>
 
       <ul className="reasons">
         {topReasons.map((f, idx) => (
