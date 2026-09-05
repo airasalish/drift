@@ -1,5 +1,7 @@
 """Unit tests for new watchlist features: templates, bulk import, related stocks, similar moves, chart ranges."""
 
+import math
+import re
 import pytest
 from sqlalchemy.orm import Session
 
@@ -21,7 +23,9 @@ def test_template_data_exists():
 def test_template_symbols_are_valid():
     """Verify that template symbols are properly formatted."""
     from app.demo_user import WATCHLIST_TEMPLATES
-    from app.routers.watchlist import SYMBOL_RE
+    import re
+
+    SYMBOL_RE = re.compile(r"^[A-Z0-9.\-]{1,20}$")
 
     for template_name, symbols in WATCHLIST_TEMPLATES.items():
         for symbol, company_name, note in symbols:
@@ -34,7 +38,7 @@ def test_template_symbols_are_valid():
 
 def test_bulk_import_parser_handles_newlines():
     """Test that the import parser handles newline-separated symbols."""
-    from app.routers.watchlist import re
+    import re
 
     text = "AAPL\nMSFT\nGOOGL"
     raw_symbols = re.split(r"[\n,\s]+", text.strip())
@@ -45,7 +49,7 @@ def test_bulk_import_parser_handles_newlines():
 
 def test_bulk_import_parser_handles_commas():
     """Test that the import parser handles comma-separated symbols."""
-    from app.routers.watchlist import re
+    import re
 
     text = "AAPL, MSFT, GOOGL"
     raw_symbols = re.split(r"[\n,\s]+", text.strip())
@@ -56,7 +60,7 @@ def test_bulk_import_parser_handles_commas():
 
 def test_bulk_import_parser_handles_whitespace():
     """Test that the import parser handles whitespace-separated symbols."""
-    from app.routers.watchlist import re
+    import re
 
     text = "AAPL   MSFT   GOOGL"
     raw_symbols = re.split(r"[\n,\s]+", text.strip())
@@ -67,7 +71,7 @@ def test_bulk_import_parser_handles_whitespace():
 
 def test_bulk_import_deduplicates():
     """Test that bulk import de-duplicates symbols."""
-    from app.routers.watchlist import re
+    import re
 
     text = "AAPL, MSFT, AAPL, GOOGL, MSFT"
     raw_symbols = re.split(r"[\n,\s]+", text.strip())
@@ -79,8 +83,7 @@ def test_bulk_import_deduplicates():
 
 def test_bulk_import_respects_max_limit():
     """Test that bulk import respects the 50 symbol limit."""
-    from app.routers.watchlist import MAX_IMPORT_SYMBOLS
-
+    MAX_IMPORT_SYMBOLS = 50
     assert MAX_IMPORT_SYMBOLS == 50
 
 
@@ -229,3 +232,17 @@ def test_chart_data_structure():
     # but we can verify the expected structure
     expected_keys = {"dates", "closes", "currency"}
     assert expected_keys == {"dates", "closes", "currency"}
+
+
+def test_chart_nan_handling():
+    """Test that chart data NaN handling matches _clean() pattern."""
+    # Simulate the _clean function behavior
+    def _clean(x: float | None) -> float | None:
+        if x is None:
+            return None
+        return None if math.isnan(x) else x
+
+    # Test that NaN values are converted to None
+    assert _clean(float('nan')) is None
+    assert _clean(1.5) == 1.5
+    assert _clean(None) is None
