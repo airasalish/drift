@@ -26,7 +26,7 @@ export function QuickAccessRail({
   const sorted = [...items].sort((a, b) => b.attention_score - a.attention_score);
 
   return (
-    <nav className="rail" aria-label="Watched symbols">
+    <nav className="rail" aria-label="Watched symbols" data-tour="rail">
       <div className="rail-brand">
         <BrandMark />
       </div>
@@ -35,6 +35,8 @@ export function QuickAccessRail({
         type="button"
         className={`rail-nav-item${view === "history" ? " selected" : ""}`}
         onClick={onShowHistory}
+        aria-label="Open history"
+        aria-current={view === "history" ? "page" : undefined}
       >
         History
       </button>
@@ -49,6 +51,8 @@ export function QuickAccessRail({
               className={`rail-item${view === "watchlist" && item.id === selectedId ? " selected" : ""}`}
               onClick={() => onSelect(item)}
               title={item.company_name ?? item.symbol}
+              aria-label={`Open ${item.symbol}${item.company_name ? `, ${item.company_name}` : ""}`}
+              aria-current={view === "watchlist" && item.id === selectedId ? "true" : undefined}
             >
               <span className={`rail-dot tier-${attentionTier(item)}`} />
               <span className="rail-symbol">{item.symbol}</span>

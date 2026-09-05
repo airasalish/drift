@@ -10,7 +10,7 @@ import json
 from sqlalchemy.orm import Session
 
 from app.models import SymbolQuote, User, Watchlist, WatchlistItem
-from app.services.market_data import fetch_symbol_stats
+from app.services.market_data import fetch_symbol_stats, lookup_company_website
 
 DEMO_USER_NAME = "demo"
 
@@ -61,6 +61,7 @@ def _seed_item(db: Session, watchlist: Watchlist, symbol: str, company_name: str
             symbol=symbol,
             note=note,
             company_name=company_name,
+            company_website=lookup_company_website(symbol),
             added_price=quote.price,
         )
     )

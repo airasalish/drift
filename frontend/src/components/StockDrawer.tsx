@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { CompanyFavicon } from "./CompanyFavicon";
 import { simplifyRuleMessage } from "../lib/beginner";
 import { formatPct, formatPrice, pctClass } from "../format";
 import { Sparkline } from "../Sparkline";
@@ -93,6 +94,7 @@ export function StockDrawer({
         <div className="drawer-head">
           <div className="drawer-head-main">
             <span className="drawer-symbol">
+              <CompanyFavicon domain={item.company_website} symbol={item.symbol} />
               {item.symbol}
               {item.company_name && <span className="drawer-company"> · {item.company_name}</span>}
             </span>
@@ -107,7 +109,7 @@ export function StockDrawer({
               <span className="drawer-now-label">now</span>
             </div>
           </div>
-          <button className="drawer-close" onClick={onClose} aria-label="Close">
+          <button className="drawer-close" type="button" onClick={onClose} aria-label="Close detail">
             ✕
           </button>
         </div>
