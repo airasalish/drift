@@ -2405,3 +2405,8 @@ html { scrollbar-color: #29483e #07100d; scrollbar-width: thin; }
 *::-webkit-scrollbar-thumb { border: 2px solid #07100d; border-radius: 999px; background: #29483e; }
 *::-webkit-scrollbar-thumb:hover { background: #4f806d; }
 *::-webkit-scrollbar-corner { background: #07100d; }
+
+
+.hero-summary { margin: 15px 0 0; max-width: 760px; color: #c3ded2; font-size: 14px; line-height: 1.55; letter-spacing: -.01em; }
+.hero-summary strong { color: #f2fff8; font-weight: 800; }
+.hero-summary span { color: #82aa9a; }
