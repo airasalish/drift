@@ -75,6 +75,10 @@ class WatchlistItem(Base):
     # second source of truth), so a stale/missing value here never breaks
     # anything, it just falls back to showing the ticker alone
     company_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    # best-effort registrable domain from yfinance's website field, captured
+    # once at add time the same way company_name is -- never required, never
+    # blocks an add, and a missing value just means we show ticker-only
+    company_website: Mapped[str | None] = mapped_column(String, nullable=True)
     added_at: Mapped[datetime.datetime] = mapped_column(DateTime(), default=utcnow)
     added_price: Mapped[float | None] = mapped_column(Float, nullable=True)
 

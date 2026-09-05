@@ -6,6 +6,7 @@ everything the change-detection rules need: current price/volume, trailing
 
 import logging
 import math
+from urllib.parse import urlparse
 
 import yfinance as yf
 
@@ -24,6 +25,43 @@ def _clean(x: float | None) -> float | None:
     if x is None:
         return None
     return None if math.isnan(x) else x
+
+
+def domain_from_website(website: str | None) -> str | None:
+    """Turn a yfinance `website` value into a bare domain for a favicon
+    lookup. Best-effort: missing/garbage input returns None rather than
+    guessing a company.
+    """
+    if not website or not isinstance(website, str):
+        return None
+    raw = website.strip()
+    if not raw:
+        return None
+    if "://" not in raw:
+        raw = "https://" + raw
+    try:
+        host = urlparse(raw).hostname
+    except Exception:
+        return None
+    if not host:
+        return None
+    host = host.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host or None
+
+
+def lookup_company_website(symbol: str) -> str | None:
+    """Best-effort domain from yfinance Ticker.info. Never raises; a miss
+    is None and the add path proceeds with ticker-only display.
+    """
+    try:
+        info = yf.Ticker(symbol).info or {}
+        website = info.get("website") or info.get("websiteUrl")
+        return domain_from_website(website if isinstance(website, str) else None)
+    except Exception:
+        logger.exception("website lookup failed for %s", symbol)
+        return None
 
 
 def fetch_symbol_stats(symbol: str) -> dict | None:
