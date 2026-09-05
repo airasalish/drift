@@ -48,6 +48,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [view, setView] = useState<"watchlist" | "history">("watchlist");
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [watchlistQuery, setWatchlistQuery] = useState("");
   // per-viewer display preference only -- never a source of truth, the
   // rule engine's output is identical either way, this just rewords it
   const [beginnerMode, setBeginnerMode] = useState(() => {
@@ -212,7 +213,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             <WatchlistPanel
               items={items}
               selectedId={selectedId}
+              query={watchlistQuery}
+              onQueryChange={setWatchlistQuery}
               onOpenDetail={setDetailItem}
+              attentionCount={attentionItems.length}
               onResetSample={async () => {
                 await resetToSample();
                 setTourOpen(true);
