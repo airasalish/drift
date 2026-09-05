@@ -137,3 +137,14 @@ class SymbolQuote(Base):
     fetch_ok: Mapped[bool] = mapped_column(default=True)  # false => last fetch failed, price is stale
     watch_count: Mapped[int] = mapped_column(Integer, default=0)  # ready for popularity-weighted polling
     spark_closes_json: Mapped[str | None] = mapped_column(String, nullable=True)  # last 30 closes, JSON
+    # Similar moves: compact JSON array of date+ pct_change pairs for the past year
+    similar_moves_json: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
+class SymbolSector(Base):
+    """Hand-checked sector tags for related stocks (same-sector only, not correlation)."""
+
+    __tablename__ = "symbol_sectors"
+
+    symbol: Mapped[str] = mapped_column(String, primary_key=True)
+    sector: Mapped[str] = mapped_column(String, nullable=False)  # tech, auto-ev, gaming-entertainment, consumer-retail, industrial-energy, travel-transport

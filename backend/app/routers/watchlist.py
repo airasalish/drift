@@ -9,23 +9,32 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.demo_user import get_or_create_watchlist_for_user, seed_default_watchlist
-from app.models import SeenEvent, SymbolQuote, User, Watchlist, WatchlistItem
+from app.demo_user import get_or_create_watchlist_for_user, seed_default_watchlist, WATCHLIST_TEMPLATES
+from app.models import SeenEvent, SymbolQuote, SymbolSector, User, Watchlist, WatchlistItem
+from app.sector_data import get_sector_for_symbol, get_symbols_in_sector, seed_sector_data
 from app.schemas import (
+    BulkImportAnalyze,
+    BulkImportConfirm,
+    BulkImportResult,
+    ChartRangeOut,
     FiredRule,
     HistoryEventOut,
     QuoteOut,
+    RelatedStockOut,
+    SimilarMovesOut,
     WatchlistCreate,
     WatchlistItemCreate,
     WatchlistItemNoteUpdate,
     WatchlistItemOut,
     WatchlistOut,
+    WatchlistTemplateCreate,
+    WatchlistTemplateOut,
     WatchlistUpdate,
 )
 from app.services import change_detection
 from app.services.auth import get_current_user
 from app.services.digest import generate_digest
-from app.services.market_data import fetch_symbol_stats, lookup_company_website
+from app.services.market_data import fetch_symbol_stats, fetch_chart_data, lookup_company_website
 from app.services.poller import BENCHMARK_SYMBOL
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
@@ -219,21 +228,399 @@ def rename_watchlist(
 @watchlists_router.delete("/{id}")
 def delete_watchlist(id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Delete a watchlist belonging to the current user.
-    
+
     Blocks deletion if it's the user's last remaining watchlist — there must
     always be at least one watchlist per user.
     """
     watchlist = _get_watchlist_or_404(db, id, user)
-    
+
     # Check if this is the user's last watchlist
     watchlist_count = db.query(Watchlist).filter_by(user_id=user.id).count()
     if watchlist_count <= 1:
         raise HTTPException(400, "cannot delete your last watchlist")
-    
+
     db.delete(watchlist)
     db.commit()
-    
+
     return {"ok": True}
+
+
+# ============================================================================
+# WATCHLIST TEMPLATES
+# ============================================================================
+
+TEMPLATE_METADATA = {
+    "technology": {"display_name": "Technology", "description": "Major US tech companies"},
+    "ai_semiconductors": {"display_name": "AI & Semiconductors", "description": "AI infrastructure and chip makers"},
+    "indian_large_caps": {"display_name": "Indian Large Caps", "description": "Major Indian companies"},
+    "us_mega_caps": {"display_name": "US Mega Caps", "description": "Largest US companies by market cap"},
+    "banking": {"display_name": "Banking", "description": "Major financial institutions"},
+    "ev_mobility": {"display_name": "EV & Mobility", "description": "Electric vehicle and mobility companies"},
+}
+
+
+@watchlists_router.get("/templates", response_model=list[WatchlistTemplateOut])
+def list_watchlist_templates():
+    """List available watchlist templates."""
+    return [
+        WatchlistTemplateOut(
+            template_name=key,
+            display_name=value["display_name"],
+            description=value["description"],
+            symbol_count=len(WATCHLIST_TEMPLATES[key]),
+        )
+        for key, value in TEMPLATE_METADATA.items()
+    ]
+
+
+@watchlists_router.post("/templates/create", response_model=WatchlistOut)
+def create_watchlist_from_template(
+    payload: WatchlistTemplateCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Create a new watchlist from a template and populate it with the template's symbols."""
+    if payload.template_name not in WATCHLIST_TEMPLATES:
+        raise HTTPException(404, f"template '{payload.template_name}' not found")
+
+    template_symbols = WATCHLIST_TEMPLATES[payload.template_name]
+
+    # Create the watchlist
+    watchlist = Watchlist(user_id=user.id, name=payload.watchlist_name.strip())
+    db.add(watchlist)
+    db.flush()
+
+    # Add each symbol from the template using the existing add logic
+    for symbol, company_name, note in template_symbols:
+        quote = db.get(SymbolQuote, symbol)
+        if quote is None:
+            stats = fetch_symbol_stats(symbol)
+            if stats is None:
+                continue  # Skip if symbol can't be resolved
+            spark_closes = stats.pop("spark_closes")
+            similar_moves = stats.pop("similar_moves", [])
+            quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
+            quote.spark_closes_json = json.dumps(spark_closes)
+            quote.similar_moves_json = json.dumps(similar_moves)
+            quote.fetched_at = datetime.datetime.utcnow()
+            db.add(quote)
+            db.flush()
+
+        added_price = quote.price
+        website = lookup_company_website(symbol)
+
+        item = WatchlistItem(
+            watchlist_id=watchlist.id,
+            symbol=symbol,
+            note=note,
+            company_name=company_name,
+            company_website=website,
+            added_price=added_price,
+        )
+        db.add(item)
+
+    db.commit()
+    db.refresh(watchlist)
+
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+
+
+# ============================================================================
+# BULK IMPORT
+# ============================================================================
+
+MAX_IMPORT_SYMBOLS = 50
+
+
+@watchlists_router.post("/import/analyze", response_model=BulkImportResult)
+def analyze_bulk_import(
+    payload: BulkImportAnalyze,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Analyze bulk import text to validate symbols and check for duplicates."""
+    watchlist = _get_watchlist_or_404(db, payload.watchlist_id, user)
+
+    # Parse symbols from text (handle newlines, commas, whitespace)
+    raw_symbols = re.split(r"[\n,\s]+", payload.text.strip())
+    parsed_symbols = [s.strip().upper() for s in raw_symbols if s.strip()]
+
+    if len(parsed_symbols) > MAX_IMPORT_SYMBOLS:
+        raise HTTPException(400, f"maximum {MAX_IMPORT_SYMBOLS} symbols per import")
+
+    # De-duplicate
+    unique_symbols = list(dict.fromkeys(parsed_symbols))  # Preserve order while de-duplicating
+
+    # Get existing symbols in this watchlist
+    existing_symbols = {item.symbol for item in watchlist.items}
+
+    valid = []
+    duplicates = []
+    invalid = []
+
+    for symbol in unique_symbols:
+        # Check if already in watchlist
+        if symbol in existing_symbols:
+            duplicates.append(symbol)
+            continue
+
+        # Validate symbol format
+        if not SYMBOL_RE.match(symbol):
+            invalid.append(symbol)
+            continue
+
+        # Check if symbol can be resolved (fetch market data)
+        quote = db.get(SymbolQuote, symbol)
+        if quote is None:
+            # Try to fetch market data to validate
+            stats = fetch_symbol_stats(symbol)
+            if stats is None:
+                invalid.append(symbol)
+                continue
+            # Symbol is valid, but we don't add it yet (that's the confirm step)
+            valid.append(symbol)
+        else:
+            # Symbol exists in cache, so it's valid
+            valid.append(symbol)
+
+    return BulkImportResult(
+        valid=valid,
+        duplicates=duplicates,
+        invalid=invalid,
+        total_parsed=len(parsed_symbols),
+    )
+
+
+@watchlists_router.post("/import/confirm", response_model=list[WatchlistItemOut])
+def confirm_bulk_import(
+    payload: BulkImportConfirm,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Confirm and execute bulk import of validated symbols."""
+    watchlist = _get_watchlist_or_404(db, payload.watchlist_id, user)
+
+    if len(payload.symbols) > MAX_IMPORT_SYMBOLS:
+        raise HTTPException(400, f"maximum {MAX_IMPORT_SYMBOLS} symbols per import")
+
+    added_items = []
+
+    for symbol in payload.symbols:
+        # Check if already exists (shouldn't happen if analyzed first, but safety check)
+        existing = next((i for i in watchlist.items if i.symbol == symbol), None)
+        if existing:
+            continue
+
+        quote = db.get(SymbolQuote, symbol)
+        if quote is None:
+            # Fetch market data for new symbol
+            stats = fetch_symbol_stats(symbol)
+            if stats is None:
+                continue  # Skip if symbol can't be resolved
+            spark_closes = stats.pop("spark_closes")
+            similar_moves = stats.pop("similar_moves", [])
+            quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
+            quote.spark_closes_json = json.dumps(spark_closes)
+            quote.similar_moves_json = json.dumps(similar_moves)
+            quote.fetched_at = datetime.datetime.utcnow()
+            db.add(quote)
+            db.flush()
+
+        added_price = quote.price
+        website = lookup_company_website(symbol)
+
+        item = WatchlistItem(
+            watchlist_id=watchlist.id,
+            symbol=symbol,
+            note=None,  # Bulk import doesn't include notes
+            company_name=None,  # Will be filled by future lookup if needed
+            company_website=website,
+            added_price=added_price,
+        )
+        db.add(item)
+        db.flush()
+        added_items.append(item)
+
+    db.commit()
+
+    # Return the newly added items
+    out = []
+    for item in added_items:
+        quote = db.get(SymbolQuote, item.symbol)
+        out.append(_serialize(item, quote))
+
+    return out
+
+
+# ============================================================================
+# RELATED STOCKS (SAME-SECTOR)
+# ============================================================================
+
+@watchlists_router.get("/related/{symbol}", response_model=list[RelatedStockOut])
+def get_related_stocks(
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get stocks in the same sector as the given symbol from tracked symbols."""
+    symbol = symbol.upper()
+    sector = get_sector_for_symbol(symbol)
+
+    if sector is None:
+        return []  # No sector data for this symbol
+
+    # Get all symbols in the same sector
+    sector_symbols = get_symbols_in_sector(sector)
+
+    # Filter to symbols that are actually in any of the user's watchlists
+    user_watchlists = db.query(Watchlist).filter_by(user_id=user.id).all()
+    tracked_symbols = set()
+    for watchlist in user_watchlists:
+        for item in watchlist.items:
+            tracked_symbols.add(item.symbol)
+
+    # Return symbols in the same sector that are also tracked
+    related = []
+    for related_symbol in sector_symbols:
+        if related_symbol == symbol:
+            continue  # Don't include the symbol itself
+        if related_symbol in tracked_symbols:
+            quote = db.get(SymbolQuote, related_symbol)
+            if quote:
+                # Get company name from watchlist item if available
+                company_name = None
+                for watchlist in user_watchlists:
+                    for item in watchlist.items:
+                        if item.symbol == related_symbol:
+                            company_name = item.company_name
+                            break
+                    if company_name:
+                        break
+
+                related.append(
+                    RelatedStockOut(
+                        symbol=related_symbol,
+                        company_name=company_name,
+                        sector=sector,
+                    )
+                )
+
+    return related
+
+
+# ============================================================================
+# SIMILAR MOVES
+# ============================================================================
+
+@watchlists_router.get("/similar-moves/{symbol}", response_model=SimilarMovesOut)
+def get_similar_moves(
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Find historical days with similar % moves to today's move."""
+    symbol = symbol.upper()
+    quote = db.get(SymbolQuote, symbol)
+
+    if quote is None or quote.price is None or quote.prev_close is None:
+        raise HTTPException(404, f"no data available for '{symbol}'")
+
+    # Calculate today's % change
+    today_pct_change = (quote.price - quote.prev_close) / quote.prev_close
+
+    # Load similar moves data
+    similar_moves_data = []
+    if quote.similar_moves_json:
+        try:
+            similar_moves_data = json.loads(quote.similar_moves_json)
+        except (TypeError, ValueError):
+            similar_moves_data = []
+
+    # Find similar historical moves (within 20% of today's move magnitude)
+    similar_days = []
+    tolerance = 0.2  # 20% tolerance
+    move_magnitude = abs(today_pct_change)
+
+    for move in similar_moves_data:
+        if abs(move["pct_change"]) >= move_magnitude * (1 - tolerance) and abs(move["pct_change"]) <= move_magnitude * (1 + tolerance):
+            try:
+                move_date = datetime.datetime.strptime(move["date"], "%Y-%m-%d")
+                similar_days.append(
+                    SimilarMoveOut(
+                        date=move_date,
+                        pct_change=move["pct_change"],
+                    )
+                )
+            except (ValueError, TypeError):
+                continue
+
+    # Sort by closest to today's move magnitude and return up to 3
+    similar_days.sort(key=lambda x: abs(x.pct_change - today_pct_change))
+    similar_days = similar_days[:3]
+
+    if len(similar_days) < 2:
+        return SimilarMovesOut(
+            symbol=symbol,
+            today_pct_change=today_pct_change,
+            similar_moves=[],
+            message="not enough historical data yet",
+        )
+
+    return SimilarMovesOut(
+        symbol=symbol,
+        today_pct_change=today_pct_change,
+        similar_moves=similar_days,
+        message=None,
+    )
+
+
+# ============================================================================
+# CHART RANGES
+# ============================================================================
+
+@watchlists_router.get("/chart/{symbol}/{range_name}", response_model=ChartRangeOut)
+def get_chart_range(
+    symbol: str,
+    range_name: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get chart data for a specific time range.
+
+    Range options: "1M", "3M", "6M", "1Y", "ALL"
+    All data is daily granularity (no intraday).
+    """
+    symbol = symbol.upper()
+
+    # Validate that symbol is in user's watchlists (optional, but good practice)
+    user_watchlists = db.query(Watchlist).filter_by(user_id=user.id).all()
+    tracked_symbols = set()
+    for watchlist in user_watchlists:
+        for item in watchlist.items:
+            tracked_symbols.add(item.symbol)
+
+    if symbol not in tracked_symbols:
+        raise HTTPException(404, f"symbol '{symbol}' not in your watchlists")
+
+    chart_data = fetch_chart_data(symbol, range_name)
+    if chart_data is None:
+        raise HTTPException(422, f"couldn't fetch chart data for '{symbol}' with range '{range_name}'")
+
+    # Convert date strings to datetime objects
+    dates = []
+    for date_str in chart_data["dates"]:
+        try:
+            dates.append(datetime.datetime.strptime(date_str, "%Y-%m-%d"))
+        except ValueError:
+            dates.append(None)
+
+    return ChartRangeOut(
+        symbol=symbol,
+        range_name=range_name,
+        dates=dates,
+        closes=chart_data["closes"],
+        currency=chart_data["currency"],
+    )
 
 
 # ============================================================================
@@ -311,8 +698,10 @@ def add_watchlist_item(
         if stats is None:
             raise HTTPException(422, f"couldn't find market data for '{symbol}'")
         spark_closes = stats.pop("spark_closes")
+        similar_moves = stats.pop("similar_moves", [])
         quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
         quote.spark_closes_json = json.dumps(spark_closes)
+        quote.similar_moves_json = json.dumps(similar_moves)
         quote.fetched_at = datetime.datetime.utcnow()
         db.add(quote)
         db.flush()
@@ -694,8 +1083,10 @@ def add_symbol(
         if stats is None:
             raise HTTPException(422, f"couldn't find market data for '{symbol}'")
         spark_closes = stats.pop("spark_closes")
+        similar_moves = stats.pop("similar_moves", [])
         quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
         quote.spark_closes_json = json.dumps(spark_closes)
+        quote.similar_moves_json = json.dumps(similar_moves)
         quote.fetched_at = datetime.datetime.utcnow()
         db.add(quote)
         db.flush()
