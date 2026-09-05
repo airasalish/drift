@@ -298,6 +298,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               onExplain={handleExplain}
               onSeen={markSeen}
               onOpenDetail={setDetailItem}
+              displayName={displayName}
             />
 
             <WatchlistPanel
