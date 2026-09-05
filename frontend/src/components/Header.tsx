@@ -38,7 +38,7 @@ export function Header({
 
       <div className="header-right">
         {!loading && (
-          <div className="status-meta">
+          <div className="status-meta" aria-live="polite">
             <span className={`dot${error ? " stale" : ""}`} />
             {lastRefreshedAt ? `Updated ${formatRelative(lastRefreshedAt.toISOString())}` : "Loading…"}
             <span className="sep">·</span>

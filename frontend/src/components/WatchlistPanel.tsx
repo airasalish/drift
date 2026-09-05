@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { attentionTier, TIER_LABEL, type AttentionTier } from "../lib/attention";
+import { formatRelative } from "../format";
 import type { WatchlistItem } from "../types";
 import { WatchlistRow } from "./WatchlistRow";
 
@@ -15,6 +16,7 @@ export function WatchlistPanel({
   query,
   onQueryChange,
   attentionCount,
+  lastRefreshedAt,
   onOpenDetail,
   onResetSample,
 }: {
@@ -23,6 +25,7 @@ export function WatchlistPanel({
   query: string;
   onQueryChange: (value: string) => void;
   attentionCount: number;
+  lastRefreshedAt: Date | null;
   onOpenDetail: (item: WatchlistItem) => void;
   onResetSample: () => void;
 }) {
@@ -42,7 +45,7 @@ export function WatchlistPanel({
       <div className="wp-head">
         <div>
           <h2>Your watchlist <span className="section-context">/ workspace</span></h2>
-          <p className="wp-summary"><span>{items.length} tracked</span><span className="wp-summary-sep">·</span><span className={attentionCount > 0 ? "wp-summary-alert" : ""}>{attentionCount} needs a look</span><span className="wp-summary-sep">·</span><span className="wp-summary-hint">Select a row for detail</span></p>
+          <p className="wp-summary"><span>{items.length} tracked</span><span className="wp-summary-sep">·</span><span className={attentionCount > 0 ? "wp-summary-alert" : ""}>{attentionCount} needs a look</span><span className="wp-summary-sep">·</span><span className="wp-summary-freshness">{lastRefreshedAt ? `Prices updated ${formatRelative(lastRefreshedAt.toISOString())}` : "Prices updating"}</span><span className="wp-summary-sep">·</span><span className="wp-summary-hint">Select a row for detail</span></p>
         </div>
         {confirmingReset ? (
           <div className="confirm-remove">
