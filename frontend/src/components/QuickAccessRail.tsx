@@ -54,7 +54,13 @@ export function QuickAccessRail({
   const [deleteWatchlistId, setDeleteWatchlistId] = useState<number | null>(null);
 
   const activeWatchlist = watchlists.find(w => w.id === activeWatchlistId);
-  const showWatchlistSwitcher = watchlists.length > 1;
+  // Always reachable, not gated on already having 2+ watchlists -- that
+  // gate made "+ New watchlist" undiscoverable for literally everyone,
+  // since every account starts with exactly one and the control that
+  // creates a second one lived inside a menu that only appeared once a
+  // second one already existed. The menu itself still stays compact for
+  // a single-watchlist user (name + count + "New watchlist"), it's just
+  // never fully hidden.
 
   async function handleCreateWatchlist() {
     if (!newWatchlistName.trim()) return;
@@ -110,8 +116,9 @@ export function QuickAccessRail({
         <BrandMark />
       </div>
 
-      {/* Watchlist Switcher - only show when user has multiple watchlists */}
-      {showWatchlistSwitcher && (
+      {/* Watchlist switcher: always reachable so "+ New watchlist" (inside
+          the menu below) isn't locked behind already having a second one. */}
+      <>
         <div className="rail-watchlist-section">
           <button
             type="button"
@@ -171,7 +178,7 @@ export function QuickAccessRail({
             </div>
           )}
         </div>
-      )}
+      </>
 
       <button
         type="button"
