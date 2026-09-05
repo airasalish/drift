@@ -8,6 +8,10 @@ class WatchlistItemCreate(BaseModel):
     note: str | None = None
 
 
+class WatchlistItemNoteUpdate(BaseModel):
+    note: str | None = None
+
+
 class FiredRule(BaseModel):
     rule: str
     message: str

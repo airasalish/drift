@@ -68,8 +68,19 @@ export const api = {
       handle<WatchlistItem>(r)
     ),
 
-  digest: () =>
-    fetch(`${BASE}/watchlist/digest`, { headers: authHeaders() }).then((r) => handle<{ digest: string | null }>(r)),
+  updateNote: (id: number, note: string) =>
+    fetch(`${BASE}/watchlist/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ note: note || null }),
+    }).then((r) => handle<WatchlistItem>(r)),
+
+  // optional `symbol` narrows the digest to one stock (drawer's "Explain
+  // this"); omitted, it summarizes the whole attention feed as before.
+  digest: (symbol?: string) =>
+    fetch(`${BASE}/watchlist/digest${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""}`, {
+      headers: authHeaders(),
+    }).then((r) => handle<{ digest: string | null }>(r)),
 
   benchmark: () =>
     fetch(`${BASE}/watchlist/benchmark`, { headers: authHeaders() }).then((r) => handle<BenchmarkOut>(r)),
