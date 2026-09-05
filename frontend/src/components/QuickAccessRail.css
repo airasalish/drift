@@ -1,3 +1,41 @@
+/* ── Hover/focus explainer tooltips on rail nav items ── */
+.rail-nav-item[data-tooltip], .rail-upgrade[data-tooltip] {
+  position: relative;
+}
+
+.rail-nav-item[data-tooltip]::after, .rail-upgrade[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: calc(100% + 4px);
+  z-index: 20;
+  background: var(--surface, #10231c);
+  border: 1px solid var(--border-soft, #1f3a30);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: var(--muted, #9fb3ab);
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.rail-nav-item[data-tooltip]:hover::after,
+.rail-nav-item[data-tooltip]:focus-visible::after,
+.rail-upgrade[data-tooltip]:hover::after,
+.rail-upgrade[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 /* ── Watchlist switcher in rail ── */
 .rail-watchlist-section {
   padding: 0 var(--sp-2) var(--sp-2);

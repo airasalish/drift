@@ -1979,6 +1979,20 @@ button:disabled { cursor: not-allowed; }
 .refresh-icon.spinning { animation: spin .75s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #353b3c;
+  border-radius: 3px;
+  background: #0b0e0e;
+  color: #bfc4c5;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.share-btn:hover { border-color: var(--green); color: #f5f6f6; background: var(--green-soft); }
+
 .status-meta { min-height: 17px; }
 .status-meta .dot { box-shadow: 0 0 0 3px rgba(23,211,42,.08); }
 .status-meta .dot.stale { box-shadow: 0 0 0 3px rgba(244,71,71,.1); }
