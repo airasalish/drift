@@ -51,7 +51,6 @@ export function Header({
         )}
         {username && (
           <div className="account">
-            <span className="username">{username}</span>
             <button className="logout-btn" onClick={onLogout}>
               Log out
             </button>
