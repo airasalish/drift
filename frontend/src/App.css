@@ -2163,3 +2163,12 @@ html { scroll-behavior: smooth; }
 
 .wp-summary-hint { color: #53635f; }
 @media (max-width: 560px) { .wp-summary-hint, .wp-summary-hint + .wp-summary-sep { display: none; } }
+
+
+/* Row details are a viewport surface, never a document section. */
+.drawer { position: fixed; inset-block: 0; right: 0; max-height: 100dvh; overscroll-behavior: contain; outline: none; }
+.drawer:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+@media (max-width: 680px) {
+  .drawer { left: 0; width: 100vw; border-left: 0; border-top: 1px solid var(--border); padding: 18px 16px 24px; }
+  .drawer-spark svg { max-width: 100%; }
+}
