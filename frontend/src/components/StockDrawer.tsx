@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../api";
 import { CompanyFavicon } from "./CompanyFavicon";
 import { simplifyRuleMessage } from "../lib/beginner";
@@ -89,7 +90,7 @@ export function StockDrawer({
   const primary = primaryIdx >= 0 ? stats[primaryIdx] : null;
   const secondary = stats.filter((_, i) => i !== primaryIdx);
 
-  return (
+  return createPortal((
     // Non-modal by design: no dimming scrim over the rest of the page.
     // The watchlist (and the quick-jump rail) stay fully interactive while
     // the drawer is open, so switching between stocks is a single click
@@ -212,5 +213,5 @@ export function StockDrawer({
           )}
         </div>
       </aside>
-  );
+  ), document.body);
 }
