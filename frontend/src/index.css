@@ -1,8 +1,20 @@
-* {
-  margin: 0;
-  padding: 0;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f4f5f6;
+  background: #000;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-body {
-  min-height: 100vh;
+* { box-sizing: border-box; }
+html { background: #000; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: #000; }
+button, input { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+::selection { background: #16d42a; color: #001400; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
