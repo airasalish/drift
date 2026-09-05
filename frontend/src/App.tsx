@@ -109,8 +109,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
   const displayName = username && username.toLowerCase() !== "demo" ? username : "";
 
-  const attentionItems = items.filter((i) => i.has_attention).sort((a, b) => b.attention_score - a.attention_score);
-  const quietItems = items.filter((i) => attentionTier(i) === "quiet");
+  const attentionItems = items.filter((i) => i.has_attention && i.id !== -1).sort((a, b) => b.attention_score - a.attention_score);
+  const quietItems = items.filter((i) => attentionTier(i) === "quiet" && i.id !== -1);
+  const portfolioItem = items.find((i) => i.id === -1);
 
   // keep the open drawer in sync with the freshest poll data instead of a
   // stale snapshot from the moment it was opened
@@ -300,6 +301,22 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <div className="skeleton-block" />
         ) : (
           <>
+            {portfolioItem && (
+              <div className="portfolio-signal" data-tour="portfolio-signal">
+                <div className="portfolio-signal-header">
+                  <span className="portfolio-signal-icon">📊</span>
+                  <h3>Portfolio-wide signal</h3>
+                </div>
+                <ul className="reasons">
+                  {portfolioItem.fired.map((f, idx) => (
+                    <li key={idx} className={f.rule}>
+                      {beginnerMode ? f.message : f.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <SinceYouLeft
               attentionItems={attentionItems}
               quietCount={quietItems.length}

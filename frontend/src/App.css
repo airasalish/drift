@@ -31,6 +31,8 @@
   --red-dim: rgba(242, 86, 95, 0.13);
   --amber: #eaa64d;
   --amber-dim: rgba(234, 166, 77, 0.13);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96, 165, 250, 0.13);
 
   /* Drift's identity color: brand mark, focus rings, and the "needs a
      look" urgency signal. Never used to mean price direction. */
@@ -124,6 +126,7 @@ input:focus-visible,
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  z-index: 2;
 }
 
 .rail-brand {
@@ -701,9 +704,37 @@ section h2 {
 .reasons li.unusual_volume { border-left-color: var(--amber); }
 .reasons li.week52_high { border-left-color: var(--green); }
 .reasons li.week52_low { border-left-color: var(--red); }
+.reasons li.portfolio_move { border-left-color: var(--blue); }
 
 .positive { color: var(--green); }
 .negative { color: var(--red); }
+
+/* ── Portfolio signal ── */
+.portfolio-signal {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  margin-bottom: var(--sp-4);
+}
+
+.portfolio-signal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.portfolio-signal-icon {
+  font-size: 20px;
+}
+
+.portfolio-signal h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
 
 /* ── HERO: "since you left" ── */
 .hero {
