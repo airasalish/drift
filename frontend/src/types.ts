@@ -4,6 +4,12 @@ export interface FiredRule {
   value: number;
 }
 
+export interface Watchlist {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
 export interface Quote {
   currency: string | null;
   price: number | null;

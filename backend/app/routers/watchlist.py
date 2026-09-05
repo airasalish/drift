@@ -10,14 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.demo_user import get_or_create_watchlist_for_user, seed_default_watchlist
-from app.models import SeenEvent, SymbolQuote, User, WatchlistItem
+from app.models import SeenEvent, SymbolQuote, User, Watchlist, WatchlistItem
 from app.schemas import (
     FiredRule,
     HistoryEventOut,
     QuoteOut,
+    WatchlistCreate,
     WatchlistItemCreate,
     WatchlistItemNoteUpdate,
     WatchlistItemOut,
+    WatchlistOut,
+    WatchlistUpdate,
 )
 from app.services import change_detection
 from app.services.auth import get_current_user
@@ -26,6 +29,9 @@ from app.services.market_data import fetch_symbol_stats, lookup_company_website
 from app.services.poller import BENCHMARK_SYMBOL
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+
+# Secondary router for watchlist CRUD operations
+watchlists_router = APIRouter(prefix="/api/watchlists", tags=["watchlists"])
 
 # real tickers are short and use a narrow character set; reject obvious
 # garbage before spending a network call on yfinance. 20 chars comfortably
@@ -74,6 +80,19 @@ def _sanitize_item(item: WatchlistItem) -> None:
         item.added_price = None
     if item.price_at_last_view is not None and math.isnan(item.price_at_last_view):
         item.price_at_last_view = None
+
+
+def _get_watchlist_or_404(db: Session, watchlist_id: int, user: User) -> Watchlist:
+    """Get a watchlist by ID, ensuring it belongs to the current user.
+    
+    Returns 404 if the watchlist doesn't exist OR if it exists but belongs
+    to another user (ownership enforced via 404, not 403, to match the
+    existing "not found" pattern used elsewhere in this router).
+    """
+    watchlist = db.get(Watchlist, watchlist_id)
+    if watchlist is None or watchlist.user_id != user.id:
+        raise HTTPException(404, "not found")
+    return watchlist
 
 
 def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemOut:
@@ -147,6 +166,338 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
         has_attention=has_attention,
     )
 
+
+# ============================================================================
+# WATCHLIST CRUD ENDPOINTS (new multi-watchlist support)
+# ============================================================================
+
+@watchlists_router.get("", response_model=list[WatchlistOut])
+def list_watchlists(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """List all watchlists belonging to the current user."""
+    watchlists = db.query(Watchlist).filter_by(user_id=user.id).order_by(Watchlist.created_at).all()
+    return [
+        WatchlistOut(id=w.id, name=w.name, created_at=w.created_at) for w in watchlists
+    ]
+
+
+@watchlists_router.post("", response_model=WatchlistOut)
+def create_watchlist(
+    payload: WatchlistCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Create a new watchlist for the current user."""
+    if not payload.name or not payload.name.strip():
+        raise HTTPException(400, "name is required")
+    
+    watchlist = Watchlist(user_id=user.id, name=payload.name.strip())
+    db.add(watchlist)
+    db.commit()
+    db.refresh(watchlist)
+    
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+
+
+@watchlists_router.patch("/{id}", response_model=WatchlistOut)
+def rename_watchlist(
+    id: int,
+    payload: WatchlistUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Rename a watchlist belonging to the current user."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    if not payload.name or not payload.name.strip():
+        raise HTTPException(400, "name is required")
+    
+    watchlist.name = payload.name.strip()
+    db.commit()
+    db.refresh(watchlist)
+    
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+
+
+@watchlists_router.delete("/{id}")
+def delete_watchlist(id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Delete a watchlist belonging to the current user.
+    
+    Blocks deletion if it's the user's last remaining watchlist — there must
+    always be at least one watchlist per user.
+    """
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    # Check if this is the user's last watchlist
+    watchlist_count = db.query(Watchlist).filter_by(user_id=user.id).count()
+    if watchlist_count <= 1:
+        raise HTTPException(400, "cannot delete your last watchlist")
+    
+    db.delete(watchlist)
+    db.commit()
+    
+    return {"ok": True}
+
+
+# ============================================================================
+# MULTI-WATCHLIST-AWARE ITEM ROUTES (new, alongside existing routes)
+# ============================================================================
+
+@watchlists_router.get("/{id}/items", response_model=list[WatchlistItemOut])
+def list_watchlist_items(
+    id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """List items in a specific watchlist owned by the current user."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    out = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        out.append(_serialize(item, quote))
+    
+    out.sort(key=lambda w: w.attention_score, reverse=True)
+    return out
+
+
+@watchlists_router.post("/{id}/items", response_model=WatchlistItemOut)
+def add_watchlist_item(
+    id: int,
+    payload: WatchlistItemCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Add an item to a specific watchlist owned by the current user."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    symbol = payload.symbol.strip().upper()
+    if not symbol:
+        raise HTTPException(400, "symbol is required")
+    if not SYMBOL_RE.match(symbol):
+        raise HTTPException(400, f"'{symbol}' doesn't look like a valid ticker")
+
+    existing = next((i for i in watchlist.items if i.symbol == symbol), None)
+    if existing:
+        raise HTTPException(409, f"{symbol} is already on your watchlist")
+
+    quote = db.get(SymbolQuote, symbol)
+    if quote is None:
+        stats = fetch_symbol_stats(symbol)
+        if stats is None:
+            raise HTTPException(422, f"couldn't find market data for '{symbol}'")
+        spark_closes = stats.pop("spark_closes")
+        quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
+        quote.spark_closes_json = json.dumps(spark_closes)
+        quote.fetched_at = datetime.datetime.utcnow()
+        db.add(quote)
+        db.flush()
+
+    added_price = quote.price
+    website = lookup_company_website(symbol)
+
+    item = WatchlistItem(
+        watchlist_id=watchlist.id,
+        symbol=symbol,
+        note=payload.note,
+        company_name=payload.company_name.strip() if payload.company_name else None,
+        company_website=website,
+        added_price=added_price,
+    )
+    db.add(item)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, f"{symbol} is already on your watchlist")
+    db.refresh(item)
+
+    return _serialize(item, quote)
+
+
+@watchlists_router.patch("/{id}/items/{item_id}", response_model=WatchlistItemOut)
+def update_watchlist_item_note(
+    id: int,
+    item_id: int,
+    payload: WatchlistItemNoteUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Update the note on an item in a specific watchlist."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    item = next((i for i in watchlist.items if i.id == item_id), None)
+    if item is None:
+        raise HTTPException(404, "not found")
+
+    item.note = payload.note
+    db.commit()
+    db.refresh(item)
+
+    quote = db.get(SymbolQuote, item.symbol)
+    return _serialize(item, quote)
+
+
+@watchlists_router.delete("/{id}/items/{item_id}")
+def remove_watchlist_item(
+    id: int, item_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Remove an item from a specific watchlist."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    item = next((i for i in watchlist.items if i.id == item_id), None)
+    if item is None:
+        raise HTTPException(404, "not found")
+    db.delete(item)
+    db.commit()
+    return {"ok": True}
+
+
+@watchlists_router.post("/{id}/items/{item_id}/seen", response_model=WatchlistItemOut)
+def mark_watchlist_item_seen(
+    id: int, item_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Mark an item in a specific watchlist as seen."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    item = next((i for i in watchlist.items if i.id == item_id), None)
+    if item is None:
+        raise HTTPException(404, "not found")
+
+    quote = db.get(SymbolQuote, item.symbol)
+    item.last_viewed_at = datetime.datetime.utcnow()
+    item.price_at_last_view = quote.price if quote else None
+    if quote is not None:
+        current_keys = change_detection.evaluate(None, quote)["keys"]
+        item.fired_rules_at_last_view = json.dumps(current_keys)
+    else:
+        item.fired_rules_at_last_view = None
+
+    db.add(
+        SeenEvent(
+            user_id=user.id,
+            symbol=item.symbol,
+            company_name=item.company_name,
+            seen_at=item.last_viewed_at,
+            price_at_seen=item.price_at_last_view,
+        )
+    )
+    db.commit()
+    db.refresh(item)
+
+    return _serialize(item, quote)
+
+
+@watchlists_router.get("/{id}/digest")
+def get_watchlist_digest(
+    id: int,
+    symbol: str | None = Query(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get a digest for a specific watchlist.
+    
+    Optional `symbol` narrows the facts handed to the LLM to one stock.
+    """
+    items = list_watchlist_items(id, db, user)
+    fired_facts = [
+        {"symbol": i.symbol, "fired": [f.model_dump() for f in i.fired]}
+        for i in items
+        if i.has_attention and (symbol is None or i.symbol == symbol.strip().upper())
+    ]
+    return {"digest": generate_digest(fired_facts)}
+
+
+@watchlists_router.get("/{id}/benchmark")
+def get_watchlist_benchmark(id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Get benchmark comparison for a specific watchlist."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
+    _sanitize_quote(benchmark)
+    benchmark_pct = None
+    if benchmark and benchmark.price is not None and benchmark.prev_close:
+        benchmark_pct = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
+
+    day_pcts = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        _sanitize_quote(quote)
+        if quote and quote.price is not None and quote.prev_close:
+            day_pcts.append((quote.price - quote.prev_close) / quote.prev_close)
+
+    watchlist_pct = sum(day_pcts) / len(day_pcts) if day_pcts else None
+    outperformance_pct = (
+        watchlist_pct - benchmark_pct if watchlist_pct is not None and benchmark_pct is not None else None
+    )
+
+    return {
+        "benchmark_symbol": BENCHMARK_SYMBOL,
+        "benchmark_label": "Nifty 50",
+        "benchmark_pct": benchmark_pct,
+        "watchlist_pct": watchlist_pct,
+        "outperformance_pct": outperformance_pct,
+    }
+
+
+@watchlists_router.get("/{id}/history", response_model=list[HistoryEventOut])
+def get_watchlist_history(
+    id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Get history for items in a specific watchlist."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    # Get all symbols in this watchlist
+    watchlist_symbols = {item.symbol for item in watchlist.items}
+    
+    events = (
+        db.query(SeenEvent)
+        .filter_by(user_id=user.id)
+        .filter(SeenEvent.symbol.in_(watchlist_symbols))
+        .order_by(SeenEvent.seen_at.desc())
+        .limit(30)
+        .all()
+    )
+
+    out = []
+    for e in events:
+        quote = db.get(SymbolQuote, e.symbol)
+        _sanitize_quote(quote)
+        change_since_pct = None
+        if quote and quote.price is not None and e.price_at_seen:
+            change_since_pct = (quote.price - e.price_at_seen) / e.price_at_seen
+        out.append(
+            HistoryEventOut(
+                id=e.id,
+                symbol=e.symbol,
+                company_name=e.company_name,
+                seen_at=e.seen_at,
+                price_at_seen=e.price_at_seen,
+                current_price=quote.price if quote else None,
+                currency=quote.currency if quote else None,
+                change_since_pct=change_since_pct,
+            )
+        )
+    return out
+
+
+@watchlists_router.post("/{id}/reset", response_model=list[WatchlistItemOut])
+def reset_watchlist_to_sample(
+    id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    """Reset a specific watchlist to the sample set."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    
+    for item in list(watchlist.items):
+        db.delete(item)
+    db.flush()
+    db.expire(watchlist, ["items"])
+    seed_default_watchlist(db, watchlist)
+    db.commit()
+
+    out = []
+    for item in watchlist.items:
+        quote = db.get(SymbolQuote, item.symbol)
+        out.append(_serialize(item, quote))
+    out.sort(key=lambda w: w.attention_score, reverse=True)
+    return out
+
+
+# ============================================================================
+# EXISTING SINGLE-WATCHLIST ROUTES (unchanged, resolve to default watchlist)
+# ============================================================================
 
 @router.get("", response_model=list[WatchlistItemOut])
 def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_current_user)):

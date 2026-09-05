@@ -1,4 +1,4 @@
-import type { HistoryEvent, WatchlistItem } from "./types";
+import type { HistoryEvent, Watchlist, WatchlistItem } from "./types";
 
 // VITE_API_BASE lets the deployed frontend point at the deployed backend;
 // falls back to local dev so `npm run dev` needs zero configuration.
@@ -6,6 +6,7 @@ const BASE = `${import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000"}/api`;
 
 const TOKEN_KEY = "drift_token";
 const USERNAME_KEY = "drift_username";
+const ACTIVE_WATCHLIST_KEY = "drift_active_watchlist";
 
 // "Remember me" controls WHERE the token lives, not whether it's saved at
 // all: localStorage survives closing the browser, sessionStorage clears
@@ -19,6 +20,19 @@ export function getUsername(): string | null {
   return localStorage.getItem(USERNAME_KEY) ?? sessionStorage.getItem(USERNAME_KEY);
 }
 
+export function getActiveWatchlistId(): number | null {
+  const stored = localStorage.getItem(ACTIVE_WATCHLIST_KEY);
+  return stored ? parseInt(stored, 10) : null;
+}
+
+export function setActiveWatchlistId(id: number | null): void {
+  if (id === null) {
+    localStorage.removeItem(ACTIVE_WATCHLIST_KEY);
+  } else {
+    localStorage.setItem(ACTIVE_WATCHLIST_KEY, id.toString());
+  }
+}
+
 function setSession(token: string, username: string, remember: boolean) {
   const store = remember ? localStorage : sessionStorage;
   store.setItem(TOKEN_KEY, token);
@@ -28,6 +42,7 @@ function setSession(token: string, username: string, remember: boolean) {
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USERNAME_KEY);
+  localStorage.removeItem(ACTIVE_WATCHLIST_KEY);
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(USERNAME_KEY);
 }
@@ -50,7 +65,23 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+export interface SymbolSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string | null;
+}
+
+export interface BenchmarkOut {
+  benchmark_symbol: string;
+  benchmark_label: string;
+  benchmark_pct: number | null;
+  watchlist_pct: number | null;
+  outperformance_pct: number | null;
+}
+
 export const api = {
+  // Existing single-watchlist routes (unchanged for backward compatibility)
+  // These resolve to the user's default watchlist
   list: () => fetch(`${BASE}/watchlist`, { headers: authHeaders() }).then((r) => handle<WatchlistItem[]>(r)),
 
   add: (symbol: string, note: string, companyName?: string) =>
@@ -63,9 +94,6 @@ export const api = {
   remove: (id: number) =>
     fetch(`${BASE}/watchlist/${id}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
 
-  // clears the caller's watchlist and repopulates it with the curated
-  // sample set -- lets a demo/exploration session always get back to a
-  // clean, populated starting point
   resetToSample: () =>
     fetch(`${BASE}/watchlist/reset`, { method: "POST", headers: authHeaders() }).then((r) =>
       handle<WatchlistItem[]>(r)
@@ -83,8 +111,6 @@ export const api = {
       body: JSON.stringify({ note: note || null }),
     }).then((r) => handle<WatchlistItem>(r)),
 
-  // optional `symbol` narrows the digest to one stock (drawer's "Explain
-  // this"); omitted, it summarizes the whole attention feed as before.
   digest: (symbol?: string) =>
     fetch(`${BASE}/watchlist/digest${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""}`, {
       headers: authHeaders(),
@@ -93,25 +119,86 @@ export const api = {
   benchmark: () =>
     fetch(`${BASE}/watchlist/benchmark`, { headers: authHeaders() }).then((r) => handle<BenchmarkOut>(r)),
 
-  // a real timeline of past "mark as seen" moments, not a placeholder
   history: () =>
     fetch(`${BASE}/watchlist/history`, { headers: authHeaders() }).then((r) => handle<HistoryEvent[]>(r)),
 
+  // New multi-watchlist-aware routes
+  watchlists: {
+    list: () => fetch(`${BASE}/watchlists`, { headers: authHeaders() }).then((r) => handle<Watchlist[]>(r)),
+
+    create: (name: string) =>
+      fetch(`${BASE}/watchlists`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ name }),
+      }).then((r) => handle<Watchlist>(r)),
+
+    rename: (id: number, name: string) =>
+      fetch(`${BASE}/watchlists/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ name }),
+      }).then((r) => handle<Watchlist>(r)),
+
+    delete: (id: number) =>
+      fetch(`${BASE}/watchlists/${id}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
+
+    // Item operations scoped to a specific watchlist
+    listItems: (watchlistId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items`, { headers: authHeaders() }).then((r) => handle<WatchlistItem[]>(r)),
+
+    addItem: (watchlistId: number, symbol: string, note: string, companyName?: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ symbol, note: note || null, company_name: companyName || null }),
+      }).then((r) => handle<WatchlistItem>(r)),
+
+    removeItem: (watchlistId: number, itemId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items/${itemId}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
+
+    markSeenItem: (watchlistId: number, itemId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items/${itemId}/seen`, { method: "POST", headers: authHeaders() }).then((r) =>
+        handle<WatchlistItem>(r)
+      ),
+
+    updateItemNote: (watchlistId: number, itemId: number, note: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ note: note || null }),
+      }).then((r) => handle<WatchlistItem>(r)),
+
+    digest: (watchlistId: number, symbol?: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/digest${symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""}`, {
+        headers: authHeaders(),
+      }).then((r) => handle<{ digest: string | null }>(r)),
+
+    benchmark: (watchlistId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/benchmark`, { headers: authHeaders() }).then((r) => handle<BenchmarkOut>(r)),
+
+    history: (watchlistId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/history`, { headers: authHeaders() }).then((r) => handle<HistoryEvent[]>(r)),
+
+    resetToSample: (watchlistId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/reset`, { method: "POST", headers: authHeaders() }).then((r) =>
+        handle<WatchlistItem[]>(r)
+      ),
+  },
+
+  // Shared routes (not watchlist-scoped)
   searchSymbols: (q: string) =>
-    // no auth needed -- search isn't user-specific data
     fetch(`${BASE}/symbols/search?q=${encodeURIComponent(q)}`).then((r) =>
       handle<{ results: SymbolSearchResult[] }>(r)
     ),
 
-  // Fire-and-forget mark-seen for the "user is leaving" case (tab hidden /
-  // closed). A normal fetch can get cancelled mid-flight when the page
-  // unloads; sendBeacon is specifically designed to survive that -- but it
-  // can't attach custom headers, so the token rides in the URL instead
-  // (backend accepts either, see services/auth.py).
-  markSeenBeacon: (id: number) => {
+  markSeenBeacon: (id: number, watchlistId?: number) => {
     const token = getToken();
     if (navigator.sendBeacon && token) {
-      navigator.sendBeacon(`${BASE}/watchlist/${id}/seen?token=${encodeURIComponent(token)}`);
+      const endpoint = watchlistId 
+        ? `${BASE}/watchlists/${watchlistId}/items/${id}/seen?token=${encodeURIComponent(token)}`
+        : `${BASE}/watchlist/${id}/seen?token=${encodeURIComponent(token)}`;
+      navigator.sendBeacon(endpoint);
     }
   },
 
@@ -149,17 +236,3 @@ export const api = {
     return data;
   },
 };
-
-export interface SymbolSearchResult {
-  symbol: string;
-  name: string;
-  exchange: string | null;
-}
-
-export interface BenchmarkOut {
-  benchmark_symbol: string;
-  benchmark_label: string;
-  benchmark_pct: number | null;
-  watchlist_pct: number | null;
-  outperformance_pct: number | null;
-}

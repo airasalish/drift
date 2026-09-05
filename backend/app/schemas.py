@@ -3,6 +3,20 @@ import datetime
 from pydantic import BaseModel
 
 
+class WatchlistCreate(BaseModel):
+    name: str
+
+
+class WatchlistUpdate(BaseModel):
+    name: str
+
+
+class WatchlistOut(BaseModel):
+    id: int
+    name: str
+    created_at: datetime.datetime
+
+
 class WatchlistItemCreate(BaseModel):
     symbol: str
     note: str | None = None

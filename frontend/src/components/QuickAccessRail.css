@@ -1,0 +1,223 @@
+/* ── Watchlist switcher in rail ── */
+.rail-watchlist-section {
+  padding: 0 var(--sp-2) var(--sp-2);
+}
+
+.rail-watchlist-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.rail-watchlist-toggle:hover {
+  border-color: var(--border-soft);
+}
+
+.rail-watchlist-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.rail-watchlist-count {
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: var(--sp-2);
+}
+
+.rail-watchlist-menu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: var(--sp-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.rail-watchlist-item {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.rail-watchlist-item:last-child {
+  border-bottom: none;
+}
+
+.rail-watchlist-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--sp-3);
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rail-watchlist-option:hover {
+  background: var(--surface-2);
+}
+
+.rail-watchlist-option.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.rail-watchlist-option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.rail-watchlist-active-indicator {
+  font-size: 10px;
+  margin-left: var(--sp-2);
+}
+
+.rail-watchlist-actions {
+  display: flex;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-3) var(--sp-3);
+}
+
+.rail-watchlist-action {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.rail-watchlist-action:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail-watchlist-action-danger:hover {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.rail-watchlist-create {
+  display: block;
+  width: 100%;
+  padding: var(--sp-3);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.rail-watchlist-create:hover {
+  background: var(--surface-2);
+}
+
+/* ── Dialog styles ── */
+.rail-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.rail-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.rail-dialog h3 {
+  margin: 0 0 var(--sp-3);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rail-dialog input {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: var(--sp-3);
+}
+
+.rail-dialog input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rail-dialog-warning {
+  margin: 0 0 var(--sp-3);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.rail-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.rail-dialog button {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail-dialog button:hover {
+  background: var(--surface-3);
+}
+
+.rail-dialog-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.rail-dialog-primary:hover {
+  background: var(--accent-border);
+}

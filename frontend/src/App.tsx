@@ -40,6 +40,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     markSeen,
     updateNote,
     resetToSample,
+    watchlists,
+    activeWatchlistId,
+    createWatchlist,
+    renameWatchlist,
+    deleteWatchlist,
+    switchWatchlist,
   } = useWatchlist();
   const [adding, setAdding] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
@@ -113,7 +119,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   async function handleExplain() {
     setDigestLoading(true);
     try {
-      const { digest } = await api.digest();
+      const { digest } = activeWatchlistId 
+        ? await api.watchlists.digest(activeWatchlistId)
+        : await api.digest();
       setDigest(digest ?? "Couldn't generate a summary right now — the details below still apply.");
     } catch {
       setDigest("Couldn't generate a summary right now — the details below still apply.");
@@ -137,7 +145,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     setDetailItem(null);
     setHistoryLoading(true);
     try {
-      setHistoryEvents(await api.history());
+      setHistoryEvents(activeWatchlistId 
+        ? await api.watchlists.history(activeWatchlistId)
+        : await api.history());
     } catch {
       setHistoryEvents([]);
     } finally {
@@ -170,6 +180,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           setDetailItem(null);
         }}
         onShowHistory={handleShowHistory}
+        watchlists={watchlists}
+        activeWatchlistId={activeWatchlistId}
+        onCreateWatchlist={createWatchlist}
+        onRenameWatchlist={renameWatchlist}
+        onDeleteWatchlist={deleteWatchlist}
+        onSwitchWatchlist={switchWatchlist}
       />
 
       <div className="page">
