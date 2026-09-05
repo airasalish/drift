@@ -38,10 +38,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   // stale snapshot from the moment it was opened
   const liveDetailItem = detailItem ? items.find((i) => i.id === detailItem.id) ?? null : null;
 
-  async function handleAdd(symbol: string, note: string) {
+  async function handleAdd(symbol: string, note: string, companyName?: string) {
     setAdding(true);
     try {
-      await add(symbol, note);
+      await add(symbol, note, companyName);
     } finally {
       setAdding(false);
     }
@@ -102,7 +102,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             onOpenDetail={setDetailItem}
           />
 
-          <WatchlistPanel items={items} onOpenDetail={setDetailItem} />
+          <WatchlistPanel items={items} selectedId={liveDetailItem?.id ?? null} onOpenDetail={setDetailItem} />
 
           <IgnoredDisclosure items={quietItems} />
         </>
