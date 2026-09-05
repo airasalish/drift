@@ -40,10 +40,7 @@
 }
 
 .rail-watchlist-menu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-left: var(--sp-2);
+  position: fixed;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

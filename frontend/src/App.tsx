@@ -148,7 +148,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
   function handleSelect(item: WatchlistItem) {
     setView("watchlist");
-    setDetailItem(item);
+    setDetailItem((prev) => (prev?.id === item.id ? null : item));
   }
 
   async function handleShowHistory() {
@@ -327,7 +327,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               beginnerMode={beginnerMode}
               onExplain={handleExplain}
               onSeen={markSeen}
-              onOpenDetail={setDetailItem}
+              onOpenDetail={handleSelect}
               displayName={displayName}
             />
 
@@ -336,7 +336,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               selectedId={selectedId}
               query={watchlistQuery}
               onQueryChange={setWatchlistQuery}
-              onOpenDetail={setDetailItem}
+              onOpenDetail={handleSelect}
               attentionCount={attentionItems.length}
               lastRefreshedAt={lastRefreshedAt}
               onResetSample={async () => {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { attentionTier } from "../lib/attention";
 import type { Watchlist, WatchlistItem } from "../types";
 import { BrandMark } from "./BrandMark";
@@ -44,7 +45,14 @@ export function QuickAccessRail({
   onSwitchWatchlist: (id: number) => void;
 }) {
   const sorted = [...items].sort((a, b) => b.attention_score - a.attention_score);
+  const watchlistToggleRef = useRef<HTMLButtonElement>(null);
   const [showWatchlistMenu, setShowWatchlistMenu] = useState(false);
+  // The rail scrolls its own contents (overflow-y: auto), which forces
+  // overflow-x to compute as auto too -- a menu positioned to pop out
+  // past the rail's own edge gets silently clipped there rather than
+  // floating over the page. Portaling to <body> with a viewport-relative
+  // position (computed fresh each open) sidesteps that entirely.
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -122,8 +130,15 @@ export function QuickAccessRail({
         <div className="rail-watchlist-section">
           <button
             type="button"
+            ref={watchlistToggleRef}
             className="rail-watchlist-toggle"
-            onClick={() => setShowWatchlistMenu(!showWatchlistMenu)}
+            onClick={() => {
+              if (!showWatchlistMenu && watchlistToggleRef.current) {
+                const rect = watchlistToggleRef.current.getBoundingClientRect();
+                setMenuPos({ top: rect.top, left: rect.right + 8 });
+              }
+              setShowWatchlistMenu((v) => !v);
+            }}
             aria-expanded={showWatchlistMenu}
             aria-label="Switch watchlist"
           >
@@ -131,8 +146,8 @@ export function QuickAccessRail({
             <span className="rail-watchlist-count">{watchlists.length}</span>
           </button>
 
-          {showWatchlistMenu && (
-            <div className="rail-watchlist-menu">
+          {showWatchlistMenu && menuPos && createPortal(
+            <div className="rail-watchlist-menu" style={{ top: menuPos.top, left: menuPos.left }}>
               {watchlists.map((watchlist) => (
                 <div key={watchlist.id} className="rail-watchlist-item">
                   <button
@@ -175,7 +190,8 @@ export function QuickAccessRail({
               >
                 + New watchlist
               </button>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </>
