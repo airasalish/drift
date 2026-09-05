@@ -206,6 +206,40 @@ polish task — it's a real API contract change:
   into a "polish" commit. If you're not confident this is worth an API
   contract change for the value it adds, say so instead of guessing.
 
+**Resolved: go ahead and make the change.** The remaining question is
+what happens to rows written before the change — `SymbolQuote` is a
+shared cache keyed by symbol (one row per ticker, read by every user
+watching it, see the docstring on `SymbolQuote` in `backend/app/models.py`),
+and every existing row's `spark_closes_json` currently holds the OLD
+plain-float shape (`[1.2, 3.4, ...]`). After the change ships, the
+background poller (`backend/app/services/poller.py`, runs every
+`POLL_INTERVAL_SECONDS` — 60s by default) will start writing the NEW
+shape (`[{"date": "...", "close": 1.2}, ...]`) on its very next refresh
+of each symbol. That means both shapes will genuinely coexist in the
+table for up to about a minute after deploy, and possibly longer for a
+symbol nobody's actively watching yet (nothing polls a symbol with zero
+watchers, see `refresh_all_watched_symbols`).
+
+**Do not backfill.** This codebase's established pattern for exactly
+this situation — old-format data sitting alongside a newer, stricter
+expectation — is a defensive read-time guard, not a migration script.
+Precedent: `_sanitize_quote`/`_sanitize_item` in
+`backend/app/routers/watchlist.py` do this already for a past NaN-in-JSON
+incident (see `ENGINEERING_DECISIONS.md` if it still exists, or the git
+log around that fix) — they mutate the in-memory object at read time and
+never touch the stored row, trusting the next real poll cycle to
+naturally overwrite it with clean data. Do the same here: wherever
+`spark_closes_json` gets deserialized (currently in `_serialize()` in
+`backend/app/routers/watchlist.py`), check the shape of the first
+element — if it's a bare number, you're looking at a pre-migration row;
+synthesize a response with `date: null` for those points rather than
+crashing or guessing a date. The frontend's `Sparkline`/hover code should
+already treat a null date as "no date available" (same honest fallback
+described above for when dates don't exist at all) rather than special-
+casing "old row" vs. "date genuinely unavailable" as two different
+states — they should look identical to the user, because from the
+user's side they are.
+
 Do NOT build a timeframe selector (1D/1W/1M/1Y) on top of this without
 also solving where the additional history data comes from —
 `fetch_symbol_stats` only ever pulls a fixed `period="1y"` window
