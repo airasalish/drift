@@ -34,7 +34,12 @@ export function DriftCard({
           {item.symbol}
           {item.company_name && <span className="dc-company"> · {item.company_name}</span>}
         </span>
-        <Sparkline values={item.quote?.spark ?? []} markerValue={item.price_at_last_view} width={80} height={28} />
+        <div className="dc-head-right">
+          <Sparkline values={item.quote?.spark ?? []} markerValue={item.price_at_last_view} width={80} height={28} />
+          <span className="dc-chevron" aria-hidden>
+            ›
+          </span>
+        </div>
       </div>
 
       {primaryPct != null && (

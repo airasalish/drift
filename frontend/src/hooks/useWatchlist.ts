@@ -99,6 +99,17 @@ export function useWatchlist() {
     }
   }
 
+  async function resetToSample() {
+    try {
+      await api.resetToSample();
+      setError(null);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "failed to reset watchlist");
+      throw e;
+    }
+  }
+
   async function updateNote(id: number, note: string) {
     try {
       await api.updateNote(id, note);
@@ -122,5 +133,6 @@ export function useWatchlist() {
     remove,
     markSeen,
     updateNote,
+    resetToSample,
   };
 }

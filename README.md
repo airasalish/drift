@@ -29,7 +29,10 @@ Full spec/rationale: [PROJECT_BRIEF.md](PROJECT_BRIEF.md) · decision log: [ENGI
 ```
 cd backend
 python -m venv .venv
-.venv/Scripts/activate        # or: source .venv/bin/activate on macOS/Linux
+# Windows:
+.venv\Scripts\activate
+# macOS / Linux:
+# source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
@@ -38,12 +41,21 @@ Creates `watchlist.db` (SQLite) automatically on first run — no separate datab
 **Frontend** (React + Vite):
 ```
 cd frontend
+cp .env.example .env   # sets VITE_API_BASE=http://127.0.0.1:8000 for local dev
 npm install
 npm run dev
 ```
-Runs at http://localhost:5173 and talks to the backend above.
+Runs at http://localhost:5173. `VITE_API_BASE` tells the frontend where your backend lives. The default in `.env.example` points at the local backend above; change it to the Render URL if you want to run the frontend against the deployed API instead.
 
 Sign up for your own account, or click "Try the demo" for a zero-setup look with real seeded data. Add a symbol (e.g. `AAPL`), optionally note why you're watching it — it drifts back to you on the card later — then use "Mark as seen" (or just navigate away; it anchors automatically) to set the baseline the next visit compares against.
+
+## Screenshots
+
+| Login | Watchlist | Stock detail |
+|---|---|---|
+| ![Login screen](docs/screenshots/login.png) | ![Watchlist with drift feed](docs/screenshots/watchlist.png) | ![Stock detail drawer](docs/screenshots/drawer.png) |
+
+> Screenshots live in `docs/screenshots/`. To update them after UI changes, take a fresh capture of each view and replace the PNGs — filenames are stable so the table above stays correct automatically.
 
 ## Architecture
 
