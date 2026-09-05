@@ -105,6 +105,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
   const marketOpen = isMarketOpen();
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
+  const displayName = username && username.toLowerCase() !== "demo" ? username : "";
 
   const attentionItems = items.filter((i) => i.has_attention).sort((a, b) => b.attention_score - a.attention_score);
   const quietItems = items.filter((i) => attentionTier(i) === "quiet");
@@ -188,6 +189,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           setWatchlistQuery("");
         }}
         onShowHistory={handleShowHistory}
+        onShowInsights={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        onShowPreview={(label) => setWorkspaceNotice(`${label} is a planned extension. Drift currently stays focused on explainable price, volume, and range signals.`)}
         watchlists={watchlists}
         activeWatchlistId={activeWatchlistId}
         onCreateWatchlist={createWatchlist}
@@ -223,7 +226,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         <section className="command-center-head">
           <div>
             <span className="command-kicker">DRIFT / COMMAND CENTER</span>
-            <h2>{greeting}{username ? `, ${username}` : ""}.</h2>
+            <h2>{greeting}{displayName ? `, ${displayName}` : ""}.</h2>
             <p>Here is what changed while you were away.</p>
           </div>
           <div className="command-nav" aria-label="Workspace sections">
