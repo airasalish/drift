@@ -2180,3 +2180,18 @@ html { scroll-behavior: smooth; }
 
 .wp-summary-freshness { color: #6f9186; }
 @media (max-width: 720px) { .wp-summary-freshness, .wp-summary-freshness + .wp-summary-sep { display: none; } }
+
+
+/* Command-center layer inspired by the two reference dashboards. */
+.command-center-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: -2px 0 24px; padding: 4px 0 20px; border-bottom: 1px solid #1d2925; }
+.command-kicker { color: #62eab4; font-size: 9px; font-weight: 800; letter-spacing: .2em; }
+.command-center-head h2 { margin: 12px 0 5px; color: #f0faf5; font-size: clamp(28px, 4vw, 46px); line-height: .98; letter-spacing: -.065em; font-weight: 600; }
+.command-center-head p { margin: 0; color: #7d9b8f; font-size: 12px; }
+.command-nav { display: flex; align-items: center; gap: 5px; padding: 4px; border: 1px solid #263732; border-radius: 5px; background: #07100d; }
+.command-nav button { border: 0; border-radius: 3px; padding: 9px 11px; background: transparent; color: #75958a; font-size: 10px; font-weight: 700; cursor: pointer; }
+.command-nav button:hover, .command-nav button.active { color: #baffde; background: rgba(77,211,157,.13); }
+.command-nav button span { display: block; margin-top: 3px; color: #527267; font-size: 8px; font-weight: 500; }
+.workspace-notice { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: -18px 0 20px; padding: 11px 13px; border: 1px solid rgba(98,234,180,.25); border-radius: 4px; background: rgba(13,42,31,.72); color: #a7c9bb; font-size: 11px; line-height: 1.45; animation: alert-in .2s var(--ease-snappy); }
+.workspace-notice button { flex: 0 0 auto; border: 0; background: transparent; color: #82b9a4; font-size: 19px; line-height: 1; cursor: pointer; }
+.workspace-notice button:hover { color: #fff; }
+@media (max-width: 760px) { .command-center-head { display: block; } .command-nav { margin-top: 18px; overflow-x: auto; } .command-nav button { flex: 0 0 auto; } }
