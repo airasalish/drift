@@ -243,10 +243,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         </nav>
 
         <section className="workspace-metrics" aria-label="Workspace metrics">
-          <div className="workspace-metric metric-attention"><span>ATTENTION</span><strong>{attentionItems.length}</strong><small>{attentionItems.length ? "things worth checking" : "all quiet right now"}</small></div>
-          <div className="workspace-metric"><span>WATCHLIST</span><strong>{items.length}</strong><small>tracked symbols</small></div>
-          <div className="workspace-metric"><span>FILTERED OUT</span><strong>{quietItems.length}</strong><small>normal movements</small></div>
-          <div className="workspace-metric metric-benchmark"><span>{benchmark?.benchmark_label ?? "BENCHMARK"}</span><strong>{benchmark?.benchmark_pct != null ? formatPct(benchmark.benchmark_pct) : "—"}</strong><small>{benchmark ? "market context" : "updating context"}</small></div>
+          <div className="workspace-metric metric-benchmark"><span>{benchmark?.benchmark_label ?? "NIFTY 50"}</span><strong>{benchmark?.benchmark_pct != null ? formatPct(benchmark.benchmark_pct) : "—"}</strong><small>{benchmark ? "live market context" : "updating context"}</small></div>
+          <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("S&P 500 coverage is queued next. This card is intentionally not presenting invented market data.")}><span>S&amp;P 500 <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
+          <button type="button" className="workspace-metric metric-preview" onClick={() => setWorkspaceNotice("NASDAQ coverage is queued next. This card is intentionally not presenting invented market data.")}><span>NASDAQ <b>PREVIEW</b></span><strong>—</strong><small>coverage planned</small></button>
         </section>
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
