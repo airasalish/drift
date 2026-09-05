@@ -67,12 +67,13 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
         <div className="login-card-topline"><span className="login-brand"><img src="/drift-d-mark.png" alt="" aria-hidden="true" /> DRIFT</span><span>ACCESS / {mode === "login" ? "01" : "02"}</span></div>
         <h1>Track what moves you.</h1>
         <p className="tagline">A calmer watchlist for the changes worth your attention.</p>
+        <p className="auth-contract">Use a username and password. Email verification and recovery are intentionally not required in this version.</p>
 
         <form onSubmit={handleSubmit}>
           <label className="field-label" htmlFor="username">Username</label>
-          <input id="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter your username" disabled={busy} autoComplete="username" />
-          <label className="field-label" htmlFor="password">Password</label>
-          <input id="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" type="password" disabled={busy} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+          <input id="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username" disabled={busy} autoComplete="username" minLength={2} maxLength={40} required />
+          <label className="field-label" htmlFor="password">Password <span>(6+ characters)</span></label>
+          <input id="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "At least 6 characters" : "Enter your password"} type="password" disabled={busy} autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={6} required />
           <label className="login-remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Stay logged in on this device</label>
           <button type="submit" className="login-submit" disabled={busy || !username.trim() || !password}>
             <span>{busy ? "Connecting…" : mode === "signup" ? "Create account" : "Enter Drift"}</span><span aria-hidden="true">↗</span>
@@ -82,7 +83,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
         {error && <p className="login-error" role="alert">{error}</p>}
 
         <div className="login-links">
-          <button type="button" className="login-mode-toggle" onClick={() => setMode(mode === "signup" ? "login" : "signup")} disabled={busy}>
+          <button type="button" className="login-mode-toggle" onClick={() => { setError(null); setMode(mode === "signup" ? "login" : "signup"); }} disabled={busy}>
             {mode === "signup" ? "Already have an account? Log in" : "New here? Create an account"}
           </button>
           <span className="login-divider">or</span>
