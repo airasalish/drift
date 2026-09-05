@@ -3,6 +3,7 @@ import { api } from "./api";
 import { AddStockForm } from "./components/AddStockForm";
 import { Header } from "./components/Header";
 import { IgnoredDisclosure } from "./components/IgnoredDisclosure";
+import { QuickAccessRail } from "./components/QuickAccessRail";
 import { SinceYouLeft } from "./components/SinceYouLeft";
 import { StockDrawer } from "./components/StockDrawer";
 import { WatchlistPanel } from "./components/WatchlistPanel";
@@ -22,8 +23,20 @@ function isMarketOpen(): boolean {
 }
 
 function App({ username, onLogout }: { username: string | null; onLogout: () => void }) {
-  const { items, benchmark, loading, error, lastRefreshedAt, countdown, refresh, add, remove, markSeen, updateNote } =
-    useWatchlist();
+  const {
+    items,
+    benchmark,
+    loading,
+    error,
+    lastRefreshedAt,
+    countdown,
+    refresh,
+    add,
+    remove,
+    markSeen,
+    updateNote,
+    resetToSample,
+  } = useWatchlist();
   const [adding, setAdding] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
@@ -37,6 +50,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   // keep the open drawer in sync with the freshest poll data instead of a
   // stale snapshot from the moment it was opened
   const liveDetailItem = detailItem ? items.find((i) => i.id === detailItem.id) ?? null : null;
+  const selectedId = liveDetailItem?.id ?? null;
 
   async function handleAdd(symbol: string, note: string, companyName?: string) {
     setAdding(true);
@@ -65,56 +79,65 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   }
 
   return (
-    <div className="page">
-      <Header
-        username={username}
-        onLogout={onLogout}
-        itemCount={items.length}
-        marketOpen={marketOpen}
-        lastRefreshedAt={lastRefreshedAt}
-        countdown={countdown}
-        loading={loading}
-        error={error}
-      />
+    <div className="app-shell">
+      <QuickAccessRail items={items} selectedId={selectedId} onSelect={setDetailItem} />
 
-      <AddStockForm onAdd={handleAdd} adding={adding} />
+      <div className="page">
+        <Header
+          username={username}
+          onLogout={onLogout}
+          itemCount={items.length}
+          marketOpen={marketOpen}
+          lastRefreshedAt={lastRefreshedAt}
+          countdown={countdown}
+          loading={loading}
+          error={error}
+        />
 
-      {error && (
-        <div className="error-row">
-          <div className="error">{error}</div>
-          <button onClick={refresh}>Retry</button>
-        </div>
-      )}
+        <AddStockForm onAdd={handleAdd} adding={adding} />
 
-      {loading ? (
-        <div className="skeleton-block" />
-      ) : (
-        <>
-          <SinceYouLeft
-            attentionItems={attentionItems}
-            quietCount={quietItems.length}
-            latestViewed={latestViewedAt(items)}
-            benchmark={benchmark}
-            digest={digest}
-            digestLoading={digestLoading}
-            onExplain={handleExplain}
-            onSeen={markSeen}
-            onOpenDetail={setDetailItem}
-          />
+        {error && (
+          <div className="error-row">
+            <div className="error">{error}</div>
+            <button onClick={refresh}>Retry</button>
+          </div>
+        )}
 
-          <WatchlistPanel items={items} selectedId={liveDetailItem?.id ?? null} onOpenDetail={setDetailItem} />
+        {loading ? (
+          <div className="skeleton-block" />
+        ) : (
+          <>
+            <SinceYouLeft
+              attentionItems={attentionItems}
+              quietCount={quietItems.length}
+              latestViewed={latestViewedAt(items)}
+              benchmark={benchmark}
+              digest={digest}
+              digestLoading={digestLoading}
+              onExplain={handleExplain}
+              onSeen={markSeen}
+              onOpenDetail={setDetailItem}
+            />
 
-          <IgnoredDisclosure items={quietItems} />
-        </>
-      )}
+            <WatchlistPanel
+              items={items}
+              selectedId={selectedId}
+              onOpenDetail={setDetailItem}
+              onResetSample={resetToSample}
+            />
 
-      <StockDrawer
-        item={liveDetailItem}
-        onClose={() => setDetailItem(null)}
-        onSeen={markSeen}
-        onRemove={handleRemove}
-        onUpdateNote={updateNote}
-      />
+            <IgnoredDisclosure items={quietItems} />
+          </>
+        )}
+
+        <StockDrawer
+          item={liveDetailItem}
+          onClose={() => setDetailItem(null)}
+          onSeen={markSeen}
+          onRemove={handleRemove}
+          onUpdateNote={updateNote}
+        />
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { attentionTier, TIER_LABEL, type AttentionTier } from "../lib/attention";
 import type { WatchlistItem } from "../types";
 import { WatchlistRow } from "./WatchlistRow";
@@ -12,11 +13,15 @@ export function WatchlistPanel({
   items,
   selectedId,
   onOpenDetail,
+  onResetSample,
 }: {
   items: WatchlistItem[];
   selectedId: number | null;
   onOpenDetail: (item: WatchlistItem) => void;
+  onResetSample: () => void;
 }) {
+  const [confirmingReset, setConfirmingReset] = useState(false);
+
   const grouped = TIER_ORDER.map((tier) => ({
     tier,
     items: items.filter((i) => attentionTier(i) === tier).sort((a, b) => b.attention_score - a.attention_score),
@@ -24,7 +29,30 @@ export function WatchlistPanel({
 
   return (
     <section className="watchlist-panel">
-      <h2>Your watchlist</h2>
+      <div className="wp-head">
+        <h2>Your watchlist</h2>
+        {confirmingReset ? (
+          <div className="confirm-remove">
+            <span>Reset to sample?</span>
+            <button
+              className="yes"
+              onClick={() => {
+                onResetSample();
+                setConfirmingReset(false);
+              }}
+            >
+              Yes
+            </button>
+            <button className="no" onClick={() => setConfirmingReset(false)}>
+              No
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="wp-reset-link" onClick={() => setConfirmingReset(true)}>
+            Reset to sample
+          </button>
+        )}
+      </div>
       {items.length === 0 ? (
         <div className="empty-box">Nothing on your watchlist yet — add a symbol above.</div>
       ) : (

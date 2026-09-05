@@ -63,6 +63,14 @@ export const api = {
   remove: (id: number) =>
     fetch(`${BASE}/watchlist/${id}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
 
+  // clears the caller's watchlist and repopulates it with the curated
+  // sample set -- lets a demo/exploration session always get back to a
+  // clean, populated starting point
+  resetToSample: () =>
+    fetch(`${BASE}/watchlist/reset`, { method: "POST", headers: authHeaders() }).then((r) =>
+      handle<WatchlistItem[]>(r)
+    ),
+
   markSeen: (id: number) =>
     fetch(`${BASE}/watchlist/${id}/seen`, { method: "POST", headers: authHeaders() }).then((r) =>
       handle<WatchlistItem>(r)

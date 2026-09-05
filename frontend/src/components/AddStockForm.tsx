@@ -12,14 +12,19 @@ export function AddStockForm({
 }) {
   const [symbol, setSymbol] = useState("");
   const [note, setNote] = useState("");
-  // captured from the autocomplete pick, not a second lookup -- cleared
-  // the moment the user edits the ticker away from what they picked, so a
-  // stale name can never get attached to a different symbol
+  // captured from the autocomplete pick, not a second lookup -- also
+  // doubles as visual confirmation of what got selected, since the plain
+  // input text alone didn't make that obvious
   const [picked, setPicked] = useState<SymbolSearchResult | null>(null);
 
   function handleSymbolChange(v: string) {
     setSymbol(v);
     if (picked && v.trim().toUpperCase() !== picked.symbol.toUpperCase()) setPicked(null);
+  }
+
+  function clearPicked() {
+    setPicked(null);
+    setSymbol("");
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -41,7 +46,17 @@ export function AddStockForm({
   return (
     <form className="add-form" onSubmit={handleSubmit}>
       <div className="add-form-row">
-        <SymbolInput value={symbol} onChange={handleSymbolChange} onSelect={setPicked} disabled={adding} />
+        {picked && picked.symbol.toUpperCase() === symbol.trim().toUpperCase() ? (
+          <div className="symbol-selected-chip">
+            <span className="ssc-ticker">{picked.symbol}</span>
+            <span className="ssc-name">{picked.name}</span>
+            <button type="button" className="ssc-clear" onClick={clearPicked} disabled={adding} aria-label="Clear selection">
+              ✕
+            </button>
+          </div>
+        ) : (
+          <SymbolInput value={symbol} onChange={handleSymbolChange} onSelect={setPicked} disabled={adding} />
+        )}
         <button type="submit" disabled={adding || !symbol.trim()}>
           {adding ? "Adding…" : "Add"}
         </button>

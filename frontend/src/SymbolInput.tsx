@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type SymbolSearchResult } from "./api";
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 180;
 
 export function SymbolInput({
   value,
@@ -18,6 +18,7 @@ export function SymbolInput({
   disabled?: boolean;
 }) {
   const [results, setResults] = useState<SymbolSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -25,20 +26,22 @@ export function SymbolInput({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const query = value.trim();
-    if (query.length < 2) {
-      // a single letter is too ambiguous to rank usefully (e.g. "A" is
-      // itself a real ticker -- Agilent -- so it's not "wrong" to return
-      // that over Apple, just not what most people mean by typing "A")
+    if (query.length < 1) {
       setResults([]);
+      setSearching(false);
+      setOpen(false);
       return;
     }
+    setSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
         const { results } = await api.searchSymbols(query);
         setResults(results);
-        setOpen(results.length > 0);
+        setOpen(true);
       } catch {
         setResults([]);
+      } finally {
+        setSearching(false);
       }
     }, DEBOUNCE_MS);
   }, [value]);
@@ -71,6 +74,10 @@ export function SymbolInput({
       />
       {open && (
         <div className="symbol-dropdown">
+          {searching && results.length === 0 && <div className="symbol-dropdown-status">Searching…</div>}
+          {!searching && results.length === 0 && (
+            <div className="symbol-dropdown-status">No matches for "{value.trim()}"</div>
+          )}
           {results.map((r) => (
             <button
               key={r.symbol}
