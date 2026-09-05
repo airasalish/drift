@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-/** Best-effort company mark from a stored domain. Never invents a logo —
- *  if the domain is missing or the favicon request fails, render nothing
+/** Best-effort company mark from a stored domain. Never invents a logo. If
+ *  the domain is missing or the favicon request fails, render nothing
  *  and let the ticker stand alone (same fallback as company_name). */
 export function CompanyFavicon({
   domain,
