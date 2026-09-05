@@ -4,14 +4,14 @@ import math
 import os
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.demo_user import get_or_create_watchlist_for_user
 from app.models import SymbolQuote, User, WatchlistItem
-from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemOut
+from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemNoteUpdate, WatchlistItemOut
 from app.services import change_detection
 from app.services.auth import get_current_user
 from app.services.digest import generate_digest
@@ -151,17 +151,26 @@ def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_curre
 
 
 @router.get("/digest")
-def get_digest(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def get_digest(
+    symbol: str | None = Query(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     """On-demand only (see services/digest.py for why) -- reuses the same
     rule evaluation as list_watchlist rather than recomputing it, so this
     endpoint can never see a different set of "fired" facts than what the
     UI already shows.
+
+    Optional `symbol` narrows the facts handed to the LLM to one stock, for
+    the per-stock "Explain this" in the detail drawer -- purely a filter on
+    what's sent, same rule-computed facts, same prompt. Omitting it keeps
+    the original whole-feed behavior unchanged.
     """
     items = list_watchlist(db, user)
     fired_facts = [
         {"symbol": i.symbol, "fired": [f.model_dump() for f in i.fired]}
         for i in items
-        if i.has_attention
+        if i.has_attention and (symbol is None or i.symbol == symbol.strip().upper())
     ]
     return {"digest": generate_digest(fired_facts)}
 
@@ -256,6 +265,30 @@ def add_symbol(
         raise HTTPException(409, f"{symbol} is already on your watchlist")
     db.refresh(item)
 
+    return _serialize(item, quote)
+
+
+@router.patch("/{item_id}", response_model=WatchlistItemOut)
+def update_note(
+    item_id: int,
+    payload: WatchlistItemNoteUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Updates the thesis/reason text after a symbol's already been added --
+    previously the only way to set it was at creation time. Additive
+    endpoint; doesn't change any existing route's contract.
+    """
+    watchlist = get_or_create_watchlist_for_user(db, user)
+    item = next((i for i in watchlist.items if i.id == item_id), None)
+    if item is None:
+        raise HTTPException(404, "not found")
+
+    item.note = payload.note
+    db.commit()
+    db.refresh(item)
+
+    quote = db.get(SymbolQuote, item.symbol)
     return _serialize(item, quote)
 
 
