@@ -2125,3 +2125,15 @@ html { scroll-behavior: smooth; }
 .rail-item:hover { padding-left: 13px; }
 .rail-item.selected { box-shadow: inset 2px 0 var(--green); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .page, .workspace-shortcuts, .dashboard-cover { animation: none; } .dashboard-cover-signal i { animation: none; } }
+
+
+.workspace-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: -8px 0 18px; }
+.workspace-metric { display: flex; flex-direction: column; gap: 5px; min-height: 84px; padding: 13px 15px; border: 1px solid #263532; border-radius: 5px; background: linear-gradient(130deg, rgba(8,28,22,.86), rgba(4,14,11,.72)); transition: border-color .18s ease, transform .18s ease; }
+.workspace-metric span { color: #75978b; font-size: 9px; font-weight: 700; letter-spacing: .15em; }
+.workspace-metric strong { color: #edf8f3; font-size: 25px; line-height: 1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.workspace-metric small { color: #79998e; font-size: 10px; }
+.workspace-metric.metric-attention { border-color: rgba(98,234,180,.38); }
+.workspace-metric.metric-attention strong, .workspace-metric.metric-benchmark strong { color: #64f0b6; }
+.workspace-metric:hover { border-color: #4e9279; transform: translateY(-1px); }
+@media (max-width: 760px) { .workspace-metrics { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 420px) { .workspace-metrics { gap: 7px; } .workspace-metric { min-height: 72px; padding: 10px; } .workspace-metric strong { font-size: 21px; } }
