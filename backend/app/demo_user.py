@@ -47,6 +47,53 @@ DEFAULT_WATCHLIST_SEED = [
     ("SWIGGY.NS", "Swiggy Limited", "Breakout"),
 ]
 
+# Pre-made watchlist templates for quick start
+# Each template contains real, currently-resolvable symbols with company names
+WATCHLIST_TEMPLATES = {
+    "technology": [
+        ("AAPL", "Apple Inc.", "Core holding"),
+        ("MSFT", "Microsoft Corporation", "Core holding"),
+        ("GOOGL", "Alphabet Inc.", "Core holding"),
+        ("META", "Meta Platforms Inc.", "Growth"),
+        ("AMZN", "Amazon.com Inc.", "Growth"),
+    ],
+    "ai_semiconductors": [
+        ("NVDA", "NVIDIA Corporation", "AI infrastructure"),
+        ("AMD", "Advanced Micro Devices", "AI chips"),
+        ("INTC", "Intel Corporation", "Semiconductors"),
+        ("TSM", "Taiwan Semiconductor", "Manufacturing"),
+        ("ASML", "ASML Holding N.V.", "Semiconductor equipment"),
+    ],
+    "indian_large_caps": [
+        ("RELIANCE.NS", "Reliance Industries Limited", "Conglomerate"),
+        ("TCS.NS", "Tata Consultancy Services", "IT services"),
+        ("INFY.NS", "Infosys Limited", "IT services"),
+        ("HDFCBANK.NS", "HDFC Bank Limited", "Banking"),
+        ("ICICIBANK.NS", "ICICI Bank Limited", "Banking"),
+    ],
+    "us_mega_caps": [
+        ("AAPL", "Apple Inc.", "Core holding"),
+        ("MSFT", "Microsoft Corporation", "Core holding"),
+        ("GOOGL", "Alphabet Inc.", "Core holding"),
+        ("AMZN", "Amazon.com Inc.", "E-commerce"),
+        ("NVDA", "NVIDIA Corporation", "AI chips"),
+    ],
+    "banking": [
+        ("JPM", "JPMorgan Chase & Co.", "Investment banking"),
+        ("BAC", "Bank of America Corp", "Banking"),
+        ("WFC", "Wells Fargo & Company", "Banking"),
+        ("C", "Citigroup Inc.", "Banking"),
+        ("GS", "Goldman Sachs Group", "Investment banking"),
+    ],
+    "ev_mobility": [
+        ("TSLA", "Tesla, Inc.", "EV leader"),
+        ("BYDDY", "BYD Company Limited", "EV manufacturing"),
+        ("NIO", "NIO Inc.", "EV manufacturing"),
+        ("LCID", "Lucid Group Inc.", "EV manufacturing"),
+        ("RIVN", "Rivian Automotive Inc.", "EV manufacturing"),
+    ],
+}
+
 
 def backfill_company_websites(db: Session) -> None:
     """One-time, idempotent catch-up for items added before company_website
@@ -86,8 +133,10 @@ def _seed_item(db: Session, watchlist: Watchlist, symbol: str, company_name: str
         if stats is None:
             return  # network hiccup at seed time isn't fatal -- just skip that one
         spark_closes = stats.pop("spark_closes")
+        similar_moves = stats.pop("similar_moves", [])
         quote = SymbolQuote(symbol=symbol, watch_count=0, fetch_ok=True, **stats)
         quote.spark_closes_json = json.dumps(spark_closes)
+        quote.similar_moves_json = json.dumps(similar_moves)
         quote.fetched_at = datetime.datetime.utcnow()
         db.add(quote)
         db.flush()

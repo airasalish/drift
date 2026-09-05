@@ -75,3 +75,68 @@ class WatchlistItemOut(BaseModel):
     fired: list[FiredRule]
     attention_score: float
     has_attention: bool
+
+
+# ── Watchlist Templates ──
+
+class WatchlistTemplateCreate(BaseModel):
+    template_name: str  # Key from WATCHLIST_TEMPLATES
+    watchlist_name: str  # Custom name for the created watchlist
+
+
+class WatchlistTemplateOut(BaseModel):
+    template_name: str
+    display_name: str
+    description: str
+    symbol_count: int
+
+
+# ── Bulk Import ──
+
+class BulkImportAnalyze(BaseModel):
+    text: str
+    watchlist_id: int
+
+
+class BulkImportConfirm(BaseModel):
+    watchlist_id: int
+    symbols: list[str]  # De-duplicated, validated symbols to import
+
+
+class BulkImportResult(BaseModel):
+    valid: list[str]  # Symbols ready to import
+    duplicates: list[str]  # Already in watchlist
+    invalid: list[str]  # Failed validation
+    total_parsed: int
+
+
+# ── Related Stocks ──
+
+class RelatedStockOut(BaseModel):
+    symbol: str
+    company_name: str | None
+    sector: str | None
+
+
+# ── Similar Moves ──
+
+class SimilarMoveOut(BaseModel):
+    date: datetime.datetime
+    pct_change: float
+
+
+class SimilarMovesOut(BaseModel):
+    symbol: str
+    today_pct_change: float
+    similar_moves: list[SimilarMoveOut]
+    message: str | None  # "not enough historical data yet" if applicable
+
+
+# ── Chart Ranges ──
+
+class ChartRangeOut(BaseModel):
+    symbol: str
+    range_name: str  # "1M", "3M", "6M", "1Y", "ALL"
+    dates: list[datetime.datetime]
+    closes: list[float]
+    currency: str | None

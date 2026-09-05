@@ -98,6 +98,27 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
     # is honest; a NaN reaching the frontend (or JSON encoding) is not
     spark_closes = [round(c, 4) for c in closes.tail(30).tolist() if not math.isnan(c)]
 
+    # Similar moves: compact record of the year's daily % moves
+    # Store date + pct_change pairs for historical comparison
+    similar_moves = []
+    for idx in range(len(hist) - 1):  # Exclude the latest (today's) bar
+        if idx >= len(closes) - 1:
+            break
+        try:
+            prev_close_val = float(closes.iloc[idx])
+            curr_close_val = float(closes.iloc[idx + 1])
+            if prev_close_val > 0 and not math.isnan(prev_close_val) and not math.isnan(curr_close_val):
+                pct_change = (curr_close_val - prev_close_val) / prev_close_val
+                # Get the date from the index
+                date = hist.index[idx + 1]
+                if hasattr(date, 'strftime'):
+                    date_str = date.strftime('%Y-%m-%d')
+                else:
+                    date_str = str(date)
+                similar_moves.append({"date": date_str, "pct_change": round(pct_change, 6)})
+        except (IndexError, ValueError, ZeroDivisionError):
+            continue
+
     return {
         "price": _clean(latest_price),
         "prev_close": _clean(prev_close),
@@ -107,5 +128,65 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
         "week52_high": _clean(float(hist["High"].max())),
         "week52_low": _clean(float(hist["Low"].min())),
         "spark_closes": spark_closes,
+        "similar_moves": similar_moves,
+        "currency": currency,
+    }
+
+
+def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
+    """Fetch chart data for a specific time range.
+
+    Range options: "1M", "3M", "6M", "1Y", "ALL"
+    All data is daily granularity (no intraday).
+    """
+    # Map range names to yfinance period parameters
+    period_map = {
+        "1M": "1mo",
+        "3M": "3mo",
+        "6M": "6mo",
+        "1Y": "1y",
+        "ALL": "max",
+    }
+
+    if range_name not in period_map:
+        return None
+
+    period = period_map[range_name]
+
+    try:
+        ticker = yf.Ticker(symbol)
+        hist = ticker.history(period=period, interval="1d", auto_adjust=False)
+        try:
+            currency = ticker.fast_info.currency
+        except Exception:
+            currency = None
+    except Exception:
+        logger.exception("yfinance chart fetch failed for %s (range: %s)", symbol, range_name)
+        return None
+
+    if hist is None or hist.empty:
+        return None
+
+    closes = hist["Close"]
+
+    # Convert to list of (date, close) pairs
+    chart_data = []
+    for idx, close in enumerate(closes):
+        try:
+            date = hist.index[idx]
+            if hasattr(date, 'strftime'):
+                date_str = date.strftime('%Y-%m-%d')
+            else:
+                date_str = str(date)
+            chart_data.append({
+                "date": date_str,
+                "close": float(close) if not math.isnan(close) else None
+            })
+        except (ValueError, TypeError):
+            continue
+
+    return {
+        "dates": [d["date"] for d in chart_data],
+        "closes": [d["close"] for d in chart_data],
         "currency": currency,
     }
