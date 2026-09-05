@@ -1,4 +1,4 @@
-import type { WatchlistItem } from "./types";
+import type { HistoryEvent, WatchlistItem } from "./types";
 
 // VITE_API_BASE lets the deployed frontend point at the deployed backend;
 // falls back to local dev so `npm run dev` needs zero configuration.
@@ -92,6 +92,10 @@ export const api = {
 
   benchmark: () =>
     fetch(`${BASE}/watchlist/benchmark`, { headers: authHeaders() }).then((r) => handle<BenchmarkOut>(r)),
+
+  // a real timeline of past "mark as seen" moments, not a placeholder
+  history: () =>
+    fetch(`${BASE}/watchlist/history`, { headers: authHeaders() }).then((r) => handle<HistoryEvent[]>(r)),
 
   searchSymbols: (q: string) =>
     // no auth needed -- search isn't user-specific data

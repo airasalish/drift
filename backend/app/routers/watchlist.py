@@ -10,8 +10,15 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.demo_user import get_or_create_watchlist_for_user, seed_default_watchlist
-from app.models import SymbolQuote, User, WatchlistItem
-from app.schemas import FiredRule, QuoteOut, WatchlistItemCreate, WatchlistItemNoteUpdate, WatchlistItemOut
+from app.models import SeenEvent, SymbolQuote, User, WatchlistItem
+from app.schemas import (
+    FiredRule,
+    HistoryEventOut,
+    QuoteOut,
+    WatchlistItemCreate,
+    WatchlistItemNoteUpdate,
+    WatchlistItemOut,
+)
 from app.services import change_detection
 from app.services.auth import get_current_user
 from app.services.digest import generate_digest
@@ -114,7 +121,10 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
             if item.price_at_last_view:
                 change_since_last_view = (quote.price - item.price_at_last_view) / item.price_at_last_view
 
-        result = change_detection.evaluate(item.price_at_last_view, quote)
+        previously_fired = (
+            frozenset(json.loads(item.fired_rules_at_last_view)) if item.fired_rules_at_last_view else frozenset()
+        )
+        result = change_detection.evaluate(item.price_at_last_view, quote, previously_fired)
         fired = [FiredRule(**f) for f in result["fired"]]
         score = result["score"]
         has_attention = result["attention"]
@@ -174,6 +184,40 @@ def get_digest(
         if i.has_attention and (symbol is None or i.symbol == symbol.strip().upper())
     ]
     return {"digest": generate_digest(fired_facts)}
+
+
+@router.get("/history", response_model=list[HistoryEventOut])
+def get_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """A real timeline of your own attention: every time you've marked a
+    symbol seen, what it was trading at, and what it's done since. This is
+    Drift's "remembers where you were" idea made literal and browsable,
+    not a placeholder nav section -- it reads real SeenEvent rows, no
+    fabricated history.
+    """
+    events = (
+        db.query(SeenEvent).filter_by(user_id=user.id).order_by(SeenEvent.seen_at.desc()).limit(30).all()
+    )
+
+    out = []
+    for e in events:
+        quote = db.get(SymbolQuote, e.symbol)
+        _sanitize_quote(quote)
+        change_since_pct = None
+        if quote and quote.price is not None and e.price_at_seen:
+            change_since_pct = (quote.price - e.price_at_seen) / e.price_at_seen
+        out.append(
+            HistoryEventOut(
+                id=e.id,
+                symbol=e.symbol,
+                company_name=e.company_name,
+                seen_at=e.seen_at,
+                price_at_seen=e.price_at_seen,
+                current_price=quote.price if quote else None,
+                currency=quote.currency if quote else None,
+                change_since_pct=change_since_pct,
+            )
+        )
+    return out
 
 
 @router.get("/benchmark")
@@ -338,6 +382,12 @@ def mark_seen(item_id: int, db: Session = Depends(get_db), user: User = Depends(
     """Explicit 'I looked at this' action — the only thing that moves
     last_viewed_at / price_at_last_view forward. Never done implicitly by a
     background poll or a page load. See PROJECT_BRIEF.md §3.
+
+    Also snapshots which structural rules (unusual volume, 52-week
+    proximity) are true right now -- those aren't anchored to
+    price_at_last_view the way price_move is, so without this snapshot
+    they'd fire again on every single refresh regardless of whether
+    anything actually changed, and "mark as seen" would visibly do nothing.
     """
     watchlist = get_or_create_watchlist_for_user(db, user)
     item = next((i for i in watchlist.items if i.id == item_id), None)
@@ -347,6 +397,21 @@ def mark_seen(item_id: int, db: Session = Depends(get_db), user: User = Depends(
     quote = db.get(SymbolQuote, item.symbol)
     item.last_viewed_at = datetime.datetime.utcnow()
     item.price_at_last_view = quote.price if quote else None
+    if quote is not None:
+        current_keys = change_detection.evaluate(None, quote)["keys"]
+        item.fired_rules_at_last_view = json.dumps(current_keys)
+    else:
+        item.fired_rules_at_last_view = None
+
+    db.add(
+        SeenEvent(
+            user_id=user.id,
+            symbol=item.symbol,
+            company_name=item.company_name,
+            seen_at=item.last_viewed_at,
+            price_at_seen=item.price_at_last_view,
+        )
+    )
     db.commit()
     db.refresh(item)
 

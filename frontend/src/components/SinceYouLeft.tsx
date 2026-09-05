@@ -15,6 +15,7 @@ export function SinceYouLeft({
   benchmark,
   digest,
   digestLoading,
+  beginnerMode,
   onExplain,
   onSeen,
   onOpenDetail,
@@ -25,6 +26,7 @@ export function SinceYouLeft({
   benchmark: BenchmarkOut | null;
   digest: string | null;
   digestLoading: boolean;
+  beginnerMode: boolean;
   onExplain: () => void;
   onSeen: (id: number) => void;
   onOpenDetail: (item: WatchlistItem) => void;
@@ -63,7 +65,7 @@ export function SinceYouLeft({
       {hasAttention && (
         <div className="drift-cards">
           {attentionItems.map((item) => (
-            <DriftCard key={item.id} item={item} onOpenDetail={onOpenDetail} onSeen={onSeen} />
+            <DriftCard key={item.id} item={item} beginnerMode={beginnerMode} onOpenDetail={onOpenDetail} onSeen={onSeen} />
           ))}
         </div>
       )}
