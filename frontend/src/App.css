@@ -2258,3 +2258,8 @@ html { scroll-behavior: smooth; }
 @media (min-width: 981px) { .workspace-metrics { display: grid; order: 3; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 660px; margin: 0 0 18px auto; } }
 @media (max-width: 980px) { .workspace-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; } .workspace-metric { min-height: 65px; padding: 9px; } .workspace-metric strong { font-size: 19px; } .workspace-metric small { font-size: 8px; } }
 @media (max-width: 500px) { .workspace-metrics { grid-template-columns: 1fr; } .workspace-metric.metric-preview { display: none; } }
+
+
+/* Shared supplied Drift D mark. */
+.brand-mark { display: block; width: 34px; height: 34px; object-fit: cover; border-radius: 9px; box-shadow: 0 0 18px rgba(83,236,178,.16); }
+.brand:hover .brand-mark { transform: rotate(-3deg) scale(1.04); }

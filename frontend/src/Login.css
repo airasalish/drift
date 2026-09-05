@@ -82,3 +82,7 @@
   .login-art, .landing-live-dot, .landing-scroll span { animation: none; }
   .landing-copy, .login-card { animation: none; }
 }
+
+
+.login-brand { display: inline-flex; align-items: center; gap: 8px; }
+.login-brand img { width: 20px; height: 20px; object-fit: cover; border-radius: 5px; box-shadow: 0 0 14px rgba(83,236,178,.18); }
