@@ -86,3 +86,7 @@
 
 .login-brand { display: inline-flex; align-items: center; gap: 8px; }
 .login-brand img { width: 20px; height: 20px; object-fit: cover; border-radius: 5px; box-shadow: 0 0 14px rgba(83,236,178,.18); }
+
+
+.auth-contract { margin: -15px 0 24px; color: #728a81; font-size: 10px; line-height: 1.45; }
+.field-label span { color: #657b73; font-size: 9px; text-transform: none; letter-spacing: 0; font-weight: 400; }
