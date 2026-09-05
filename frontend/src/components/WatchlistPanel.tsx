@@ -41,7 +41,7 @@ export function WatchlistPanel({
     <section className="watchlist-panel">
       <div className="wp-head">
         <div>
-          <h2>Your watchlist</h2>
+          <h2>Your watchlist <span className="section-context">/ workspace</span></h2>
           <p className="wp-summary"><span>{items.length} tracked</span><span className="wp-summary-sep">·</span><span className={attentionCount > 0 ? "wp-summary-alert" : ""}>{attentionCount} needs a look</span></p>
         </div>
         {confirmingReset ? (
@@ -76,7 +76,7 @@ export function WatchlistPanel({
             aria-label="Filter tracked symbols"
           />
           {query && <button type="button" className="watchlist-filter-clear" onClick={() => onQueryChange("")} aria-label="Clear filter">×</button>}
-          <kbd>/</kbd>
+          <kbd>F</kbd>
         </div>
       )}
       {items.length === 0 ? (
