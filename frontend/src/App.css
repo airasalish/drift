@@ -2032,3 +2032,33 @@ button:disabled { cursor: not-allowed; }
   .hero-head .explain-btn { width: 100%; }
   .watchlist-row:hover { padding-left: 16px; }
 }
+
+
+/* Fast local filter: instant, client-side, and intentionally quieter than the add flow. */
+.wp-head > div { min-width: 0; }
+.wp-summary { margin: -7px 0 0; color: #697071; font-size: 10px; letter-spacing: .02em; }
+.wp-summary-sep { padding: 0 6px; color: #414748; }
+.wp-summary-alert { color: var(--green); }
+.watchlist-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -3px 0 14px;
+  padding: 0 10px;
+  border: 1px solid #2b3031;
+  background: #080a0a;
+  border-radius: 3px;
+  color: #707778;
+}
+.watchlist-filter-wrap:focus-within { border-color: #596263; box-shadow: 0 0 0 2px rgba(40,227,58,.06); }
+.watchlist-filter-icon { font-size: 19px; line-height: 1; transform: rotate(-15deg); }
+.watchlist-filter-wrap input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #edf0f0; padding: 10px 0; font-size: 12px; }
+.watchlist-filter-clear { border: 0; background: transparent; color: #878e8f; cursor: pointer; font-size: 18px; line-height: 1; padding: 1px 3px; }
+.watchlist-filter-clear:hover { color: var(--green); }
+.watchlist-filter-wrap kbd { border: 1px solid #353b3c; border-bottom-color: #4a5152; border-radius: 2px; color: #737a7b; padding: 2px 5px; font-size: 10px; font-family: inherit; }
+.filter-empty { border-style: solid; }
+.filter-empty button { border: 0; background: transparent; color: var(--green); padding: 0; text-decoration: underline; cursor: pointer; }
+@media (max-width: 560px) {
+  .wp-summary { margin-top: -4px; }
+  .watchlist-filter-wrap kbd { display: none; }
+}
