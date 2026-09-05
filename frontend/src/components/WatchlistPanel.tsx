@@ -64,12 +64,13 @@ export function WatchlistPanel({
               <span className="tier-count">{g.items.length}</span>
             </div>
             <div className="watchlist-rows">
-              {g.items.map((item) => (
+              {g.items.map((item, idx) => (
                 <WatchlistRow
                   key={item.id}
                   item={item}
                   selected={item.id === selectedId}
                   onClick={() => onOpenDetail(item)}
+                  tourAnchor={idx === 0 && g.tier === grouped[0].tier}
                 />
               ))}
             </div>
