@@ -1296,15 +1296,29 @@ section h2 {
   z-index: 201;
   padding: 22px 22px 24px;
   overflow-y: auto;
-  animation: drawer-in 0.22s cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation: drawer-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1);
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
+/* Non-modal means no dimming scrim announces this opened -- easy to miss
+   if you weren't already looking at the right edge. The slide carries a
+   brief accent ring that fades out after it settles: a one-time cue, not
+   a persistent glow (it's gone well before you'd start reading). */
 @keyframes drawer-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  0% {
+    transform: translateX(100%);
+    box-shadow: -24px 0 48px -16px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--accent-border);
+  }
+  55% {
+    transform: translateX(0);
+    box-shadow: -24px 0 48px -16px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--accent-border);
+  }
+  100% {
+    transform: translateX(0);
+    box-shadow: -24px 0 48px -16px rgba(0, 0, 0, 0.5), 0 0 0 0 transparent;
+  }
 }
 
 .drawer-head {
