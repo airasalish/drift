@@ -1,5 +1,29 @@
+import { useState } from "react";
 import { formatRelative } from "../format";
 import { BrandMark } from "./BrandMark";
+
+async function shareDrift(): Promise<"shared" | "copied" | "cancelled" | "failed"> {
+  const shareData = {
+    title: "Drift",
+    text: "Drift: a calmer watchlist that tells you what actually changed since you last looked.",
+    url: window.location.origin,
+  };
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return "shared";
+    } catch (e) {
+      // user closed the native share sheet -- not an error, just no-op
+      return e instanceof Error && e.name === "AbortError" ? "cancelled" : "failed";
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(shareData.url);
+    return "copied";
+  } catch {
+    return "failed";
+  }
+}
 
 export function Header({
   username,
@@ -26,6 +50,15 @@ export function Header({
   onToggleBeginnerMode: () => void;
   onRefresh: () => void;
 }) {
+  const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied" | "failed">("idle");
+
+  async function handleShare() {
+    const result = await shareDrift();
+    if (result === "cancelled") return;
+    setShareStatus(result === "failed" ? "failed" : result);
+    setTimeout(() => setShareStatus("idle"), 2200);
+  }
+
   return (
     <header className="header">
       <div className="brand">
@@ -74,6 +107,16 @@ export function Header({
           >
             <span className={loading ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
             <span>{loading ? "Updating" : "Refresh"}</span>
+          </button>
+          <button
+            type="button"
+            className="share-btn"
+            onClick={handleShare}
+            title="Share Drift"
+            aria-label="Share Drift"
+          >
+            <span aria-hidden="true">⇪</span>
+            <span>{shareStatus === "shared" ? "Shared" : shareStatus === "copied" ? "Link copied" : shareStatus === "failed" ? "Couldn't share" : "Share"}</span>
           </button>
           {username && (
             <button className="logout-btn" onClick={onLogout}>

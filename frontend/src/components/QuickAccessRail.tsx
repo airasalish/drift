@@ -202,6 +202,7 @@ export function QuickAccessRail({
         onClick={onShowHome}
         aria-label="Open home"
         aria-current={view === "watchlist" ? "page" : undefined}
+        data-tooltip="Your tracked symbols, grouped by how much attention each one needs right now."
       >
         <span className="rail-nav-icon" aria-hidden="true">⌂</span>
         Home
@@ -213,12 +214,18 @@ export function QuickAccessRail({
         onClick={onShowHistory}
         aria-label="Open history"
         aria-current={view === "history" ? "page" : undefined}
+        data-tooltip="A timeline of everything Drift has flagged, and when you acknowledged it."
       >
         <span className="rail-nav-icon" aria-hidden="true">◷</span>
         History
       </button>
 
-      <button type="button" className="rail-nav-item" onClick={onShowInsights}>
+      <button
+        type="button"
+        className="rail-nav-item"
+        onClick={onShowInsights}
+        data-tooltip="Jumps to the attention feed below: the exact rule and numbers behind each flagged symbol."
+      >
         <span className="rail-nav-icon" aria-hidden="true">⌁</span>
         Insights
       </button>
@@ -242,7 +249,12 @@ export function QuickAccessRail({
         </div>
       )}
 
-      <button type="button" className="rail-upgrade" onClick={onShowPro}>
+      <button
+        type="button"
+        className="rail-upgrade"
+        onClick={onShowPro}
+        data-tooltip="Planned, not live yet. The free workspace already runs Drift's full rule engine on everything you track."
+      >
         <span className="rail-upgrade-title">Upgrade to Pro <b>→</b></span>
         <span className="rail-upgrade-copy">Get real-time alerts, advanced insights and more.</span>
         <span className="rail-upgrade-glow" aria-hidden="true" />
