@@ -15,6 +15,7 @@ from app.demo_user import backfill_company_websites
 from app.routers.auth import router as auth_router
 from app.routers.symbols import router as symbols_router
 from app.routers.watchlist import router as watchlist_router, watchlists_router
+from app.sector_data import seed_sector_data
 from app.services.poller import poll_forever
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         backfill_company_websites(db)
+        seed_sector_data(db)
     finally:
         db.close()
     poll_task = asyncio.create_task(poll_forever())
