@@ -64,7 +64,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
       </section>
 
       <section className="login-card" aria-label="Sign in to Drift">
-        <div className="login-card-topline"><span>DRIFT</span><span>ACCESS / {mode === "login" ? "01" : "02"}</span></div>
+        <div className="login-card-topline"><span className="login-brand"><img src="/drift-d-mark.png" alt="" aria-hidden="true" /> DRIFT</span><span>ACCESS / {mode === "login" ? "01" : "02"}</span></div>
         <h1>Track what moves you.</h1>
         <p className="tagline">A calmer watchlist for the changes worth your attention.</p>
 
