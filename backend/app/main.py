@@ -10,7 +10,8 @@ from fastapi.responses import JSONResponse
 
 load_dotenv()
 
-from app.database import ensure_schema
+from app.database import SessionLocal, ensure_schema
+from app.demo_user import backfill_company_websites
 from app.routers.auth import router as auth_router
 from app.routers.symbols import router as symbols_router
 from app.routers.watchlist import router as watchlist_router
@@ -22,6 +23,11 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_schema()
+    db = SessionLocal()
+    try:
+        backfill_company_websites(db)
+    finally:
+        db.close()
     poll_task = asyncio.create_task(poll_forever())
     try:
         yield
