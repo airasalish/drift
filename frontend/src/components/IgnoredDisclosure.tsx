@@ -11,7 +11,7 @@ export function IgnoredDisclosure({ items }: { items: WatchlistItem[] }) {
 
   return (
     <section className="ignored-disclosure">
-      <button type="button" className="ignored-toggle" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="ignored-toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className={`chevron${open ? " open" : ""}`} aria-hidden>
           ▸
         </span>

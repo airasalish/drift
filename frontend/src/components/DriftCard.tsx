@@ -1,3 +1,4 @@
+import { CompanyFavicon } from "./CompanyFavicon";
 import { simplifyRuleMessage } from "../lib/beginner";
 import { Sparkline } from "../Sparkline";
 import { formatPct, formatPrice, pctClass } from "../format";
@@ -27,13 +28,18 @@ export function DriftCard({
       className="drift-card"
       role="button"
       tabIndex={0}
+      aria-label={`Open ${item.symbol} detail`}
       onClick={() => onOpenDetail(item)}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onOpenDetail(item);
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpenDetail(item);
+        }
       }}
     >
       <div className="dc-head">
         <span className="dc-symbol">
+          <CompanyFavicon domain={item.company_website} symbol={item.symbol} />
           {item.symbol}
           {item.company_name && <span className="dc-company"> · {item.company_name}</span>}
         </span>
@@ -46,7 +52,7 @@ export function DriftCard({
       </div>
 
       {primaryPct != null && (
-        <div className="dc-primary">
+        <div className="dc-primary" data-tour="drift-pct">
           <span className={`dc-primary-value ${pctClass(primaryPct)}`}>{formatPct(primaryPct)}</span>
           <span className="dc-primary-label">{primaryLabel}</span>
         </div>

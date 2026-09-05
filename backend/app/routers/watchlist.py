@@ -22,7 +22,7 @@ from app.schemas import (
 from app.services import change_detection
 from app.services.auth import get_current_user
 from app.services.digest import generate_digest
-from app.services.market_data import fetch_symbol_stats
+from app.services.market_data import fetch_symbol_stats, lookup_company_website
 from app.services.poller import BENCHMARK_SYMBOL
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
@@ -134,6 +134,7 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
         symbol=item.symbol,
         note=item.note,
         company_name=item.company_name,
+        company_website=item.company_website,
         added_at=item.added_at,
         added_price=item.added_price,
         last_viewed_at=item.last_viewed_at,
@@ -320,12 +321,15 @@ def add_symbol(
         db.flush()
 
     added_price = quote.price
+    # same best-effort capture as company_name: never blocks the add
+    website = lookup_company_website(symbol)
 
     item = WatchlistItem(
         watchlist_id=watchlist.id,
         symbol=symbol,
         note=payload.note,
         company_name=payload.company_name.strip() if payload.company_name else None,
+        company_website=website,
         added_price=added_price,
     )
     db.add(item)
