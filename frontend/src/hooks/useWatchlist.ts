@@ -51,13 +51,18 @@ export function useWatchlist() {
     };
   }, [refresh]);
 
-  // auto-mark-seen on tab hide: only for items never viewed yet, or
-  // currently flagged -- never touches quiet, already-seen items
+  // auto-mark-seen on tab hide: only for items currently in the attention
+  // feed -- you had it in front of you, leaving is a real acknowledgment.
+  // Deliberately NOT for every never-viewed item: that used to silently
+  // establish a 0%-change baseline for anything you'd just added the
+  // moment you switched tabs for any reason, before you'd ever actually
+  // looked at it -- which made "since last view" read as 0% across the
+  // whole watchlist and defeated the entire point of tracking real drift.
   useEffect(() => {
     function handleVisibility() {
       if (document.visibilityState !== "hidden") return;
       for (const item of itemsRef.current) {
-        if (item.last_viewed_at == null || item.has_attention) {
+        if (item.has_attention) {
           api.markSeenBeacon(item.id);
         }
       }
