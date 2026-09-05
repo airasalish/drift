@@ -81,6 +81,15 @@ export function FirstLookTour({
     };
   }, [open, stepIndex]);
 
+  // The anchor for a later step (e.g. a watchlist row) can sit well below
+  // the fold on a long page -- without this, its rect still "measures"
+  // fine (getBoundingClientRect doesn't care if the element is on screen),
+  // so the tooltip silently renders off-viewport instead of failing loudly.
+  useLayoutEffect(() => {
+    if (!open || !step) return;
+    document.querySelector(step.selector)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [open, stepIndex, step?.selector]);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -135,18 +144,20 @@ export function FirstLookTour({
         <h3 className="tour-title">{step.title}</h3>
         <p className="tour-body">{step.body}</p>
         <div className="tour-actions">
-          <button type="button" className="tour-skip" onClick={onClose}>
-            Skip
-          </button>
+          {!last && (
+            <button type="button" className="tour-skip" onClick={onClose}>
+              Skip
+            </button>
+          )}
           <button
             type="button"
-            className="tour-next"
+            className={last ? "tour-next tour-cta" : "tour-next"}
             onClick={() => {
               if (last) onClose();
               else setStepIndex((i) => i + 1);
             }}
           >
-            {last ? "Done" : "Next"}
+            {last ? "Try Drift →" : "Next"}
           </button>
         </div>
       </div>
