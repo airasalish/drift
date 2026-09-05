@@ -193,6 +193,18 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <AddStockForm onAdd={handleAdd} adding={adding} />
 
+        <div className="workspace-shortcuts" aria-label="Workspace shortcuts">
+          <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
+            <span className="shortcut-icon">⌁</span><span><strong>Track what matters</strong><small>Focus on real moves, not noise.</small></span><b>›</b>
+          </button>
+          <button type="button" className="workspace-shortcut" onClick={toggleBeginnerMode}>
+            <span className="shortcut-icon">◌</span><span><strong>Get clearer explanations</strong><small>{beginnerMode ? "Beginner mode is on." : "Translate signals into plain language."}</small></span><b>›</b>
+          </button>
+          <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
+            <span className="shortcut-icon">▥</span><span><strong>Make better decisions</strong><small>See what changed after you looked.</small></span><b>›</b>
+          </button>
+        </div>
+
         {error && (
           <div className="error-row">
             <div className="error">{error}</div>

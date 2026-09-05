@@ -2093,3 +2093,14 @@ button:disabled { cursor: not-allowed; }
   .dashboard-cover-copy { padding: 18px 20px; }
   .dashboard-cover-signal { right: 15px; top: 14px; font-size: 8px; }
 }
+
+.workspace-shortcuts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: -5px 0 34px; }
+.workspace-shortcut { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; min-height: 76px; padding: 13px 15px; border: 1px solid #293432; border-radius: 5px; background: linear-gradient(105deg, rgba(10,37,28,.82), rgba(5,15,12,.78)); color: #e3f4ec; text-align: left; cursor: pointer; }
+.workspace-shortcut:hover { border-color: #4ccf9e; background: linear-gradient(105deg, rgba(13,54,40,.92), rgba(6,22,17,.86)); transform: translateY(-2px); }
+.shortcut-icon { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgba(80,222,169,.25); border-radius: 4px; background: rgba(46,194,145,.1); color: #63edb6; font-size: 22px; }
+.workspace-shortcut span:nth-child(2) { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.workspace-shortcut strong { font-size: 12px; font-weight: 600; }
+.workspace-shortcut small { color: #87a89b; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.workspace-shortcut b { color: #74dcb0; font-size: 21px; font-weight: 300; transition: transform .16s ease; }
+.workspace-shortcut:hover b { transform: translateX(3px); }
+@media (max-width: 760px) { .workspace-shortcuts { grid-template-columns: 1fr; } .workspace-shortcut { min-height: 62px; } }
