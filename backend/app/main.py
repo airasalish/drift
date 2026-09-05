@@ -14,7 +14,7 @@ from app.database import SessionLocal, ensure_schema
 from app.demo_user import backfill_company_websites
 from app.routers.auth import router as auth_router
 from app.routers.symbols import router as symbols_router
-from app.routers.watchlist import router as watchlist_router
+from app.routers.watchlist import router as watchlist_router, watchlists_router
 from app.services.poller import poll_forever
 
 logging.basicConfig(level=logging.INFO)
@@ -72,6 +72,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 app.include_router(auth_router)
 app.include_router(watchlist_router)
+app.include_router(watchlists_router)
 app.include_router(symbols_router)
 
 
