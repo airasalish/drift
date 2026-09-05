@@ -218,6 +218,11 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           onRefresh={refresh}
         />
 
+        <nav className="mobile-workspace-nav" aria-label="Workspace navigation">
+          <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Home <span>{items.length}</span></button>
+          <button type="button" className={view === "history" ? "active" : ""} onClick={handleShowHistory}>History</button>
+        </nav>
+
         <section className="workspace-metrics" aria-label="Workspace metrics">
           <div className="workspace-metric metric-attention"><span>ATTENTION</span><strong>{attentionItems.length}</strong><small>{attentionItems.length ? "things worth checking" : "all quiet right now"}</small></div>
           <div className="workspace-metric"><span>WATCHLIST</span><strong>{items.length}</strong><small>tracked symbols</small></div>
