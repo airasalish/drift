@@ -17,6 +17,17 @@ export interface Quote {
   spark: number[];
 }
 
+export interface HistoryEvent {
+  id: number;
+  symbol: string;
+  company_name: string | null;
+  seen_at: string;
+  price_at_seen: number | null;
+  current_price: number | null;
+  currency: string | null;
+  change_since_pct: number | null;
+}
+
 export interface WatchlistItem {
   id: number;
   symbol: string;

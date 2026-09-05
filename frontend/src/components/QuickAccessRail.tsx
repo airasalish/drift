@@ -2,20 +2,26 @@ import { attentionTier } from "../lib/attention";
 import type { WatchlistItem } from "../types";
 import { BrandMark } from "./BrandMark";
 
-// A persistent quick-jump list, not fake page navigation -- Drift has one
-// real view. This borrows Koyfin's actual useful pattern: the watchlist
-// stays visible and clickable while a detail panel is open, so switching
-// between stocks is one click instead of close-then-reopen. Hidden below
-// a width where there isn't room for it (see App.css); the drawer already
-// covers "get to a stock's detail" fine on narrow screens.
+// A persistent quick-jump list plus a real second destination (History),
+// not fake page navigation -- Drift doesn't get a "Markets" or
+// "Dashboards" section here because there's no real content behind one.
+// This borrows Koyfin's actual useful pattern: the watchlist stays visible
+// and clickable while a detail panel is open, so switching between stocks
+// is one click instead of close-then-reopen. Hidden below a width where
+// there isn't room for it (see App.css); the drawer already covers
+// "get to a stock's detail" fine on narrow screens.
 export function QuickAccessRail({
   items,
   selectedId,
+  view,
   onSelect,
+  onShowHistory,
 }: {
   items: WatchlistItem[];
   selectedId: number | null;
+  view: "watchlist" | "history";
   onSelect: (item: WatchlistItem) => void;
+  onShowHistory: () => void;
 }) {
   const sorted = [...items].sort((a, b) => b.attention_score - a.attention_score);
 
@@ -24,6 +30,15 @@ export function QuickAccessRail({
       <div className="rail-brand">
         <BrandMark />
       </div>
+
+      <button
+        type="button"
+        className={`rail-nav-item${view === "history" ? " selected" : ""}`}
+        onClick={onShowHistory}
+      >
+        History
+      </button>
+
       {sorted.length > 0 && (
         <div className="rail-list">
           <span className="rail-label">Watching</span>
@@ -31,7 +46,7 @@ export function QuickAccessRail({
             <button
               key={item.id}
               type="button"
-              className={`rail-item${item.id === selectedId ? " selected" : ""}`}
+              className={`rail-item${view === "watchlist" && item.id === selectedId ? " selected" : ""}`}
               onClick={() => onSelect(item)}
               title={item.company_name ?? item.symbol}
             >

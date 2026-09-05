@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { simplifyRuleMessage } from "../lib/beginner";
 import { formatPct, formatPrice, pctClass } from "../format";
 import { Sparkline } from "../Sparkline";
 import type { WatchlistItem } from "../types";
@@ -10,12 +11,14 @@ import { ThesisChips } from "./ThesisChips";
 // "what happened to this stock while I was away" -- nothing that doesn't.
 export function StockDrawer({
   item,
+  beginnerMode,
   onClose,
   onSeen,
   onRemove,
   onUpdateNote,
 }: {
   item: WatchlistItem | null;
+  beginnerMode: boolean;
   onClose: () => void;
   onSeen: (id: number) => void;
   onRemove: (id: number) => void;
@@ -151,7 +154,7 @@ export function StockDrawer({
             <ul className="reasons">
               {item.fired.map((f, idx) => (
                 <li key={idx} className={f.rule}>
-                  {f.message}
+                  {beginnerMode ? simplifyRuleMessage(f) : f.message}
                 </li>
               ))}
             </ul>

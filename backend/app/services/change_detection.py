@@ -1,6 +1,6 @@
 """The actual differentiator: rule-based, auditable "what changed" scoring.
 
-Every rule here maps 1:1 to PROJECT_BRIEF.md §1. Deliberately not ML/LLM —
+Every rule here maps 1:1 to PROJECT_BRIEF.md §1. Deliberately not ML/LLM --
 see ENGINEERING_DECISIONS.md for why: a rule can be defended with the exact
 number that fired it, in front of a judge, with no re-guessing.
 """
@@ -17,16 +17,32 @@ VOLUME_SPIKE_MULTIPLE = 2.0
 NEAR_52W_PCT = 0.03  # within 3% counts as "near" the extreme
 
 
-def evaluate(price_at_last_view: float | None, quote: SymbolQuote) -> dict:
+def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fired: frozenset[str] | None = None) -> dict:
     """Returns fired rules (each with a human-readable message and the raw
-    number behind it), a numeric attention score, and whether this symbol
-    belongs in the "what changed" feed at all.
+    number behind it), a numeric attention score, whether this symbol
+    belongs in the "what changed" feed at all, and the set of structural
+    rule keys currently true (for the caller to snapshot at mark-seen time).
+
+    `previously_fired` is the set of structural rule keys (see `keys` in the
+    return value) that were already true the last time the user looked --
+    price_move doesn't need this, it's already anchored to price_at_last_view
+    and naturally resets to "not firing" the moment that baseline moves.
+    Unusual volume and 52-week proximity are NOT time-anchored on their own
+    (they're facts about the current quote, not about the gap since your
+    last visit), so without this, a stock sitting near its 52-week high
+    would stay stuck in the attention feed forever, "mark as seen" doing
+    nothing -- that was a real reported bug, not a hypothetical. Suppressing
+    a rule that already fired last time you looked, while still firing it
+    the moment it becomes newly true again, is what actually makes "mark
+    as seen" mean something for these rules.
     """
+    previously_fired = previously_fired or frozenset()
     fired: list[dict] = []
+    keys: list[str] = []
     score = 0.0
 
     if quote.price is None:
-        return {"fired": fired, "score": 0.0, "attention": False}
+        return {"fired": fired, "score": 0.0, "attention": False, "keys": keys}
 
     # ── 1. Price move since last view ────────────────────────────────────────
     if price_at_last_view and price_at_last_view > 0:
@@ -67,48 +83,58 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote) -> dict:
     if quote.volume is not None and quote.avg_volume_20d and quote.avg_volume_20d > 0:
         volume_ratio = quote.volume / quote.avg_volume_20d
         if volume_ratio >= VOLUME_SPIKE_MULTIPLE:
-            fired.append(
-                {
-                    "rule": "unusual_volume",
-                    "message": f"Volume is {volume_ratio:.1f}× its 20-day average",
-                    "value": volume_ratio,
-                }
-            )
-            score += VOLUME_WEIGHT
+            keys.append("unusual_volume")
+            if "unusual_volume" not in previously_fired:
+                fired.append(
+                    {
+                        "rule": "unusual_volume",
+                        "message": f"Volume is {volume_ratio:.1f}× its 20-day average",
+                        "value": volume_ratio,
+                    }
+                )
+                score += VOLUME_WEIGHT
 
     # ── 4. 52-week high/low (exact hit or within 3%) ──────────────────────────
     if quote.week52_high is not None:
         if quote.price >= quote.week52_high:
-            fired.append({
-                "rule": "week52_high",
-                "message": "At a new 52-week high",
-                "value": quote.price,
-            })
-            score += WEEK52_WEIGHT
+            keys.append("week52_high_exact")
+            if "week52_high_exact" not in previously_fired:
+                fired.append({
+                    "rule": "week52_high",
+                    "message": "At a new 52-week high",
+                    "value": quote.price,
+                })
+                score += WEEK52_WEIGHT
         elif quote.price >= quote.week52_high * (1 - NEAR_52W_PCT):
-            pct_away = (quote.week52_high - quote.price) / quote.week52_high * 100
-            fired.append({
-                "rule": "week52_high",
-                "message": f"Within {pct_away:.1f}% of its 52-week high",
-                "value": quote.price,
-            })
-            score += WEEK52_WEIGHT * 0.6
+            keys.append("week52_high_near")
+            if "week52_high_near" not in previously_fired:
+                pct_away = (quote.week52_high - quote.price) / quote.week52_high * 100
+                fired.append({
+                    "rule": "week52_high",
+                    "message": f"Within {pct_away:.1f}% of its 52-week high",
+                    "value": quote.price,
+                })
+                score += WEEK52_WEIGHT * 0.6
 
     if quote.week52_low is not None:
         if quote.price <= quote.week52_low:
-            fired.append({
-                "rule": "week52_low",
-                "message": "At a new 52-week low",
-                "value": quote.price,
-            })
-            score += WEEK52_WEIGHT
+            keys.append("week52_low_exact")
+            if "week52_low_exact" not in previously_fired:
+                fired.append({
+                    "rule": "week52_low",
+                    "message": "At a new 52-week low",
+                    "value": quote.price,
+                })
+                score += WEEK52_WEIGHT
         elif quote.price <= quote.week52_low * (1 + NEAR_52W_PCT):
-            pct_away = (quote.price - quote.week52_low) / quote.week52_low * 100
-            fired.append({
-                "rule": "week52_low",
-                "message": f"Within {pct_away:.1f}% of its 52-week low",
-                "value": quote.price,
-            })
-            score += WEEK52_WEIGHT * 0.6
+            keys.append("week52_low_near")
+            if "week52_low_near" not in previously_fired:
+                pct_away = (quote.price - quote.week52_low) / quote.week52_low * 100
+                fired.append({
+                    "rule": "week52_low",
+                    "message": f"Within {pct_away:.1f}% of its 52-week low",
+                    "value": quote.price,
+                })
+                score += WEEK52_WEIGHT * 0.6
 
-    return {"fired": fired, "score": score, "attention": len(fired) > 0}
+    return {"fired": fired, "score": score, "attention": len(fired) > 0, "keys": keys}

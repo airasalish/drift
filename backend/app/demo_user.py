@@ -17,7 +17,8 @@ DEMO_USER_NAME = "demo"
 # Curated so a cold visitor (or a judge clicking "try the demo") sees a
 # lively, recognizable watchlist immediately instead of an empty state --
 # real, currently-relevant tickers spanning AI/EV hype, gaming, football
-# (EA Sports FC) and sports betting, not just blue-chip defaults. These are
+# (EA Sports FC) and sports betting globally, plus two of the most widely
+# held retail names in India, not just US blue-chip defaults. These are
 # real yfinance-resolvable symbols; nothing here is fabricated data.
 DEFAULT_WATCHLIST_SEED = [
     ("NVDA", "NVIDIA Corporation", "Earnings"),
@@ -25,6 +26,10 @@ DEFAULT_WATCHLIST_SEED = [
     ("EA", "Electronic Arts Inc.", "Waiting for a price"),
     ("DKNG", "DraftKings Inc.", "Breakout"),
     ("RBLX", "Roblox Corporation", "Recovery"),
+    # Zomato renamed to Eternal Ltd on the NSE in 2024 -- ETERNAL.NS is the
+    # real current ticker, verified against live yfinance data before use.
+    ("ETERNAL.NS", "Eternal Limited (Zomato)", "Just monitoring"),
+    ("NYKAA.NS", "FSN E-Commerce Ventures (Nykaa)", "Long-term hold"),
 ]
 
 
