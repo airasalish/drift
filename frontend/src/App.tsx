@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./api";
 import { AddStockForm } from "./components/AddStockForm";
+import { FirstLookTour } from "./components/FirstLookTour";
 import { Header } from "./components/Header";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { IgnoredDisclosure } from "./components/IgnoredDisclosure";
@@ -56,6 +57,21 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
       return false;
     }
   });
+  const [tourOpen, setTourOpen] = useState(() => {
+    try {
+      return sessionStorage.getItem("drift_pending_tour") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("drift_pending_tour");
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const marketOpen = isMarketOpen();
 
@@ -179,7 +195,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               items={items}
               selectedId={selectedId}
               onOpenDetail={setDetailItem}
-              onResetSample={resetToSample}
+              onResetSample={async () => {
+                await resetToSample();
+                setTourOpen(true);
+              }}
             />
 
             <IgnoredDisclosure items={quietItems} />
@@ -195,6 +214,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           onUpdateNote={updateNote}
         />
       </div>
+
+      <FirstLookTour open={tourOpen && !loading} onClose={() => setTourOpen(false)} />
     </div>
   );
 }

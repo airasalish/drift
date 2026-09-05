@@ -23,7 +23,7 @@
   --text: #eef0f3;
   --text-dim: #b6bac3;
   --muted: #868c97;
-  --faint: #565b64;
+  --faint: #6b717c;
 
   --green: #34d399;
   --green-dim: rgba(52, 211, 153, 0.13);
@@ -69,6 +69,25 @@ button {
   font-family: inherit;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+.thesis-chip:focus-visible,
+.thesis-custom:focus-visible,
+.wp-reset-link:focus-visible,
+.ignored-toggle:focus-visible,
+.rail-item:focus-visible,
+.rail-nav-item:focus-visible,
+.explain-btn:focus-visible,
+.logout-btn:focus-visible,
+.beginner-toggle:focus-visible,
+.drawer-close:focus-visible,
+.drawer-thesis-display:focus-visible,
+.ssc-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* numerals never jitter as digits change */
 .price, .price-cell, .wr-price, .wr-since-value, .wr-since-added,
 .dc-primary-value, .dc-secondary-price, .drawer-primary-value, .drawer-now,
@@ -88,7 +107,7 @@ button {
   min-width: 0;
   max-width: 1040px;
   margin: 0 auto;
-  padding: 36px 20px 100px;
+  padding: var(--sp-8) var(--sp-5) 100px;
 }
 
 /* ── Quick-access rail ── */
@@ -201,8 +220,8 @@ button {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 22px;
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-6);
   flex-wrap: wrap;
 }
 
@@ -321,9 +340,9 @@ button {
 .add-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 32px;
-  padding: 14px;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-7);
+  padding: var(--sp-4);
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
@@ -584,7 +603,7 @@ button {
 
 /* ── Section basics ── */
 section {
-  margin-bottom: 34px;
+  margin-bottom: var(--sp-7);
 }
 
 section h2 {
@@ -691,21 +710,21 @@ section h2 {
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
-  padding: 26px 26px 24px;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
 }
 
 .hero-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--sp-4);
   flex-wrap: wrap;
 }
 
 .hero-headline-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-1);
 }
 
 .hero-eyebrow {
@@ -718,10 +737,10 @@ section h2 {
 
 .hero-headline {
   margin: 0;
-  font-size: 38px;
+  font-size: 44px;
   font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
 }
 
 .hero-calm-copy {
@@ -770,8 +789,8 @@ section h2 {
 .drift-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  gap: 12px;
-  margin-top: 18px;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
 }
 
 .drift-card {
@@ -779,7 +798,7 @@ section h2 {
   border: 1px solid var(--border);
   border-left: 2.5px solid var(--accent);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: var(--sp-4);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -805,6 +824,10 @@ section h2 {
   font-weight: 800;
   font-size: 16px;
   letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
 }
 
 .dc-company {
@@ -841,9 +864,10 @@ section h2 {
 }
 
 .dc-primary-value {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .dc-primary-label {
@@ -1007,6 +1031,14 @@ section h2 {
   min-width: 0;
 }
 
+.company-favicon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: var(--surface-3);
+}
+
 .wr-symbol {
   font-weight: 700;
   font-size: 13.5px;
@@ -1057,7 +1089,8 @@ section h2 {
 
 .wr-since-value {
   font-weight: 800;
-  font-size: 14.5px;
+  font-size: 16px;
+  letter-spacing: -0.02em;
 }
 
 .wr-since-added {
@@ -1338,6 +1371,9 @@ section h2 {
   font-weight: 800;
   font-size: 18px;
   letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 
 .drawer-company {
@@ -1357,9 +1393,10 @@ section h2 {
 }
 
 .drawer-primary-value {
-  font-size: 34px;
+  font-size: 42px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .drawer-primary-label {
@@ -1603,7 +1640,7 @@ section h2 {
   }
 
   .hero-headline {
-    font-size: 25px;
+    font-size: 28px;
   }
 
   .mc-note {
@@ -1640,3 +1677,83 @@ section h2 {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── First-look tour ── */
+.tour-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(4, 5, 8, 0.55);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tour-spot {
+  position: fixed;
+  z-index: 501;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px var(--accent-border);
+  pointer-events: none;
+}
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 502;
+  width: min(300px, calc(100vw - 24px));
+  background: var(--surface-3);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+}
+
+.tour-step-meta {
+  margin: 0 0 var(--sp-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tour-title {
+  margin: 0 0 var(--sp-2);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tour-body {
+  margin: 0 0 var(--sp-4);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.tour-skip {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.tour-next {
+  background: var(--accent);
+  color: #0a0b0e;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+  padding: var(--sp-2) var(--sp-4);
+}
+

@@ -34,7 +34,7 @@ export function SinceYouLeft({
   const hasAttention = attentionItems.length > 0;
 
   return (
-    <section className="hero">
+    <section className="hero" data-tour="hero">
       <div className="hero-head">
         <div className="hero-headline-block">
           <span className="hero-eyebrow">
