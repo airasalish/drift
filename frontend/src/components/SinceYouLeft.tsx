@@ -49,7 +49,8 @@ export function SinceYouLeft({
           </h2>
         </div>
         {hasAttention && (
-          <button className="explain-btn" onClick={onExplain} disabled={digestLoading}>
+          <button className="explain-btn" onClick={onExplain} disabled={digestLoading} title="AI-written summary for readability -- the move above and its % are what the rule engine actually computed">
+            <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">✨</span>
             {digestLoading ? "Summarizing…" : "Summarize the moves"}
           </button>
         )}
@@ -70,7 +71,14 @@ export function SinceYouLeft({
 
       <MarketContext benchmark={benchmark} />
 
-      {digest && <p className="digest">{digest}</p>}
+      {digest && (
+        <p className="digest">
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, display: "block", marginBottom: 4 }}>
+            ✨ AI SUMMARY
+          </span>
+          {digest}
+        </p>
+      )}
 
       {hasAttention && (
         <div className="drift-cards">

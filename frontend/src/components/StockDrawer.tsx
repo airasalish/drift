@@ -158,11 +158,23 @@ export function StockDrawer({
           <div className="drawer-section">
             <div className="drawer-section-head">
               <h3>Why Drift surfaced this</h3>
-              <button className="explain-btn" onClick={handleExplain} disabled={digestLoading}>
+              <button className="explain-btn" onClick={handleExplain} disabled={digestLoading} title="AI-generated summary in plain English -- the rule list below is what actually decided this stock got flagged">
+                <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">✨</span>
                 {digestLoading ? "Summarizing…" : "Explain this"}
               </button>
             </div>
-            {digest && <p className="digest">{digest}</p>}
+            {/* Deliberately labeled: this sentence is AI-written for readability,
+                but it's not what decided the stock was flagged -- the rule list
+                right below it is the actual, auditable reasoning. Keeping the
+                two visually distinct so neither gets credit for the other. */}
+            {digest && (
+              <p className="digest">
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, display: "block", marginBottom: 4 }}>
+                  ✨ AI SUMMARY
+                </span>
+                {digest}
+              </p>
+            )}
             <ul className="reasons">
               {item.fired.map((f, idx) => (
                 <li key={idx} className={f.rule}>
