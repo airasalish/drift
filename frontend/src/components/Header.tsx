@@ -98,6 +98,7 @@ export function Header({
             <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">Aa</span>
             {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
           </button>
+          <span className="beginner-help">Simpler explanations, same signals</span>
           <button
             type="button"
             className="refresh-btn"

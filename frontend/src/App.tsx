@@ -14,6 +14,7 @@ import { WatchlistPanel } from "./components/WatchlistPanel";
 import { WatchlistPickerModal } from "./components/WatchlistPickerModal";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { attentionTier, latestViewedAt } from "./lib/attention";
+import { simplifyRuleMessage } from "./lib/beginner";
 import { formatPct } from "./format";
 import type { HistoryEvent, WatchlistItem } from "./types";
 import "./App.css";
@@ -310,7 +311,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
                 <ul className="reasons">
                   {portfolioItem.fired.map((f, idx) => (
                     <li key={idx} className={f.rule}>
-                      {beginnerMode ? f.message : f.message}
+                      {beginnerMode ? simplifyRuleMessage(f) : f.message}
                     </li>
                   ))}
                 </ul>
