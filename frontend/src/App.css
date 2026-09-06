@@ -2458,8 +2458,6 @@ body::after { z-index: 0; }
 /* Explainable company suggestions: useful starter paths, never disguised advice. */
 .suggested-companies { margin: 0 0 20px; padding: 16px; border: 1px solid rgba(89,190,153,.18); border-radius: 5px; background: rgba(3,18,13,.82); }
 .suggested-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 13px; }
-.suggested-brand { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 9px; color: var(--text-dim); font-size: 9px; font-weight: 800; letter-spacing: .14em; }
-.suggested-brand .brand-mark { width: 18px; height: 18px; }
 .suggested-kicker { color: #62eab4; font-size: 8px; font-weight: 800; letter-spacing: .18em; }
 .suggested-head h2 { margin: 6px 0 4px; color: #e8f8f0; font-size: 18px; letter-spacing: -.035em; }
 .suggested-head p { max-width: 650px; margin: 0; color: #789a8c; font-size: 10px; line-height: 1.45; }
@@ -2468,6 +2466,8 @@ body::after { z-index: 0; }
 .suggested-card { min-width: 0; padding: 11px; border: 1px solid #263932; border-radius: 4px; background: linear-gradient(135deg, rgba(8,39,28,.78), rgba(3,15,11,.78)); }
 .suggested-card:hover { border-color: rgba(99,234,180,.48); }
 .suggested-card-top { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+.suggested-symbol { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.suggested-symbol .company-favicon { width: 18px; height: 18px; border-radius: 5px; }
 .suggested-card-top strong { color: #effcf5; font-size: 12px; }
 .suggested-card-top button { border: 1px solid rgba(96,227,177,.45); border-radius: 3px; padding: 4px 6px; background: transparent; color: #6be9b3; font-size: 9px; font-weight: 700; cursor: pointer; }
 .suggested-card-top button:hover:not(:disabled) { background: rgba(91,255,195,.12); }
