@@ -55,6 +55,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<WatchlistItem | null>(null);
+  const [chartSelectedItem, setChartSelectedItem] = useState<WatchlistItem | null>(null);
   const [view, setView] = useState<"watchlist" | "history" | "chart">("watchlist");
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -118,6 +119,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   // stale snapshot from the moment it was opened
   const liveDetailItem = detailItem ? items.find((i) => i.id === detailItem.id) ?? null : null;
   const selectedId = liveDetailItem?.id ?? null;
+  const chartSelectedId = chartSelectedItem ? items.find((i) => i.id === chartSelectedItem.id)?.id ?? null : null;
 
   async function handleAdd(symbol: string, note: string, companyName?: string) {
     setAdding(true);
@@ -150,6 +152,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   function handleSelect(item: WatchlistItem) {
     setView("watchlist");
     setDetailItem((prev) => (prev?.id === item.id ? null : item));
+  }
+
+  // Separate from handleSelect: switching the chart's focused stock must not
+  // change the view away from "chart" or pop open the detail drawer.
+  function handleChartSelect(item: WatchlistItem) {
+    setChartSelectedItem(item);
   }
 
   async function handleShowHistory() {
@@ -303,8 +311,9 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         ) : view === "chart" ? (
           <ChartView
             items={items}
-            selectedId={selectedId}
-            onSelectStock={handleSelect}
+            selectedId={chartSelectedId}
+            onSelectStock={handleChartSelect}
+            activeWatchlistId={activeWatchlistId}
           />
         ) : loading ? (
           <div className="skeleton-block" />

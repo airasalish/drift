@@ -8,10 +8,12 @@ export function ChartView({
   items,
   selectedId,
   onSelectStock,
+  activeWatchlistId,
 }: {
   items: WatchlistItem[];
   selectedId: number | null;
   onSelectStock: (item: WatchlistItem) => void;
+  activeWatchlistId: number | null;
 }) {
   const selectableItems = items.filter(i => i.id !== -1);
   const selectedIndex = selectableItems.findIndex(i => i.id === selectedId);
@@ -93,7 +95,7 @@ export function ChartView({
       {/* Right Panel: Drifty Intelligence */}
       <div className="chart-view-right">
         {selectedItem ? (
-          <DriftyPanel item={selectedItem} />
+          <DriftyPanel item={selectedItem} watchlistId={activeWatchlistId} />
         ) : (
           <div className="drifty-empty">
             <span>Select a stock to see Drifty analysis</span>
