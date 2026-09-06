@@ -38,17 +38,18 @@ Compares a stock's movement against its own historical volatility.
 - `move_magnitude`: How many times larger today's move is compared to normal
 - `volume_vs_normal`: Today's volume divided by 20-day average volume
 
-**Thresholds**:
-- Move magnitude > 2× normal: **+30 attention points**
-- Volume >= 2× normal: **+15 attention points**
+**Thresholds** (shared with `change_detection.py`):
+- Move >= `max(MIN_MOVE_THRESHOLD, MOVE_SENSITIVITY × normal_daily_move)`: **+30 attention points**
+- Volume >= `VOLUME_SPIKE_MULTIPLE` × normal: **+15 attention points**
+- At / within `NEAR_52W_PCT` of a 52-week extreme: **+20 / +12 attention points**
 
 **Example**:
 ```
 AAPL price: $228.17, prev_close: $224.50
 today_pct_change = (228.17 - 224.50) / 224.50 = 1.63%
 normal_daily_move = 0.80%
-move_magnitude = 1.63% / 0.80% = 2.04× normal
-→ Score: +30 points (exceeds 2× threshold)
+threshold = max(1.0%, 1.5 × 0.80%) = 1.20%
+1.63% >= 1.20% → Score: +30 points (2.0× its normal daily range)
 ```
 
 ### 2. Peer Analysis
@@ -116,11 +117,21 @@ Drifty detects market-wide movements by identifying when 3+ stocks move >2% in t
 
 | Signal | Threshold | Points |
 |--------|-----------|--------|
-| High move magnitude | > 2× normal | +30 |
-| Outlier in watchlist | Different direction from majority | +25 |
+| Unusual move for this stock | >= `MOVE_SENSITIVITY` (1.5) × its own average move, floored at `MIN_MOVE_THRESHOLD` (1%) | +30 |
+| Outlier in watchlist | Different direction from majority, own move unusual | +25 |
 | Market out/underperformance | > 1.5% difference | +20 |
 | Market cluster | Part of 3+ stock cluster | +15 |
-| Volume spike | >= 2× normal | +15 |
+| Volume spike | >= `VOLUME_SPIKE_MULTIPLE` (2× normal) | +15 |
+| At a 52-week high/low | price at or beyond the extreme | +20 |
+| Near a 52-week high/low | within `NEAR_52W_PCT` (3%) of the extreme | +12 |
+
+**Shared thresholds**: the move, volume and 52-week numbers above are the same
+constants `app/services/change_detection.py` uses for the watchlist's attention
+flags (via `change_detection.unusual_move_threshold()`, `VOLUME_SPIKE_MULTIPLE`
+and `NEAR_52W_PCT`) -- one definition, so the Charts view's Drifty panel and the
+list can't disagree about the same stock. `change_detection`'s "previously
+fired" suppression (what makes mark-as-seen clear a stale 52-week flag) stays
+there: Drifty is a stateless per-request read and reports current state.
 
 **Maximum Score**: 100 points (capped)
 
