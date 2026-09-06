@@ -582,8 +582,170 @@ class TestDriftyIntelligence:
         assert result.market_analysis.outperformance == result.self_analysis.today_pct_change
         assert result.attention_score >= 0
 
+    def test_drifty_outlier_sensitivity_fix(self, db_session, test_user, test_watchlist, test_quotes):
+        """Test that outlier detection requires significant move magnitude.
 
-class TestEnhancedChartData:
+        This test verifies the fix for the over-sensitivity issue where stocks
+        with sub-normal movement were being flagged as outliers just because
+        peers happened to move in a different direction.
+
+        Example: DKNG moved -0.74% (0.3× its normal move) but was flagged as
+        an outlier because 3 of 8 peers moved the other way. This is noise, not signal.
+        """
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock with sub-normal move (like the DKNG example)
+        # Use a unique symbol to avoid conflicts
+        test_symbol = "SUBNORMAL_TEST"
+        existing = db_session.get(SymbolQuote, test_symbol)
+        if existing:
+            db_session.delete(existing)
+            db_session.commit()
+
+        sub_normal_mover = SymbolQuote(
+            symbol=test_symbol,
+            price=99.26,  # -0.74% move
+            prev_close=100.0,
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.025,  # 2.5% normal move, so today is 0.3× normal
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0, 99.26]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(sub_normal_mover)
+        db_session.commit()
+
+        # Add the sub-normal mover to watchlist
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol=test_symbol,
+            company_name="Sub Normal Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Add peers that move in opposite direction (simulating the DKNG scenario)
+        # Add 3 peers moving up, so same_direction_count would be 0 < 3/2
+        for i in range(3):
+            peer_symbol = f"PEER_OUTLIER{i}"
+            existing_peer = db_session.get(SymbolQuote, peer_symbol)
+            if existing_peer:
+                db_session.delete(existing_peer)
+
+            peer_quote = SymbolQuote(
+                symbol=peer_symbol,
+                price=101.0,  # +1% move (opposite direction)
+                prev_close=100.0,
+                volume=1000000,
+                avg_volume_20d=1000000,
+                avg_daily_move_pct_20d=0.01,
+                week52_high=110.0,
+                week52_low=90.0,
+                spark_closes_json=json.dumps([100.0, 101.0]),
+                similar_moves_json=json.dumps([]),
+                fetched_at=None,
+            )
+            db_session.add(peer_quote)
+
+            peer_item = WatchlistItem(
+                watchlist_id=test_watchlist.id,
+                symbol=peer_symbol,
+                company_name=f"Peer {i}",
+                added_price=100.0,
+            )
+            db_session.add(peer_item)
+
+        db_session.commit()
+
+        result = compute_drifty(test_watchlist.id, test_symbol, test_user, db_session)
+
+        # Verify the fix: sub-normal move should NOT trigger outlier signal
+        # even though peers are moving in opposite direction
+        assert result.self_analysis.move_magnitude == "0.3× normal"  # Sub-normal move
+        assert result.peer_analysis.same_direction_count == 0  # All peers opposite direction
+        assert result.peer_analysis.watchlist_size == 4  # 1 target + 3 peers
+
+        # The key assertion: should NOT have outlier in reasons
+        assert not any("outlier" in reason.lower() for reason in result.why_interesting)
+
+        # Should have low score since it's not actually interesting
+        assert result.attention_score < 25  # Should not get the +25 outlier points
+
+
+class TestWatchlistItemCount:
+    """Tests for watchlist item count feature."""
+
+    def test_watchlist_list_includes_item_count(self, db_session, test_user, test_watchlist):
+        """Test that GET /api/watchlists includes item_count for each watchlist."""
+        from app.routers.watchlist import list_watchlists
+
+        # Add a few items to the watchlist
+        for i in range(3):
+            item = WatchlistItem(
+                watchlist_id=test_watchlist.id,
+                symbol=f"TEST{i}",
+                company_name=f"Test {i}",
+                added_price=100.0,
+            )
+            db_session.add(item)
+        db_session.commit()
+
+        # Create another empty watchlist
+        empty_watchlist = Watchlist(user_id=test_user.id, name="Empty Watchlist")
+        db_session.add(empty_watchlist)
+        db_session.commit()
+
+        # Get all watchlists
+        result = list_watchlists(db_session, test_user)
+
+        # Should have both watchlists
+        assert len(result) == 2
+
+        # Find our test watchlist
+        test_wl = next((w for w in result if w.id == test_watchlist.id), None)
+        assert test_wl is not None
+        assert test_wl.item_count == 3
+
+        # Find empty watchlist
+        empty_wl = next((w for w in result if w.name == "Empty Watchlist"), None)
+        assert empty_wl is not None
+        assert empty_wl.item_count == 0
+
+    def test_watchlist_list_no_n_plus_one_query(self, db_session, test_user):
+        """Test that item_count is populated efficiently without N+1 queries."""
+        from app.routers.watchlist import list_watchlists
+
+        # Create multiple watchlists with different item counts
+        watchlists = []
+        for i in range(5):
+            wl = Watchlist(user_id=test_user.id, name=f"Watchlist {i}")
+            db_session.add(wl)
+            watchlists.append(wl)
+        db_session.commit()
+
+        # Add varying numbers of items to each watchlist
+        for i, wl in enumerate(watchlists):
+            for j in range(i + 1):  # 0, 1, 2, 3, 4 items
+                item = WatchlistItem(
+                    watchlist_id=wl.id,
+                    symbol=f"SYMBOL{i}_{j}",
+                    company_name=f"Symbol {i}_{j}",
+                    added_price=100.0,
+                )
+                db_session.add(item)
+        db_session.commit()
+
+        # Get all watchlists - should be efficient (no N+1)
+        result = list_watchlists(db_session, test_user)
+
+        # Verify all counts are correct
+        assert len(result) == 5
+        for i, wl in enumerate(result):
+            assert wl.item_count == i + 1
     """Tests for enhanced chart data with OHLC and more timeframes."""
 
     def test_chart_data_new_timeframes(self):

@@ -18,6 +18,8 @@ export function StockDrawer({
   onSeen,
   onRemove,
   onUpdateNote,
+  onManageWatchlists,
+  onOpenChart,
 }: {
   item: WatchlistItem | null;
   beginnerMode: boolean;
@@ -25,6 +27,8 @@ export function StockDrawer({
   onSeen: (id: number) => void;
   onRemove: (id: number) => void;
   onUpdateNote: (id: number, note: string) => void;
+  onManageWatchlists: (symbol: string, companyName?: string) => void;
+  onOpenChart: (item: WatchlistItem) => void;
 }) {
   const [editingThesis, setEditingThesis] = useState(false);
   const [draftNote, setDraftNote] = useState("");
@@ -195,7 +199,11 @@ export function StockDrawer({
         </div>
 
         <div className="drawer-actions">
+          <button onClick={() => onOpenChart(item)}>Open full chart</button>
           <button onClick={() => onSeen(item.id)}>Mark as seen</button>
+          <button className="ghost" onClick={() => onManageWatchlists(item.symbol, item.company_name ?? undefined)}>
+            Manage watchlists
+          </button>
           {confirmingRemove ? (
             <div className="confirm-remove">
               <span>Remove?</span>

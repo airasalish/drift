@@ -190,10 +190,27 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
 
 @watchlists_router.get("", response_model=list[WatchlistOut])
 def list_watchlists(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """List all watchlists belonging to the current user."""
-    watchlists = db.query(Watchlist).filter_by(user_id=user.id).order_by(Watchlist.created_at).all()
+    """List all watchlists belonging to the current user with item counts."""
+    from sqlalchemy import func
+
+    # Efficient single query to get watchlists with item counts (no N+1)
+    watchlists = (
+        db.query(
+            Watchlist.id,
+            Watchlist.name,
+            Watchlist.created_at,
+            func.count(WatchlistItem.id).label("item_count"),
+        )
+        .outerjoin(WatchlistItem, Watchlist.id == WatchlistItem.watchlist_id)
+        .filter(Watchlist.user_id == user.id)
+        .group_by(Watchlist.id, Watchlist.name, Watchlist.created_at)
+        .order_by(Watchlist.created_at)
+        .all()
+    )
+
     return [
-        WatchlistOut(id=w.id, name=w.name, created_at=w.created_at) for w in watchlists
+        WatchlistOut(id=w.id, name=w.name, created_at=w.created_at, item_count=w.item_count or 0)
+        for w in watchlists
     ]
 
 
@@ -209,8 +226,8 @@ def create_watchlist(
     db.add(watchlist)
     db.commit()
     db.refresh(watchlist)
-    
-    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at, item_count=0)
 
 
 @watchlists_router.patch("/{id}", response_model=WatchlistOut)
@@ -229,8 +246,8 @@ def rename_watchlist(
     watchlist.name = payload.name.strip()
     db.commit()
     db.refresh(watchlist)
-    
-    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at, item_count=len(watchlist.items))
 
 
 @watchlists_router.delete("/{id}")
@@ -330,7 +347,7 @@ def create_watchlist_from_template(
     db.commit()
     db.refresh(watchlist)
 
-    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at)
+    return WatchlistOut(id=watchlist.id, name=watchlist.name, created_at=watchlist.created_at, item_count=len(watchlist.items))
 
 
 # ============================================================================
@@ -1146,8 +1163,10 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
         reasons.append(f"Moving {self_move_magnitude:.1f}× its normal daily range")
 
     # Signal 2: Outlier in watchlist (moving differently from peers)
-    # Only meaningful if we have peers to compare against
-    if peer_quotes and same_direction < len(peer_quotes) / 2:
+    # Only meaningful if we have peers to compare against AND the stock's own move is significant
+    # This prevents noise where a stock with sub-normal movement gets flagged as an outlier
+    # just because peers happened to move in a different direction on a quiet day
+    if peer_quotes and self_move_magnitude > 1.0 and same_direction < len(peer_quotes) / 2:
         score += 25
         reasons.append("Outlier in your watchlist (others moving differently)")
 
