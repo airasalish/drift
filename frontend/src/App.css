@@ -3627,3 +3627,56 @@ html {
     animation: none !important;
   }
 }
+
+
+/* Final product polish: one restrained visual system, stable walkthrough controls. */
+.rail-upgrade { display: none !important; }
+.dashboard-cover { display: none !important; }
+.portfolio-signal-icon { font-size: 10px; letter-spacing: .12em; font-weight: 800; color: var(--accent); }
+.tour { position: fixed; inset: 0; z-index: 10000; pointer-events: none; }
+.tour-scrim { z-index: 10000; pointer-events: auto; }
+.tour-spot { z-index: 10001; }
+.tour-tooltip { z-index: 10002; pointer-events: auto; }
+.tour-actions { position: relative; z-index: 1; }
+.tour-next, .tour-skip { position: relative; z-index: 2; pointer-events: auto; opacity: 1; visibility: visible; }
+.tour-next { min-width: 132px; transition: background-color .16s ease, border-color .16s ease, transform .16s ease; }
+.tour-next:hover { transform: translateY(-1px); }
+
+
+/* Interaction fix: walkthrough controls must remain above scrims and page stacking contexts. */
+.tour { z-index: 2147483000 !important; }
+.tour-scrim { z-index: 2147483000 !important; }
+.tour-spot { z-index: 2147483001 !important; }
+.tour-tooltip { z-index: 2147483002 !important; isolation: isolate; }
+.tour-tooltip button { opacity: 1 !important; visibility: visible !important; display: inline-flex !important; }
+.tour-next:hover, .tour-next:focus-visible { background: #67e9b2 !important; color: #07130f !important; border-color: #67e9b2 !important; }
+.tour-skip:hover, .tour-skip:focus-visible { background: rgba(103,233,178,.12) !important; color: var(--text) !important; }
+button:hover:not(:disabled), button:focus-visible { visibility: visible; }
+
+
+/* Final dark pass: near-black surfaces with restrained contrast and readable signals. */
+:root {
+  --bg: #030505;
+  --surface: #070909;
+  --surface-2: #0b0e0e;
+  --surface-3: #101414;
+  --border: #1b2422;
+  --border-soft: #121918;
+  --text: #eef5f1;
+  --text-dim: #b0bdb7;
+  --muted: #7c8b84;
+  --faint: #53615b;
+  --accent: #62e6ad;
+  --accent-dim: rgba(98,230,173,.11);
+  --accent-border: rgba(98,230,173,.38);
+}
+html, body, #root { background: #030505 !important; color: var(--text); }
+.page { background: #030505; }
+.rail, .header, .add-form, .watchlist-panel, .history-panel, .chart-view, .suggested-companies, .workspace-shortcuts, .workspace-metric, .demo-start-card, .drawer, .picker-modal, .rail-dialog, .workspace-notice { background: #070909 !important; border-color: #18211f !important; }
+.command-center-head, .workspace-metrics, .workspace-shortcuts, .suggested-companies, .watchlist-panel, .history-panel, .chart-view { border-color: #18211f; }
+.workspace-shortcut:hover, .watchlist-row:hover, .suggested-card:hover, .rail-item:hover, .rail-nav-item:hover { background: #0d1211 !important; }
+.add-form input, .symbol-dropdown, .symbol-selected-chip, .empty-box, .digest, .thesis-chip, .thesis-custom, .workspace-notice { background: #0b0f0e !important; border-color: #1c2924 !important; }
+.tour-tooltip { background: #080c0b !important; border-color: #315c4a !important; }
+.tour-scrim { background: rgba(0,0,0,.76) !important; }
+.chart-panel, .market-chart-wrap, .tv-topbar, .chart-footer { background: #07090b !important; }
+.chart-heading, .chart-toolbar { background: #090c0e !important; border-color: #17201f !important; }

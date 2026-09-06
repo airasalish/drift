@@ -22,7 +22,6 @@ export function QuickAccessRail({
   onShowHome,
   onShowHistory,
   onShowInsights,
-  onShowPro,
   watchlists,
   activeWatchlistId,
   onCreateWatchlist,
@@ -37,7 +36,6 @@ export function QuickAccessRail({
   onShowHome: () => void;
   onShowHistory: () => void;
   onShowInsights: () => void;
-  onShowPro: () => void;
   watchlists: Watchlist[];
   activeWatchlistId: number | null;
   onCreateWatchlist: (name: string) => Promise<Watchlist>;
@@ -300,17 +298,6 @@ export function QuickAccessRail({
           ))}
         </div>
       )}
-
-      <button
-        type="button"
-        className="rail-upgrade"
-        onClick={onShowPro}
-        data-tooltip="Planned, not live yet. The free workspace already runs Drift's full rule engine on everything you track."
-      >
-        <span className="rail-upgrade-title">Upgrade to Pro <b>→</b></span>
-        <span className="rail-upgrade-copy">Get real-time alerts, advanced insights and more.</span>
-        <span className="rail-upgrade-glow" aria-hidden="true" />
-      </button>
 
       {/* New Watchlist: choice -- scratch (empty) or a pre-made template
           (a real, populated watchlist from the first click) */}

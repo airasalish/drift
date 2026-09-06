@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 const STEPS: { selector: string; title: string; body: string }[] = [
   {
@@ -128,7 +129,7 @@ export function FirstLookTour({
 
   const last = stepIndex >= visible.length - 1;
 
-  return (
+  return createPortal((
     <div className="tour" role="dialog" aria-modal="true" aria-label="First-look walkthrough">
       <button type="button" className="tour-scrim" onClick={onClose} aria-label="Skip walkthrough" />
       {spot && (
@@ -167,5 +168,5 @@ export function FirstLookTour({
         </div>
       </div>
     </div>
-  );
+  ), document.body);
 }
