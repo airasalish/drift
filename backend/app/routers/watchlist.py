@@ -1045,11 +1045,19 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
     ranks stocks by how "interesting" they are. All thresholds are named and auditable.
 
     Scoring Algorithm:
-    - Self move magnitude > 2× normal: +30 points
+    - Move unusual for this stock (>= change_detection.unusual_move_threshold): +30 points
     - Outlier in watchlist (different direction from majority): +25 points
     - Market out/underperformance > 1.5%: +20 points
     - Part of a market cluster: +15 points
-    - Volume spike >= 2× normal: +15 points
+    - Volume spike >= change_detection.VOLUME_SPIKE_MULTIPLE: +15 points
+    - At a 52-week high/low: +20 points, within change_detection.NEAR_52W_PCT of one: +12 points
+
+    The move, volume and 52-week thresholds are the same named constants
+    change_detection.evaluate() uses, so the Charts view's Drifty panel and
+    the watchlist's attention flags answer "is this unusual" identically.
+    Drifty is a stateless per-request read, so it reports 52-week and volume
+    facts as they currently stand -- change_detection's "previously fired"
+    suppression (what makes mark-as-seen work) stays where it is.
 
     Args:
         watchlist_id: ID of the watchlist to analyze within
@@ -1100,6 +1108,10 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
         self_move_magnitude = abs(today_pct) / normal_move
     else:
         self_move_magnitude = 0.0
+
+    # The one definition of "unusual for this stock", shared with the
+    # watchlist's attention flags rather than restated as a second number
+    move_threshold = change_detection.unusual_move_threshold(quote.avg_daily_move_pct_20d)
 
     # Calculate volume ratio (today's volume vs 20-day average)
     volume_vs_normal = 0.0
@@ -1158,7 +1170,7 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
     reasons = []
 
     # Signal 1: High move magnitude (stock moving unusually compared to itself)
-    if self_move_magnitude > 2.0:
+    if abs(today_pct) >= move_threshold:
         score += 30
         reasons.append(f"Moving {self_move_magnitude:.1f}× its normal daily range")
 
@@ -1166,7 +1178,7 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
     # Only meaningful if we have peers to compare against AND the stock's own move is significant
     # This prevents noise where a stock with sub-normal movement gets flagged as an outlier
     # just because peers happened to move in a different direction on a quiet day
-    if peer_quotes and self_move_magnitude > 1.0 and same_direction < len(peer_quotes) / 2:
+    if peer_quotes and abs(today_pct) >= move_threshold and same_direction < len(peer_quotes) / 2:
         score += 25
         reasons.append("Outlier in your watchlist (others moving differently)")
 
@@ -1184,10 +1196,29 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
         score += 15
         reasons.append(f"{len(cluster['symbols'])} {cluster['name']} stocks {cluster['trend']}")
 
-    # Signal 5: Volume spike
-    if volume_vs_normal >= 2.0:
+    # Signal 5: Volume spike -- same multiple the watchlist's attention flags use
+    if volume_vs_normal >= change_detection.VOLUME_SPIKE_MULTIPLE:
         score += 15
         reasons.append(f"Volume is {volume_vs_normal:.1f}× normal")
+
+    # Signal 6: 52-week extremes -- same proximity band the attention flags use
+    if quote.week52_high is not None and quote.week52_high > 0:
+        if quote.price >= quote.week52_high:
+            score += 20
+            reasons.append(f"At a new 52-week high ({quote.price:.2f}, was {quote.week52_high:.2f})")
+        elif quote.price >= quote.week52_high * (1 - change_detection.NEAR_52W_PCT):
+            score += 12
+            pct_away = (quote.week52_high - quote.price) / quote.week52_high * 100
+            reasons.append(f"Within {pct_away:.1f}% of its 52-week high")
+
+    if quote.week52_low is not None and quote.week52_low > 0:
+        if quote.price <= quote.week52_low:
+            score += 20
+            reasons.append(f"At a new 52-week low ({quote.price:.2f}, was {quote.week52_low:.2f})")
+        elif quote.price <= quote.week52_low * (1 + change_detection.NEAR_52W_PCT):
+            score += 12
+            pct_away = (quote.price - quote.week52_low) / quote.week52_low * 100
+            reasons.append(f"Within {pct_away:.1f}% of its 52-week low")
 
     # Cap score at 100
     final_score = min(score, 100)
@@ -1195,7 +1226,7 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
     # Build context strings for human readability
     self_context = (
         f"{symbol} is moving {self_move_magnitude:.1f}× its normal daily range"
-        if self_move_magnitude > 1.0
+        if abs(today_pct) >= move_threshold
         else f"{symbol} normal move"
     )
 

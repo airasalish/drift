@@ -231,3 +231,16 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 **What happened, same pattern as the earlier Antigravity coordination entry**: over one extended session, work got split across this assistant, Cursor, and Manus — all pointed at the same local working directory at different points, sometimes overlapping in time. A live CSS hot-reload was observed mid-session from a second, unannounced editor before it was confirmed which tool it actually was.
 
 **The rule that held**: before staging or committing anything, check `git status` for exactly which files are actually dirty, and never `git add` broader than the specific files a given change was meant to touch — a partial-file `git add` is what kept one collaborator's uncommitted, in-progress work (CSS files mid-redesign) from being swept into an unrelated commit, the same failure mode as the original Antigravity incident this pattern was written to prevent. When a `git push` was rejected as non-fast-forward, the fix was `git fetch` + inspect the incoming commit's diff before merging — never force-push over work another collaborator had already pushed.
+
+---
+
+### 2026-09-06 — One definition of "unusual", shared by both attention surfaces
+
+**The gap**: two rule engines answered "does this stock deserve attention" independently. `change_detection.evaluate()` (rail dots, "since you last looked", watchlist sort) used `MOVE_SENSITIVITY`/`MIN_MOVE_THRESHOLD`, volume spikes and 52-week proximity; `compute_drifty()` (the Charts view's Drifty panel) hardcoded its own `2.0`/`1.0` move-magnitude cutoffs and looked at neither 52-week proximity nor the shared volume constant. A stock flagged in the list purely for a new 52-week high opened its chart to a Drifty panel scoring it near zero — the two panels told the user different stories about the same quote at the same moment.
+
+**The easy path**: bump Drifty's constants to match by hand, and add a comment asking the next person to keep them in sync.
+**What we did instead**: `change_detection.unusual_move_threshold()` is now the single function both engines call, and Drifty reads `VOLUME_SPIKE_MULTIPLE` and `NEAR_52W_PCT` directly rather than restating them. Agreement is structural, not a thing two people have to remember.
+
+**What we deliberately did not do**: merge the engines. `evaluate()`'s `previously_fired` suppression is what makes "mark as seen" clear a stale 52-week-high flag for facts that aren't time-anchored on their own — a real bug fix, and a stateful concern that has no business in Drifty's stateless per-request read. Drifty reports current state; only the list suppresses.
+
+**The test that would have caught it**: `TestEngineConsistency` asserts agreement between the two surfaces rather than each in isolation — for a stock `evaluate()` flags, `compute_drifty()` must score above zero *and* name the same rule in `why_interesting`. A second test retunes the shared constants at runtime and asserts Drifty's output follows, so re-hardcoding a threshold fails the suite.
