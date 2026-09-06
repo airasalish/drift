@@ -155,7 +155,6 @@ frontend/
   public/              Drift logo and product artwork
 PROJECT_BRIEF.md       product specification and rule rationale
 ENGINEERING_DECISIONS.md architecture and scope decisions
-SUBMISSION_NOTES.md    product pitch and demo notes
 ```
 
 ## Testing and validation
@@ -179,7 +178,6 @@ Drift is a watchlist and attention tool, not a broker. It does not place trades 
 - [GitHub repository](https://github.com/airasalish/drift)
 - [Product brief](PROJECT_BRIEF.md)
 - [Engineering decisions](ENGINEERING_DECISIONS.md)
-- [Submission notes](SUBMISSION_NOTES.md)
 
 ## License
 
