@@ -49,14 +49,6 @@ Runs at http://localhost:5173. `VITE_API_BASE` tells the frontend where your bac
 
 Sign up for your own account, or click "Try the demo" for a zero-setup look with real seeded data. Add a symbol (e.g. `AAPL`), optionally note why you're watching it — it drifts back to you on the card later — then use "Mark as seen" (or just navigate away; it anchors automatically) to set the baseline the next visit compares against.
 
-## Screenshots
-
-| Login | Watchlist | Stock detail |
-|---|---|---|
-| ![Login screen](docs/screenshots/login.png) | ![Watchlist with drift feed](docs/screenshots/watchlist.png) | ![Stock detail drawer](docs/screenshots/drawer.png) |
-
-> Screenshots live in `docs/screenshots/`. To update them after UI changes, take a fresh capture of each view and replace the PNGs — filenames are stable so the table above stays correct automatically.
-
 ## Architecture
 
 ```
