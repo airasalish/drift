@@ -339,6 +339,14 @@ input:focus-visible,
   font-weight: 600;
 }
 
+.beginner-help {
+  max-width: 150px;
+  color: var(--faint);
+  font-size: 10px;
+  line-height: 1.25;
+  text-align: left;
+}
+
 /* ── Add Form ── */
 .add-form {
   display: flex;

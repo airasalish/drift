@@ -42,6 +42,10 @@ export function Landing() {
         </div>
       </section>
 
+      <div className="markets-banner" role="note">
+        <span>Markets move.</span> So do you.
+      </div>
+
       {/* Problem */}
       <section className="landing-section problem">
         <div className="landing-container">
@@ -149,6 +153,7 @@ export function Landing() {
       {/* Rules */}
       <section className="landing-section rules">
         <div className="landing-container">
+          <span className="section-eyebrow">THE SIGNAL LAYER</span>
           <h2>The rules that matter</h2>
           <p className="rules-intro">
             A stock gets flagged if any of these fire:
@@ -182,7 +187,7 @@ export function Landing() {
       <section className="landing-section questionnaires" id="questionnaire">
         <div className="landing-container">
           <div className="questionnaire-heading">
-            <span className="section-eyebrow">A better first watchlist</span>
+            <span className="section-eyebrow">START WITH YOUR SIGNAL</span>
             <h2>Tell Drift what deserves your attention.</h2>
             <p>Two quick questions help you start with a watchlist that matches how you invest.</p>
           </div>
