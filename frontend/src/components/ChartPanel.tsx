@@ -3,7 +3,7 @@ import { api } from "../api";
 import type { WatchlistItem } from "../types";
 import "./ChartPanel.css";
 
-type TimeRange = "1M" | "3M" | "6M" | "1Y" | "ALL";
+type TimeRange = "1D" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 type Point = { date: string; close: number; open?: number; high?: number; low?: number; volume?: number };
 
 function formatCompact(value: number) {
@@ -40,17 +40,11 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const visible = useMemo(() => data.filter((point) => Number.isFinite(point.close)), [data]);
   const last = visible[visible.length - 1];
   const first = visible[0];
-  // This is the selected range's return (first point to last point of
-  // whatever timeframe is picked, e.g. 1M) -- it is NOT today's change,
-  // and must never be shown unlabeled next to the price as if it were.
-  // See rangeChange's label in the JSX below.
-  const rangeChange = first && last ? ((last.close - first.close) / first.close) * 100 : 0;
-  // True daily change: today's quote vs. yesterday's actual close,
-  // independent of whatever chart range is selected.
-  const dailyChange =
-    item.quote?.price != null && item.quote?.prev_close
-      ? ((item.quote.price - item.quote.prev_close) / item.quote.prev_close) * 100
-      : null;
+  const dailyChange = item.quote?.price != null && item.quote.prev_close != null && item.quote.prev_close > 0
+    ? ((item.quote.price - item.quote.prev_close) / item.quote.prev_close) * 100
+    : null;
+  const rangeChange = first && last ? ((last.close - first.close) / first.close) * 100 : null;
+  const change = range === "1D" ? dailyChange : rangeChange;
   const active = hoverIndex != null ? visible[hoverIndex] : last;
   const min = visible.length ? Math.min(...visible.map((p) => p.low ?? p.close)) : 0;
   const max = visible.length ? Math.max(...visible.map((p) => p.high ?? p.close)) : 1;
@@ -60,7 +54,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
 
   return <div className="chart-panel">
     <div className="tv-topbar"><div className="tv-symbol"><span className="tv-symbol-badge">{item.symbol.slice(0, 2)}</span><div><strong>{item.symbol}</strong><small>{item.company_name ?? "Tracked symbol"} · Market data</small></div></div><div className="tv-actions"><button type="button">＋</button><button type="button">Indicators</button><button type="button">⌁ Alert</button><button type="button">⋯</button></div></div>
-    <div className="chart-heading"><div><div className="chart-price-line"><strong>{active ? active.close.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</strong>{dailyChange != null && <span className={dailyChange >= 0 ? "up" : "down"}>{dailyChange >= 0 ? "▲" : "▼"} {Math.abs(dailyChange).toFixed(2)}% today</span>}</div><span className="chart-meta">{active ? `${formatDate(active.date)} · ${item.quote?.currency ?? "market currency"}` : "Loading market data"}{visible.length > 1 && <> · <span className={rangeChange >= 0 ? "up" : "down"}>{range} return {rangeChange >= 0 ? "+" : ""}{rangeChange.toFixed(2)}%</span></>}</span></div><div className="range-tabs">{(["1M", "3M", "6M", "1Y", "ALL"] as TimeRange[]).map((r) => <button type="button" key={r} className={range === r ? "active" : ""} onClick={() => setRange(r)}>{r}</button>)}</div></div>
+    <div className="chart-heading"><div><div className="chart-price-line"><strong>{active ? active.close.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</strong>{change != null && <span className={change >= 0 ? "up" : "down"}>{change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(2)}% <small>{range === "1D" ? "today" : `${range} return`}</small></span>}</div><span className="chart-meta">{active ? `${formatDate(active.date)} · ${item.quote?.currency ?? "market currency"}` : "Loading market data"}</span></div><div className="range-tabs">{(["1D", "1M", "3M", "6M", "1Y", "ALL"] as TimeRange[]).map((r) => <button type="button" key={r} className={range === r ? "active" : ""} onClick={() => setRange(r)}>{r}</button>)}</div></div>
     <div className="chart-toolbar"><div><button type="button" className={chartType === "candles" ? "selected" : ""} onClick={() => setChartType("candles")}>▥ Candles</button><button type="button" className={chartType === "line" ? "selected" : ""} onClick={() => setChartType("line")}>╱ Line</button></div><div><button type="button" onClick={() => setShowVolume((v) => !v)}>{showVolume ? "Hide volume" : "Show volume"}</button><span className="toolbar-separator">·</span><span>1D · {item.symbol}</span></div></div>
     {loading ? <div className="chart-loading">Loading candles…</div> : error ? <div className="chart-error">{error}</div> : visible.length < 2 ? <div className="chart-empty">No chart data available for this symbol.</div> : <div className="market-chart-wrap"><svg className="market-chart" viewBox={`0 0 ${width} ${showVolume ? 350 : 345}`} role="img" aria-label={`${item.symbol} interactive price chart`} onMouseLeave={() => setHoverIndex(null)}>
       {[0, 1, 2, 3, 4].map((step) => { const value = max - (max - min) * (step / 4); const yy = y(value); return <g key={step}><line x1={plotLeft} x2={width - plotRight} y1={yy} y2={yy} className="grid-line" /><text x={width - plotRight + 10} y={yy + 4} className="axis-label">{value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</text></g>; })}

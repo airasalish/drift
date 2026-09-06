@@ -56,6 +56,7 @@
 .chart-price-line { display: flex; align-items: baseline; gap: 12px; }
 .chart-price-line strong { font-size: 27px; letter-spacing: -.04em; }
 .chart-price-line span { font-size: 12px; font-weight: 700; }
+.chart-price-line span small { font-size: 10px; font-weight: 600; opacity: .78; }
 .chart-price-line .up { color: var(--green); }
 .chart-price-line .down { color: var(--red); }
 .chart-meta { display: block; color: var(--muted); font-size: 11px; margin-top: 6px; }
