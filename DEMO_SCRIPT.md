@@ -24,6 +24,8 @@ Open the site in a desktop browser and use **Try the demo**. If needed, click **
 
 > “Hey, this is Drift. A normal watchlist shows me lots of price changes. Drift helps me see which changes are actually worth my time.”
 
+> “There is a lot happening behind this simple screen. Drift learns what normal movement looks like for each stock, instead of treating every stock the same.”
+
 ### 0:10–0:18 — Quick onboarding
 
 **Action:** Choose **Long-term conviction** and **A few times a week**. Show the **Your starting point** card.
@@ -68,6 +70,8 @@ If the premade list already exists, simply switch to it and say:
 
 > “This is the main view. I can see the market context, refresh status, how many stocks I track, and how many normal moves Drift filtered out. The important items appear in the attention feed.”
 
+> “That quiet count is important: Drift is doing work in the background, checking the data and filtering normal movement so I do not have to.”
+
 If the screen is quiet:
 
 > “All quiet is useful too. It means Drift did not find a meaningful change, so it did not create noise.”
@@ -80,9 +84,13 @@ If the screen is quiet:
 
 > “When something does stand out, I can open it and see the number, chart, and reason. Drift checks the stock against its own normal movement, volume, important price levels, the rest of my list, and the market.”
 
+> “So it is not just saying ‘this stock moved.’ It is asking: is this unusual for this stock, is it different from the other stocks I watch, and is it moving differently from the market?”
+
 Point to **Mark as seen**:
 
 > “When I mark it as seen, Drift remembers where I was. Next time, it can compare from my last visit.”
+
+> “That personal baseline is one of the useful details built into the product. The next comparison starts from my last check, not from a random default.”
 
 ### 1:22–1:32 — Charts and history
 
@@ -108,6 +116,8 @@ Point to **Mark as seen**:
 
 > “Drifty AI can give me a short plain-English summary. It helps me read the result, but the actual rules and numbers are still underneath.”
 
+> “The smart part is still transparent: I can always see the evidence behind the summary.”
+
 ### 1:54–2:05 — Close
 
 **Action:** Return to Overview or leave the clean watchlist visible.
@@ -115,6 +125,8 @@ Point to **Mark as seen**:
 **Say:**
 
 > “So the full flow is: start with a premade watchlist or add my own stocks, come back later, and quickly see what changed, why it matters, and what I want to look at next.”
+
+> “It looks simple because the complicated work is happening behind the scenes: collecting fresh data, learning each stock’s normal range, comparing several signals, remembering my last visit, and turning all of that into one clear screen.”
 
 Then say:
 
