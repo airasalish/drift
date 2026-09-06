@@ -6,9 +6,12 @@ import App from './App.tsx'
 import { Login } from './Login.tsx'
 import { Signup } from './Signup.tsx'
 import { Landing } from './pages/Landing.tsx'
-import { Onboarding } from './pages/Onboarding.tsx'
 import { getToken, getUsername, logout } from './api.ts'
 
+// Once logged in, straight into the app -- no separate onboarding page
+// in between. First-time guidance is FirstLookTour (see App.tsx), a
+// contextual spotlight over the real, live page, not a generic wizard
+// shown before the app exists.
 function Root() {
   const [loggedIn, setLoggedIn] = useState(() => getToken() !== null)
 
@@ -26,20 +29,13 @@ function Root() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/*" element={
-          <App
-            username={getUsername()}
-            onLogout={() => {
-              logout()
-              setLoggedIn(false)
-            }}
-          />
-        } />
-      </Routes>
-    </Router>
+    <App
+      username={getUsername()}
+      onLogout={() => {
+        logout()
+        setLoggedIn(false)
+      }}
+    />
   )
 }
 
