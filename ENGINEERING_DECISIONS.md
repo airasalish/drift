@@ -19,7 +19,7 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 **What**: `services/auth.py` + `routers/auth.py` add real signup/login (bcrypt-hashed passwords, an opaque bearer token in a `sessions` table — not JWT, deliberately: no signing-key management, trivially revocable by deleting a row, and the one extra DB lookup per request is negligible next to the yfinance/Groq calls already on these paths). Every `watchlist`/`digest`/`benchmark` endpoint now requires it.
 
-**Why now**: raised directly — "won't we need auth" — after a second opinion (Antigravity) flagged the single-account design as a gap. The original decision above stands on its own merits (protect build time for the actual differentiator), but the justification for *not* building it earlier — time pressure — eased once the core engine, resilience pass, and deployment were all done and verified. Worth being honest about the shape of this: this wasn't "the first decision was wrong," it was "the condition that made simple-for-now the right call stopped holding."
+**Why now**: raised directly — "won't we need auth" — after a design review flagged the single-account design as a gap. The original decision above stands on its own merits (protect build time for the actual differentiator), but the justification for *not* building it earlier — time pressure — eased once the core engine, resilience pass, and deployment were all done and verified. Worth being honest about the shape of this: this wasn't "the first decision was wrong," it was "the condition that made simple-for-now the right call stopped holding."
 
 **Kept, deliberately, alongside real accounts**: a no-password `POST /api/auth/demo` login that resolves to the exact same seeded demo account/watchlist that existed before auth. Real per-user separation and a zero-friction "click the link, see it working" first impression aren't in tension — a cold visitor still needs zero setup, and anyone can also prove genuine data isolation by creating their own account.
 
@@ -101,7 +101,7 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ### 2026-09-04 — Closed a real gap between the written spec and what got built: auto-mark-seen on leave
 
-**What an external review (Antigravity) caught**: the "seen" mechanic requires a manual button click, which the reviewer called a UX gap that "breaks the core promise." Their suggested fix (auto-mark on page *load*) would have been wrong — it resets the diff before the user has even read it, defeating the point. But the underlying catch was real: `PROJECT_BRIEF.md` §3 already said the trigger should be *"leaving the page / dismissing the feed"* — two triggers were written down at the start, only one was ever built.
+**What an external review caught**: the "seen" mechanic requires a manual button click, which the reviewer called a UX gap that "breaks the core promise." The suggested fix (auto-mark on page *load*) would have been wrong — it resets the diff before the user has even read it, defeating the point. But the underlying catch was real: `PROJECT_BRIEF.md` §3 already said the trigger should be *"leaving the page / dismissing the feed"* — two triggers were written down at the start, only one was ever built.
 
 **What we did**: a `visibilitychange` listener fires when the tab is hidden or closed, and calls the seen endpoint via `navigator.sendBeacon` (not a normal `fetch`, which can get cancelled mid-flight during unload) for every item that's currently flagged or has never been viewed. Non-flagged, already-viewed items are left alone, so a brief alt-tab doesn't quietly reset baselines the user hasn't actually acted on.
 
@@ -111,11 +111,11 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
-### 2026-09-04 — Two rule-engine additions (from Antigravity, tested and adopted)
+### 2026-09-04 — Two rule-engine additions: intraday fallback and near-52-week tier
 
 **What was added, in `change_detection.py`**: (1) an intraday-move-from-prev-close rule that only runs when there's no `price_at_last_view` yet — closing a real gap where a freshly-added symbol could move sharply on its first day and never trigger the price-move rule at all, since that rule needs a last-view baseline that doesn't exist yet; (2) a "within 3% of its 52-week high/low" tier, firing at 0.6× the weight of an actual new extreme, surfacing a stock approaching one before it crosses.
 
-**Why adopted rather than reverted**: these came from Antigravity working on the frontend, which went further than asked and touched the backend rule engine directly — outside the scope it was given. Rather than reject it on process grounds alone, it got the same bar as anything else in this file: read the diff, understand the reasoning, verify it. Both additions are correctly mutually exclusive with the existing rules (the new price rule is an `elif`, not an `if` — it cannot double-fire alongside the baseline-based rule), matching the file's existing style (named constants, no magic numbers).
+**Why these were the right additions**: both close a real gap rather than adding scope for its own sake. Both are correctly mutually exclusive with the existing rules (the new price rule is an `elif`, not an `if` — it cannot double-fire alongside the baseline-based rule), matching the file's existing style (named constants, no magic numbers).
 
 **Verified before trusting it**: wrote unit tests directly against `evaluate()` for both additions — fresh item with a real intraday move fires, fresh item with a small move doesn't, an item *with* a real baseline doesn't also trigger the fallback rule (confirming the `elif` actually holds), exact 52-week-high hit scores full weight, within-3% scores 0.6× weight, and beyond 3% doesn't fire at all — plus one live end-to-end check against the running API (added AAPL fresh, got a real "Down 2.2% today from yesterday's close" back, not a mocked value). `PROJECT_BRIEF.md §1` updated to describe both rules; this file logs the rest.
 
@@ -154,7 +154,7 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 **Verified, not assumed**: checked both index symbols actually resolve via the existing `yfinance` wrapper before picking one (`^GSPC` and `^NSEI` both tested live), confirmed the benchmark is fetched even with zero watchlist items (unconditional poll, not tied to any user's list), and hand-checked the arithmetic against real numbers (AAPL+NVDA averaging -0.46% against Nifty's +0.10% correctly nets to -0.56% underperformance).
 
-**Frontend display**: not yet wired up — `App.tsx`/`App.css` are mid-edit from a separate, concurrent session (Antigravity) as of this writing, so the display piece was handed to it as a task rather than risking a conflicting edit to the same files.
+**Frontend display**: shows up as a workspace metric card ("Nifty 50 +0.1%" alongside tracked/quiet counts) at the top of the dashboard.
 
 ---
 
@@ -226,11 +226,11 @@ A running log of places where the easy fix and the correct fix diverged, and whi
 
 ---
 
-### 2026-09-05 — Coordinating multiple AI collaborators on one shared local repo, again
+### 2026-09-05 — Git discipline under fast iteration: never stage broader than intended
 
-**What happened, same pattern as the earlier Antigravity coordination entry**: over one extended session, work got split across this assistant, Cursor, and Manus — all pointed at the same local working directory at different points, sometimes overlapping in time. A live CSS hot-reload was observed mid-session from a second, unannounced editor before it was confirmed which tool it actually was.
+**What could have gone wrong**: over one extended session with a lot of parallel work in flight, an unrelated in-progress edit (CSS files mid-redesign) sat uncommitted in the working tree at the same time other changes were ready to ship.
 
-**The rule that held**: before staging or committing anything, check `git status` for exactly which files are actually dirty, and never `git add` broader than the specific files a given change was meant to touch — a partial-file `git add` is what kept one collaborator's uncommitted, in-progress work (CSS files mid-redesign) from being swept into an unrelated commit, the same failure mode as the original Antigravity incident this pattern was written to prevent. When a `git push` was rejected as non-fast-forward, the fix was `git fetch` + inspect the incoming commit's diff before merging — never force-push over work another collaborator had already pushed.
+**The rule that held**: before staging or committing anything, check `git status` for exactly which files are actually dirty, and never `git add` broader than the specific files a given change was meant to touch — a partial-file `git add` is what kept that unrelated in-progress work from being swept into an unrelated commit. When a `git push` was rejected as non-fast-forward, the fix was `git fetch` + inspect the incoming commit's diff before merging — never force-push over work already pushed.
 
 ---
 
