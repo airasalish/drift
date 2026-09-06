@@ -1,119 +1,167 @@
-# Drift — 1:20–2:00 Demo Script
+# Drift — Simple 1:40–2:00 Demo Script
 
-## Use these symbols
+## The idea
 
-The premade templates and default demo seed already use many common examples, so use these fresh, recognizable companies for the manual-add portion:
+Keep the demo relaxed. Do not explain every feature. Show one simple story:
+
+> “I add a few stocks. Drift watches them. When I come back, it tells me what changed and why it matters.”
+
+Use these fresh examples instead of the symbols already used in the premade watchlists:
 
 - `NFLX` — Netflix
-- `DIS` — Walt Disney Co.
-- `UBER` — Uber Technologies
+- `DIS` — Disney
+- `UBER` — Uber
 
-Use two or three only. They are enough to demonstrate search, verified company selection, adding, attention ranking, and charts without overcrowding the recording.
+Add only **NFLX** and **DIS** in the main recording. Add `UBER` only if the flow is moving quickly.
 
-## Before recording
+## Before you record
 
-Open the deployed app at `/`. Use a desktop-width browser. The demo account is the fastest path. If the demo account has an empty or stale watchlist, use **Reset to sample data** first, then add the fresh symbols above to the active watchlist.
+Open the site at `/` in a desktop browser. Use the demo login. If the demo is empty, use **Reset to sample data** first. Keep the search field and the demo login ready. Do not wait for a perfect market move; the point is to show how the product works.
 
-## 1:20 version — exact actions and narration
+## Full talk track
 
-### 0:00–0:12 — Landing page
+### 0:00–0:12 — Start with the problem
 
-**Action:** Show the hero, the **Markets move. So do you.** banner, and scroll briefly to the rules.
-
-**Say:**
-
-> “Most watchlists tell me what moved. Drift tells me what actually changed since I last looked, and whether it deserves attention. Its rules are explainable rather than a black-box score.”
-
-### 0:12–0:22 — Quick questionnaire
-
-**Action:** Select **Long-term conviction** and **A few times a week**. Show the starting-point card changing to **Build my watchlist**.
+**Show:** Landing page hero and the **Markets move. So do you.** banner.
 
 **Say:**
 
-> “These two questions set the context for how I want to review. They are not investment advice or a risk score; they simply make the first step clear.”
+> “Hey, this is Drift. A normal watchlist shows me a lot of price changes, but it does not tell me which ones are worth my time. Drift is made for that exact problem.”
 
-### 0:22–0:32 — Enter demo
+Scroll just enough to show the rules section.
 
-**Action:** Click **Try the demo**, then choose the demo login.
+> “It looks at the stock, the rest of my watchlist, and the market. Then it gives me a short reason.”
 
-**Say:**
+### 0:12–0:22 — Quick start questions
 
-> “I’ll use the demo account so there is no setup friction. Real signup and account-separated watchlists are also supported.”
+**Show:** The two questions on the landing page.
 
-### 0:32–0:52 — Search and add fresh examples
-
-**Action:** Search `NFLX`, select **Netflix**, and add it. Then search `DIS`, select **Walt Disney**, and add it. If time permits, add `UBER` as a third example.
+**Action:** Choose **Long-term conviction**, then **A few times a week**.
 
 **Say:**
 
-> “I’m adding Netflix and Disney manually from verified search results. These are not the symbols already loaded in the premade templates, so this shows the real add flow rather than just displaying seeded data. I could also add Uber, but two names are enough for this short demo.”
+> “I’ll answer these quickly. They help set the starting point for how I like to review. They are not a trading recommendation.”
 
-If the watchlist picker appears, choose the current watchlist and confirm.
+Point to the action card.
 
-### 0:52–1:10 — Explain the command center
+> “Once both are done, I can build my watchlist.”
 
-**Action:** Return to Overview and point to the benchmark, tracked count, quiet count, refresh status, and attention feed.
+### 0:22–0:32 — Open the demo
 
-**Say:**
-
-> “The command center separates normal movement from movement that deserves a look. I can see the market context, how many symbols are tracked, how many normal moves were filtered out, and when the data was refreshed.”
-
-Open an attention card or open one of the new symbols from the full watchlist.
-
-### 1:10–1:28 — Show evidence and charts
-
-**Action:** Open the stock detail drawer. Point to the since-last-view number, reasons, sparkline, and **Open full chart** action.
+**Action:** Click **Try the demo** and choose the demo login.
 
 **Say:**
 
-> “This is the core difference. Drift does not only show a percentage. It explains whether the move was unusual relative to the stock’s own behavior, volume, a 52-week level, or the wider portfolio. The drawer gives the chart, raw context, thesis note, and mark-as-seen action.”
+> “I’m using the demo account so we can get straight to the product. No long setup.”
 
-### 1:28–1:42 — Beginner mode
+Wait for the overview to load.
 
-**Action:** Click **Beginner mode**, then show the same rule explanation in a card or drawer.
+### 0:32–0:52 — Add two companies
+
+**Action:**
+
+1. Search `NFLX`.
+2. Select **Netflix** from the search results.
+3. Add it to the watchlist.
+4. Search `DIS`.
+5. Select **Disney** and add it.
+
+If the watchlist picker opens, choose the current watchlist and confirm.
 
 **Say:**
 
-> “Beginner mode changes the explanation into simpler language while keeping the exact same signal, score, and data. It is a readability mode, not a different analysis.”
+> “I’m adding Netflix and Disney myself. I’m choosing the company from the search results, so I’m not guessing the symbol. I could add Uber too, but two is enough for this demo.”
 
-### 1:42–1:58 — Drifty AI and close
+### 0:52–1:12 — Show the main screen
 
-**Action:** If an attention item exists, click **Drifty AI — Explain this** or **Drifty AI — Summarize the moves**. If no attention item exists, show the calm state and the chart instead.
+**Action:** Return to **Overview**. Point at the top numbers and the attention area.
 
 **Say:**
 
-> “Drifty AI is optional. It rephrases signals that the rule engine already computed; it does not decide what is flagged. Drift’s value is simple: when I return to my watchlist, I can see what changed, what is normal, and what deserves a closer look.”
+> “This is the main screen. I can see how many stocks I’m tracking, the market context, when the data was updated, and how many normal moves were filtered out.”
 
-## 2:00 extended version — add only if time allows
+If the screen says **All quiet**, say:
 
-After the short close, show one additional feature:
+> “That is okay. All quiet means Drift did not find a move big enough or unusual enough to show me. It is filtering noise instead of making up alerts.”
 
-- **Charts:** select `NFLX`, then `DIS`, and show that chart focus stays in the Charts view.
-- **History:** open History and point out previously surfaced events.
-- **Multiple watchlists:** create a watchlist named `Entertainment`, then add `NFLX` and `DIS` to it through the picker.
-- **Persistence:** click **Mark as seen**, refresh, and explain that the comparison is anchored to a real visit.
-- **Real account:** log out and mention that signup creates isolated account state.
+If there is an attention card, continue with it.
 
-Use only one extension; showing all of them will make the demo feel rushed.
+### 1:12–1:30 — Open a stock and show why
 
-## Backup lines
+**Action:** Open the Netflix or Disney card, or open it from the full watchlist. Show the detail drawer.
 
-**If everything is quiet:**
+**Say:**
 
-> “This calm state is intentional. Drift found no meaningful change, so it filtered normal movement instead of manufacturing an alert. I’ll open the full watchlist or chart to show the underlying context.”
+> “When Drift does find something, I can open it and see the number, the chart, and the reason. It might be an unusual move for this stock, a volume change, a 52-week level, or a move shared by several stocks.”
 
-**If the backend is waking:**
+Point to **since last view** and **Mark as seen**.
 
-> “The free-tier backend is waking up. The interface waits for fresh data rather than pretending an old value is live.”
+> “The important part is that Drift remembers my last real check. It compares from where I was, not just from yesterday.”
 
-**If Drifty AI is unavailable:**
+### 1:30–1:43 — Beginner mode
 
-> “The optional summary is unavailable, but the actual rule evidence remains visible. Detection does not depend on the AI summary.”
+**Action:** Click **Beginner mode**, then show a rule explanation again.
 
-**If search is slow:**
+**Say:**
 
-> “I’ll use the verified result from the dropdown rather than guessing a symbol. The important part is that company search resolves a real security before it is added.”
+> “If this feels too technical, Beginner mode makes the wording simpler. The signal does not change. Only the explanation changes.”
 
-## Do not claim
+### 1:43–1:55 — Drifty AI
 
-Do not say Drift predicts prices, knows the cause of a move, provides investment advice, or uses AI to decide what matters. Say that it surfaces unusual, explainable changes from available market data and lets the investor decide what to do next.
+**Action:** If an item is flagged, click **Drifty AI — Explain this** or **Drifty AI — Summarize the moves**.
+
+**Say:**
+
+> “Drifty AI can make the explanation easier to read. It does not decide what gets flagged. The rules and the numbers underneath are still the real reason.”
+
+If there is no flagged item, skip the button and say:
+
+> “There is no AI summary to show in this calm state, but the watchlist and charts still work normally.”
+
+### 1:55–2:05 — Close simply
+
+**Action:** Show the overview or chart, then stop on the clean watchlist.
+
+**Say:**
+
+> “That’s Drift. I add the stocks I care about, come back later, and get a short answer about what changed and why. I’ll explain how the rules and the code work later through GitHub.”
+
+Finish with:
+
+> “Less scanning. More useful attention.”
+
+## Optional extra features
+
+Only show these if the recording is still under two minutes:
+
+- **Charts:** Open Charts and switch between `NFLX` and `DIS`.
+- **History:** Open History to show past changes.
+- **Multiple watchlists:** Create an `Entertainment` watchlist and add Netflix or Disney to it.
+- **Persistence:** Click **Mark as seen**, refresh, and say the next comparison starts from that visit.
+- **Account:** Log out and mention that real signup keeps watchlists separate between users.
+
+Do not try to show all of these in the main two-minute video.
+
+## Simple backup lines
+
+**No alert appears:**
+
+> “This is the calm state working properly. Drift found no meaningful change, so it did not create noise.”
+
+**The backend is slow:**
+
+> “The demo backend is waking up. I’m waiting for fresh data instead of pretending an old price is live.”
+
+**Drifty AI does not respond:**
+
+> “That summary is optional. The actual rules and numbers still work without it.”
+
+## One-line pitch
+
+> “Drift remembers where you were, notices what changed, and gives you a simple reason to look closer.”
+
+## GitHub line
+
+Use this exact sentence during the demo:
+
+> “I’ll explain how the rules and the code work later through GitHub, but for now the important thing is that every alert has a reason you can read.”
