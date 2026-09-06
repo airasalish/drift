@@ -93,8 +93,9 @@ export function Header({
             type="button"
             className={`beginner-toggle${beginnerMode ? " on" : ""}`}
             onClick={onToggleBeginnerMode}
-            title="Simplify the wording used to explain why something was flagged"
+            title="Reword rule explanations into plain language -- deterministic rewording, not AI: same rule, same numbers, simpler sentence"
           >
+            <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">Aa</span>
             {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
           </button>
           <button
