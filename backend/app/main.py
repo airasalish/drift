@@ -14,6 +14,7 @@ from app.database import SessionLocal, ensure_schema
 from app.demo_user import backfill_company_websites
 from app.routers.auth import router as auth_router
 from app.routers.symbols import router as symbols_router
+from app.routers.users import router as users_router
 from app.routers.watchlist import router as watchlist_router, watchlists_router
 from app.sector_data import seed_sector_data
 from app.services.poller import poll_forever
@@ -76,6 +77,7 @@ app.include_router(auth_router)
 app.include_router(watchlist_router)
 app.include_router(watchlists_router)
 app.include_router(symbols_router)
+app.include_router(users_router)
 
 
 @app.get("/api/health")

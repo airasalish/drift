@@ -112,7 +112,7 @@ def _get_watchlist_or_404(db: Session, watchlist_id: int, user: User) -> Watchli
     return watchlist
 
 
-def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemOut:
+def _serialize(item: WatchlistItem, quote: SymbolQuote | None, user: User) -> WatchlistItemOut:
     _sanitize_quote(quote)
     _sanitize_item(item)
     quote_out = None
@@ -160,7 +160,7 @@ def _serialize(item: WatchlistItem, quote: SymbolQuote | None) -> WatchlistItemO
         previously_fired = (
             frozenset(json.loads(item.fired_rules_at_last_view)) if item.fired_rules_at_last_view else frozenset()
         )
-        result = change_detection.evaluate(item.price_at_last_view, quote, previously_fired)
+        result = change_detection.evaluate(item.price_at_last_view, quote, previously_fired, user.sensitivity)
         fired = [FiredRule(**f) for f in result["fired"]]
         score = result["score"]
         has_attention = result["attention"]
@@ -475,7 +475,7 @@ def confirm_bulk_import(
     out = []
     for item in added_items:
         quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out.append(_serialize(item, quote, user))
 
     return out
 
@@ -789,7 +789,7 @@ def list_watchlist_items(
 
     for item in watchlist.items:
         quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out.append(_serialize(item, quote, user))
         if quote is not None:
             quotes_for_portfolio.append(quote)
 
@@ -875,7 +875,7 @@ def add_watchlist_item(
         raise HTTPException(409, f"{symbol} is already on your watchlist")
     db.refresh(item)
 
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)
 
 
 @watchlists_router.patch("/{id}/items/{item_id}", response_model=WatchlistItemOut)
@@ -897,7 +897,7 @@ def update_watchlist_item_note(
     db.refresh(item)
 
     quote = db.get(SymbolQuote, item.symbol)
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)
 
 
 @watchlists_router.delete("/{id}/items/{item_id}")
@@ -928,7 +928,7 @@ def mark_watchlist_item_seen(
     item.last_viewed_at = datetime.datetime.utcnow()
     item.price_at_last_view = quote.price if quote else None
     if quote is not None:
-        current_keys = change_detection.evaluate(None, quote)["keys"]
+        current_keys = change_detection.evaluate(None, quote, sensitivity=user.sensitivity)["keys"]
         item.fired_rules_at_last_view = json.dumps(current_keys)
     else:
         item.fired_rules_at_last_view = None
@@ -945,7 +945,7 @@ def mark_watchlist_item_seen(
     db.commit()
     db.refresh(item)
 
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)
 
 
 @watchlists_router.get("/{id}/digest")
@@ -1114,7 +1114,8 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
 
     # The one definition of "unusual for this stock", shared with the
     # watchlist's attention flags rather than restated as a second number
-    move_threshold = change_detection.unusual_move_threshold(quote.avg_daily_move_pct_20d)
+    # Uses the user's sensitivity setting to adjust the threshold
+    move_threshold = change_detection.unusual_move_threshold(quote.avg_daily_move_pct_20d, user.sensitivity)
 
     # Calculate volume ratio (today's volume vs 20-day average)
     volume_vs_normal = 0.0
@@ -1460,7 +1461,7 @@ def reset_watchlist_to_sample(
     out = []
     for item in watchlist.items:
         quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out.append(_serialize(item, quote, user))
     out.sort(key=lambda w: w.attention_score, reverse=True)
     return out
 
@@ -1477,7 +1478,7 @@ def list_watchlist(db: Session = Depends(get_db), user: User = Depends(get_curre
     out = []
     for item in watchlist.items:
         quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out.append(_serialize(item, quote, user))
 
     out.sort(key=lambda w: w.attention_score, reverse=True)
     return out
@@ -1606,7 +1607,7 @@ def reset_to_sample(db: Session = Depends(get_db), user: User = Depends(get_curr
     out = []
     for item in watchlist.items:
         quote = db.get(SymbolQuote, item.symbol)
-        out.append(_serialize(item, quote))
+        out.append(_serialize(item, quote, user))
     out.sort(key=lambda w: w.attention_score, reverse=True)
     return out
 
@@ -1666,7 +1667,7 @@ def add_symbol(
         raise HTTPException(409, f"{symbol} is already on your watchlist")
     db.refresh(item)
 
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)
 
 
 @router.patch("/{item_id}", response_model=WatchlistItemOut)
@@ -1690,7 +1691,7 @@ def update_note(
     db.refresh(item)
 
     quote = db.get(SymbolQuote, item.symbol)
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)
 
 
 @router.delete("/{item_id}")
@@ -1725,7 +1726,7 @@ def mark_seen(item_id: int, db: Session = Depends(get_db), user: User = Depends(
     item.last_viewed_at = datetime.datetime.utcnow()
     item.price_at_last_view = quote.price if quote else None
     if quote is not None:
-        current_keys = change_detection.evaluate(None, quote)["keys"]
+        current_keys = change_detection.evaluate(None, quote, sensitivity=user.sensitivity)["keys"]
         item.fired_rules_at_last_view = json.dumps(current_keys)
     else:
         item.fired_rules_at_last_view = None
@@ -1742,4 +1743,4 @@ def mark_seen(item_id: int, db: Session = Depends(get_db), user: User = Depends(
     db.commit()
     db.refresh(item)
 
-    return _serialize(item, quote)
+    return _serialize(item, quote, user)

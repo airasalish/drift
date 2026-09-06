@@ -22,6 +22,8 @@ class User(Base):
     # is reached via a separate no-password "try the demo" login, not
     # real credential auth -- see ENGINEERING_DECISIONS.md
     password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Per-user sensitivity: conservative (fewer flags), balanced (default), aggressive (more flags)
+    sensitivity: Mapped[str] = mapped_column(String, default="balanced")
 
     watchlists: Mapped[list["Watchlist"]] = relationship(back_populates="user")
 

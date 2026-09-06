@@ -20,19 +20,31 @@ NEAR_52W_PCT = 0.03  # within 3% counts as "near" the extreme
 PORTFOLIO_MOVE_THRESHOLD = 0.02  # 2% move required to count as "moved"
 PORTFOLIO_MIN_SYMBOLS = 3  # minimum number of symbols moving together
 
+# Per-user sensitivity multipliers
+SENSITIVITY_MULTIPLIERS = {
+    "conservative": 1.4,  # raises the bar - fewer flags
+    "balanced": 1.0,      # default behavior
+    "aggressive": 0.7,    # lowers the bar - more flags
+}
+VALID_SENSITIVITIES = frozenset(SENSITIVITY_MULTIPLIERS.keys())
 
-def unusual_move_threshold(avg_daily_move_pct: float | None) -> float:
+
+def unusual_move_threshold(avg_daily_move_pct: float | None, sensitivity: str = "balanced") -> float:
     """The move size (as a fraction, e.g. 0.015 == 1.5%) at which a move stops
     being normal for this symbol: MOVE_SENSITIVITY times its own trailing
-    average daily move, floored at MIN_MOVE_THRESHOLD.
+    average daily move, floored at MIN_MOVE_THRESHOLD, then adjusted by the
+    user's sensitivity multiplier.
 
     Anything answering "is this move unusual for this stock" -- here or in the
     Drifty engine -- goes through this, so the two surfaces cannot drift apart.
     """
-    return max(MIN_MOVE_THRESHOLD, MOVE_SENSITIVITY * (avg_daily_move_pct or 0.0))
+    if sensitivity not in SENSITIVITY_MULTIPLIERS:
+        sensitivity = "balanced"  # fallback to default
+    multiplier = SENSITIVITY_MULTIPLIERS[sensitivity]
+    return max(MIN_MOVE_THRESHOLD, MOVE_SENSITIVITY * multiplier * (avg_daily_move_pct or 0.0))
 
 
-def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fired: frozenset[str] | None = None) -> dict:
+def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fired: frozenset[str] | None = None, sensitivity: str = "balanced") -> dict:
     """Returns fired rules (each with a human-readable message and the raw
     number behind it), a numeric attention score, whether this symbol
     belongs in the "what changed" feed at all, and the set of structural
@@ -50,6 +62,9 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
     a rule that already fired last time you looked, while still firing it
     the moment it becomes newly true again, is what actually makes "mark
     as seen" mean something for these rules.
+
+    `sensitivity` is the user's sensitivity setting ("conservative", "balanced",
+    or "aggressive"), which adjusts the move threshold. Defaults to "balanced".
     """
     previously_fired = previously_fired or frozenset()
     fired: list[dict] = []
@@ -63,7 +78,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
     if price_at_last_view and price_at_last_view > 0:
         pct_change = (quote.price - price_at_last_view) / price_at_last_view
         avg_move = quote.avg_daily_move_pct_20d or 0.0
-        threshold = unusual_move_threshold(avg_move)
+        threshold = unusual_move_threshold(avg_move, sensitivity)
         if abs(pct_change) >= threshold:
             direction = "Up" if pct_change >= 0 else "Down"
             fired.append(
@@ -82,7 +97,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
     elif quote.prev_close and quote.prev_close > 0:
         day_pct = (quote.price - quote.prev_close) / quote.prev_close
         avg_move = quote.avg_daily_move_pct_20d or 0.0
-        day_threshold = max(0.02, unusual_move_threshold(avg_move))
+        day_threshold = max(0.02, unusual_move_threshold(avg_move, sensitivity))
         if abs(day_pct) >= day_threshold:
             direction = "Up" if day_pct >= 0 else "Down"
             fired.append(
