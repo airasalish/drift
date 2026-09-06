@@ -31,7 +31,7 @@ export function QuickAccessRail({
 }: {
   items: WatchlistItem[];
   selectedId: number | null;
-  view: "watchlist" | "history";
+  view: "watchlist" | "history" | "chart";
   onSelect: (item: WatchlistItem) => void;
   onShowHome: () => void;
   onShowHistory: () => void;

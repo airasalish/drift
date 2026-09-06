@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { AddStockForm } from "./components/AddStockForm";
+import { ChartView } from "./components/ChartView";
 import { FirstLookTour } from "./components/FirstLookTour";
 import { Header } from "./components/Header";
 import { HistoryPanel } from "./components/HistoryPanel";
@@ -54,7 +55,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
   const [detailItem, setDetailItem] = useState<WatchlistItem | null>(null);
-  const [view, setView] = useState<"watchlist" | "history">("watchlist");
+  const [view, setView] = useState<"watchlist" | "history" | "chart">("watchlist");
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [watchlistQuery, setWatchlistQuery] = useState("");
@@ -233,13 +234,15 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             <p>Here is what changed while you were away.</p>
           </div>
           <div className="command-nav" aria-label="Workspace sections">
-            <button type="button" className="active" onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
+            <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
+            <button type="button" className={view === "chart" ? "active" : ""} onClick={() => { setView("chart"); setDetailItem(null); }}>Charts</button>
             <button type="button" onClick={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Insights</button>
           </div>
         </section>
 
         <nav className="mobile-workspace-nav" aria-label="Workspace navigation">
           <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Home <span>{items.length}</span></button>
+          <button type="button" className={view === "chart" ? "active" : ""} onClick={() => { setView("chart"); setDetailItem(null); }}>Charts</button>
           <button type="button" className={view === "history" ? "active" : ""} onClick={handleShowHistory}>History</button>
         </nav>
 
@@ -297,6 +300,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         {view === "history" ? (
           <HistoryPanel events={historyEvents} loading={historyLoading} />
+        ) : view === "chart" ? (
+          <ChartView
+            items={items}
+            selectedId={selectedId}
+            onSelectStock={handleSelect}
+          />
         ) : loading ? (
           <div className="skeleton-block" />
         ) : (
