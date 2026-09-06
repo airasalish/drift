@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { api } from "./api";
 import "./Login.css";
 
+// Deliberately does NOT route to a separate onboarding page after auth --
+// the app itself already has a contextual first-look walkthrough
+// (FirstLookTour, in App.tsx) that spotlights real, live elements on the
+// actual page. A generic wizard shown before the app exists just delays
+// the thing the user came here for.
 export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; isDemo?: boolean }) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -24,7 +29,6 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
     try {
       await api.login(username.trim(), password, remember);
       onLoggedIn();
-      navigate("/onboarding");
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
     } finally {
@@ -38,7 +42,6 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
     try {
       await api.loginDemo();
       onLoggedIn();
-      navigate("/onboarding");
     } catch (e) {
       setError(e instanceof Error ? e.message : "couldn't load the demo account");
     } finally {
