@@ -15,6 +15,11 @@
   <a href="https://github.com/airasalish/drift">Source code</a>
 </p>
 
+<p align="center">
+  <a href="https://youtu.be/CCS5dqicIbY?si=9yuoYiZHtxWYS-v6">Product walkthrough</a> ·
+  <a href="https://youtu.be/l2lPWKitNJ0?si=-qI_nW5JpMC_6w-T">Technical explanation</a>
+</p>
+
 ---
 
 ## Why Drift exists
@@ -22,6 +27,15 @@
 Most watchlists show movement, but they leave the important work to the investor: deciding whether the movement is normal, meaningful, or worth investigating. Drift handles that first layer of context. It remembers the user’s last real visit, evaluates each stock against its own behavior, and surfaces only the changes that deserve attention.
 
 The product is deliberately **rule-based and explainable**. Drift does not pretend that an opaque model knows what an investor should buy or sell. Every surfaced item has visible evidence behind it.
+
+## Watch the explanations
+
+Two short videos explain the product from different angles:
+
+1. [Product walkthrough](https://youtu.be/CCS5dqicIbY?si=9yuoYiZHtxWYS-v6) shows the user journey, from creating a watchlist to understanding what changed.
+2. [Technical explanation](https://youtu.be/l2lPWKitNJ0?si=-qI_nW5JpMC_6w-T) explains the rule-based intelligence, personal baselines, and the reasoning behind Drift’s design.
+
+If you are reviewing the project for the first time, watch the walkthrough first, then use the technical explanation alongside [PROJECT_BRIEF.md](PROJECT_BRIEF.md).
 
 ## What you can do
 
