@@ -54,3 +54,28 @@ body {
 input::placeholder {
   color: #9aa39e;
 }
+
+
+/* Dark theme alignment */
+:root {
+  color: #eef2f0;
+  background: #0b0f13;
+}
+
+html,
+body {
+  background: #0b0f13 !important;
+}
+
+::selection {
+  background: rgba(141, 188, 168, .24);
+  color: #f3f6f4;
+}
+
+:where(button, input, [role='button']):focus-visible {
+  outline-color: #8dbca8;
+}
+
+input::placeholder {
+  color: #68747d;
+}
