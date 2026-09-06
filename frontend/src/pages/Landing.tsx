@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import "./Landing.css";
 
 export function Landing() {
   const navigate = useNavigate();
+  const [investorGoal, setInvestorGoal] = useState("");
+  const [reviewCadence, setReviewCadence] = useState("");
+  const questionnaireComplete = investorGoal !== "" && reviewCadence !== "";
 
   return (
     <div className="landing">
@@ -170,6 +174,58 @@ export function Landing() {
               <p>3+ stocks move &gt;2% in the same direction on the same day.</p>
               <div className="example">Example: Your tech stocks all down 2%+ — not an isolated move.</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Questionnaires */}
+      <section className="landing-section questionnaires" id="questionnaire">
+        <div className="landing-container">
+          <div className="questionnaire-heading">
+            <span className="section-eyebrow">A better first watchlist</span>
+            <h2>Tell Drift what deserves your attention.</h2>
+            <p>Two quick questions help you start with a watchlist that matches how you invest.</p>
+          </div>
+          <div className="questionnaire-grid">
+            <fieldset className="question-card">
+              <legend><span>01</span> What are you watching for?</legend>
+              <p className="question-help">Choose the signal you want to notice first.</p>
+              <div className="answer-list">
+                {[
+                  ["long-term", "Long-term conviction", "Business progress and meaningful changes"],
+                  ["opportunity", "New opportunities", "Unusual moves worth researching"],
+                  ["portfolio", "Portfolio balance", "How my positions move together"],
+                ].map(([value, label, detail]) => (
+                  <label className={`answer-option ${investorGoal === value ? "selected" : ""}`} key={value}>
+                    <input type="radio" name="investor-goal" value={value} checked={investorGoal === value} onChange={(event) => setInvestorGoal(event.target.value)} />
+                    <span><strong>{label}</strong><small>{detail}</small></span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="question-card">
+              <legend><span>02</span> How often do you review?</legend>
+              <p className="question-help">Drift compares the market to your last real visit.</p>
+              <div className="answer-list">
+                {[
+                  ["daily", "Most trading days", "Give me a focused daily read"],
+                  ["weekly", "A few times a week", "Show me what changed since I checked"],
+                  ["sometimes", "When something feels off", "Surface only the unusual signals"],
+                ].map(([value, label, detail]) => (
+                  <label className={`answer-option ${reviewCadence === value ? "selected" : ""}`} key={value}>
+                    <input type="radio" name="review-cadence" value={value} checked={reviewCadence === value} onChange={(event) => setReviewCadence(event.target.value)} />
+                    <span><strong>{label}</strong><small>{detail}</small></span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          <div className="questionnaire-result" aria-live="polite">
+            <div>
+              <span className="result-kicker">YOUR STARTING POINT</span>
+              <strong>{questionnaireComplete ? "Your watchlist can stay quiet until something meaningful changes." : "Answer both questions to shape your starting point."}</strong>
+            </div>
+            <button type="button" className="btn btn-primary" onClick={() => navigate("/signup")} disabled={!questionnaireComplete}>Build my watchlist</button>
           </div>
         </div>
       </section>
