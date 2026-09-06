@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { api } from '../api';
 import type { WatchlistItem } from '../types';
 import './ChartPanel.css';
 
@@ -25,11 +26,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/v1/watchlists/chart/${item.symbol}/${range}`);
-        if (!response.ok) {
-          throw new Error(`Failed to load chart: ${response.status}`);
-        }
-        const chartData = await response.json();
+        const chartData = await api.watchlists.chart(item.symbol, range);
 
         // Convert API response to chart format
         const chartPoints: ChartData[] = [];

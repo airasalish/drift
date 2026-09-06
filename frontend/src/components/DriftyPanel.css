@@ -48,6 +48,58 @@
   letter-spacing: 0.5px;
 }
 
+.drifty-loading,
+.drifty-error {
+  padding: 1rem 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.drifty-error {
+  color: #ef4444;
+}
+
+.why-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.why-list li {
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.analysis-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.analysis-block p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.cluster-note {
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-2);
+  border-left: 2px solid var(--accent);
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* Attention Score */
 .attention-score {
   display: flex;
@@ -72,37 +124,6 @@
   height: 100%;
   background: var(--accent);
   transition: width 0.3s ease;
-}
-
-/* Signals List */
-.signals-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.signal-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem;
-  background: var(--surface-2);
-  border-left: 2px solid var(--accent);
-  border-radius: 0.25rem;
-  font-size: 0.85rem;
-}
-
-.signal-rule {
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
-}
-
-.signal-message {
-  color: var(--text);
-  line-height: 1.4;
 }
 
 /* Data Grid */
@@ -163,36 +184,6 @@
   margin-top: auto;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
-}
-
-.action-btn {
-  padding: 0.75rem;
-  border-radius: 0.4rem;
-  font-weight: 500;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: none;
-}
-
-.action-btn.primary {
-  background: var(--accent);
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background: var(--accent-border);
-}
-
-.action-btn.secondary {
-  background: var(--surface-2);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.action-btn.secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 /* Responsive */
