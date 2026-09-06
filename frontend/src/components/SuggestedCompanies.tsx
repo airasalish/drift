@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { BrandMark } from "./BrandMark";
+import { CompanyFavicon } from "./CompanyFavicon";
 
 const SUGGESTIONS = [
-  { symbol: "AAPL", name: "Apple Inc.", sector: "tech" },
-  { symbol: "MSFT", name: "Microsoft Corporation", sector: "tech" },
-  { symbol: "RELIANCE.NS", name: "Reliance Industries", sector: "industrial-energy" },
-  { symbol: "TCS.NS", name: "Tata Consultancy Services", sector: "tech" },
-  { symbol: "AMZN", name: "Amazon.com, Inc.", sector: "consumer-retail" },
+  { symbol: "AAPL", name: "Apple Inc.", sector: "tech", domain: "apple.com" },
+  { symbol: "MSFT", name: "Microsoft Corporation", sector: "tech", domain: "microsoft.com" },
+  { symbol: "RELIANCE.NS", name: "Reliance Industries", sector: "industrial-energy", domain: "ril.com" },
+  { symbol: "TCS.NS", name: "Tata Consultancy Services", sector: "tech", domain: "tcs.com" },
+  { symbol: "AMZN", name: "Amazon.com, Inc.", sector: "consumer-retail", domain: "amazon.com" },
 ] as const;
 
 // A small, hand-checked tag table -- not a live classification service --
@@ -87,7 +87,6 @@ export function SuggestedCompanies({
     <section className="suggested-companies" aria-labelledby="suggested-title">
       <div className="suggested-head">
         <div>
-          <div className="suggested-brand"><BrandMark /><span>DRIFT</span></div>
           <span className="suggested-kicker">IDEAS TO EXPLORE</span>
           <h2 id="suggested-title">Build a more useful watchlist</h2>
           <p>Computed from real gaps in what you track right now -- not financial advice. Each symbol still runs through Drift's live rules after you add it.</p>
@@ -97,7 +96,7 @@ export function SuggestedCompanies({
       <div className="suggested-grid">
         {available.map((item) => (
           <article className="suggested-card" key={item.symbol}>
-            <div className="suggested-card-top"><strong>{item.symbol}</strong><button type="button" onClick={() => onAdd(item.symbol, item.name)}>+ Add</button></div>
+            <div className="suggested-card-top"><span className="suggested-symbol"><CompanyFavicon domain={item.domain} symbol={item.symbol} /><strong>{item.symbol}</strong></span><button type="button" onClick={() => onAdd(item.symbol, item.name)}>+ Add</button></div>
             <span className="suggested-name">{item.name}</span>
             <p><b>Why:</b> {item.reason}</p>
           </article>
