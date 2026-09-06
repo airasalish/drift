@@ -17,12 +17,19 @@ from app.schemas import (
     BulkImportConfirm,
     BulkImportResult,
     ChartRangeOut,
+    DriftyOut,
+    DriftyRankedItem,
+    DriftyWatchlistOut,
     FiredRule,
     HistoryEventOut,
+    MarketAnalysisOut,
+    PeerAnalysisOut,
     QuoteOut,
     RelatedStockOut,
+    SelfAnalysisOut,
     SimilarMoveOut,
     SimilarMovesOut,
+    StockMembershipOut,
     WatchlistCreate,
     WatchlistItemCreate,
     WatchlistItemNoteUpdate,
@@ -588,8 +595,9 @@ def get_chart_range(
 ):
     """Get chart data for a specific time range.
 
-    Range options: "1M", "3M", "6M", "1Y", "ALL"
+    Range options: "1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "ALL"
     All data is daily granularity (no intraday).
+    Returns OHLC data where available, degrades to close-only if not.
     """
     symbol = symbol.upper()
 
@@ -613,21 +621,94 @@ def get_chart_range(
     # misaligns its own x-axis from its y-values).
     dates = []
     closes = []
-    for date_str, close in zip(chart_data["dates"], chart_data["closes"]):
+    opens = []
+    highs = []
+    lows = []
+    volumes = []
+
+    for idx, date_str in enumerate(chart_data["dates"]):
         try:
             parsed = datetime.datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
             continue
         dates.append(parsed)
-        closes.append(close)
+        closes.append(chart_data["closes"][idx])
+
+        # Handle optional OHLC/volume data
+        if "opens" in chart_data and chart_data["opens"]:
+            opens.append(chart_data["opens"][idx])
+        if "highs" in chart_data and chart_data["highs"]:
+            highs.append(chart_data["highs"][idx])
+        if "lows" in chart_data and chart_data["lows"]:
+            lows.append(chart_data["lows"][idx])
+        if "volumes" in chart_data and chart_data["volumes"]:
+            volumes.append(chart_data["volumes"][idx])
 
     return ChartRangeOut(
         symbol=symbol,
         range_name=range_name,
         dates=dates,
         closes=closes,
+        opens=opens if opens else None,
+        highs=highs if highs else None,
+        lows=lows if lows else None,
+        volumes=volumes if volumes else None,
         currency=chart_data["currency"],
     )
+
+
+# ============================================================================
+# MULTI-WATCHLIST STOCK MEMBERSHIP
+# ============================================================================
+
+@watchlists_router.get("/stock/{symbol}/memberships", response_model=StockMembershipOut)
+def get_stock_memberships(
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get all watchlists that contain a specific symbol."""
+    symbol = symbol.upper()
+
+    # Get all watchlists for the current user
+    user_watchlists = db.query(Watchlist).filter_by(user_id=user.id).all()
+
+    memberships = []
+    company_name = None
+
+    for watchlist in user_watchlists:
+        for item in watchlist.items:
+            if item.symbol == symbol:
+                memberships.append({"watchlist_id": watchlist.id, "name": watchlist.name})
+                if company_name is None:
+                    company_name = item.company_name
+                break
+
+    return StockMembershipOut(
+        symbol=symbol,
+        company_name=company_name,
+        memberships=memberships,
+    )
+
+
+@watchlists_router.delete("/{id}/items/{symbol}")
+def remove_watchlist_item_by_symbol(
+    id: int,
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Remove a stock from a watchlist by symbol (alternative to item_id-based removal)."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+    symbol = symbol.upper()
+
+    item = next((i for i in watchlist.items if i.symbol == symbol), None)
+    if item is None:
+        raise HTTPException(404, "not found")
+
+    db.delete(item)
+    db.commit()
+    return {"ok": True}
 
 
 # ============================================================================
@@ -823,6 +904,196 @@ def get_watchlist_digest(
         if i.has_attention and (symbol is None or i.symbol == symbol.strip().upper())
     ]
     return {"digest": generate_digest(fired_facts)}
+
+
+# ============================================================================
+# DRIFTY INTELLIGENCE ENGINE
+# ============================================================================
+
+def detect_cluster(watchlist_items: list[WatchlistItem], db: Session) -> dict | None:
+    """Detect if 3+ stocks are moving >2% in the same direction."""
+    MIN_CLUSTER_MOVE = 0.02  # 2%
+    MIN_CLUSTER_SIZE = 3
+
+    direction_groups = {"up": [], "down": []}
+
+    for item in watchlist_items:
+        quote = db.get(SymbolQuote, item.symbol)
+        if quote and quote.price and quote.prev_close and quote.prev_close > 0:
+            day_pct = (quote.price - quote.prev_close) / quote.prev_close
+            if abs(day_pct) >= MIN_CLUSTER_MOVE:
+                if day_pct > 0:
+                    direction_groups["up"].append((item.symbol, day_pct))
+                else:
+                    direction_groups["down"].append((item.symbol, day_pct))
+
+    # Check if any direction has enough symbols
+    for direction, symbols_moves in direction_groups.items():
+        if len(symbols_moves) >= MIN_CLUSTER_SIZE:
+            avg_move = sum(move for _, move in symbols_moves) / len(symbols_moves)
+            symbols_list = [sym for sym, _ in symbols_moves]
+            return {
+                "name": "market movers",
+                "symbols": symbols_list,
+                "trend": f"{'up' if avg_move > 0 else 'down'} {abs(avg_move * 100):.1f}%+",
+            }
+
+    return None
+
+
+def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> DriftyOut:
+    """Compute the intelligence layer for a stock within a watchlist context."""
+    # Get the quote
+    quote = db.get(SymbolQuote, symbol)
+    if not quote or quote.price is None:
+        raise HTTPException(404, "no data for symbol")
+
+    # SELF ANALYSIS
+    # Compare today's move against the stock's own volatility
+    today_pct = (quote.price - quote.prev_close) / quote.prev_close if quote.prev_close else 0
+    normal_move = quote.avg_daily_move_pct_20d or 0.01
+    self_move_magnitude = abs(today_pct) / normal_move if normal_move > 0 else 0
+
+    volume_vs_normal = 0.0
+    if quote.volume and quote.avg_volume_20d and quote.avg_volume_20d > 0:
+        volume_vs_normal = quote.volume / quote.avg_volume_20d
+
+    # PEER ANALYSIS
+    # Get all other stocks in the watchlist
+    watchlist = _get_watchlist_or_404(db, watchlist_id, user)
+    peer_quotes = []
+    for item in watchlist.items:
+        if item.symbol != symbol:
+            q = db.get(SymbolQuote, item.symbol)
+            if q:
+                peer_quotes.append(q)
+
+    # Count how many peers moved in the same direction
+    same_direction = 0
+    peer_moves = []
+    for q in peer_quotes:
+        if q.price and q.prev_close and q.prev_close > 0:
+            peer_pct = (q.price - q.prev_close) / q.prev_close
+            peer_moves.append(peer_pct)
+            if (today_pct * peer_pct) > 0:  # Same direction
+                same_direction += 1
+
+    avg_peer_move = sum(peer_moves) / len(peer_moves) if peer_moves else 0
+
+    # Detect if this is part of a cluster
+    cluster = detect_cluster(watchlist.items, db)
+
+    # MARKET ANALYSIS
+    # Compare against Nifty 50
+    benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
+    benchmark_move = 0.0
+    if benchmark and benchmark.price and benchmark.prev_close and benchmark.prev_close > 0:
+        benchmark_move = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
+
+    outperformance = today_pct - benchmark_move
+
+    # ATTENTION SCORE
+    # Simple: combine signals with weights
+    score = 0
+    reasons = []
+
+    if self_move_magnitude > 2.0:
+        score += 30
+        reasons.append(f"Moving {self_move_magnitude:.1f}× its normal daily range")
+
+    if peer_quotes and same_direction < len(peer_quotes) / 2:  # Outlier
+        score += 25
+        reasons.append(f"Outlier in your watchlist (others moving differently)")
+
+    if abs(outperformance) > 0.015:  # 1.5%
+        if outperformance > 0:
+            reasons.append(f"Outperforming market by {outperformance * 100:.1f}%")
+        else:
+            reasons.append(f"Underperforming market by {abs(outperformance) * 100:.1f}%")
+        score += 20
+
+    if cluster and symbol in cluster["symbols"]:
+        score += 15
+        reasons.append(f"{len(cluster['symbols'])} {cluster['name']} stocks {cluster['trend']}")
+
+    # Volume spike as additional signal
+    if volume_vs_normal >= 2.0:
+        score += 15
+        reasons.append(f"Volume is {volume_vs_normal:.1f}× normal")
+
+    return DriftyOut(
+        symbol=symbol,
+        attention_score=min(score, 100),
+        self_analysis=SelfAnalysisOut(
+            today_pct_change=today_pct,
+            normal_daily_move=normal_move,
+            move_magnitude=f"{self_move_magnitude:.1f}× normal",
+            volume_vs_normal=volume_vs_normal,
+            context=f"{symbol} is moving {self_move_magnitude:.1f}× its normal daily range" if self_move_magnitude > 1.0 else f"{symbol} normal move",
+        ),
+        peer_analysis=PeerAnalysisOut(
+            watchlist_size=len(watchlist.items),
+            same_direction_count=same_direction,
+            avg_peer_move=avg_peer_move,
+            comparison=f"{symbol} is {'the outlier' if same_direction < len(peer_quotes) / 2 else 'in line with peers'}. Other tech stocks are {'mostly flat' if abs(avg_peer_move) < 0.01 else f'moving {avg_peer_move * 100:.1f}%'}." if peer_quotes else "No peers in watchlist",
+            cluster=cluster,
+        ),
+        market_analysis=MarketAnalysisOut(
+            benchmark_move=benchmark_move,
+            outperformance=outperformance,
+            context=f"{symbol} is {'outperforming' if outperformance > 0 else 'underperforming'} the market by {abs(outperformance) * 100:.1f}%" if abs(outperformance) > 0.005 else f"{symbol} is in line with market",
+        ),
+        why_interesting=reasons,
+    )
+
+
+@watchlists_router.get("/{id}/stock/{symbol}/drifty", response_model=DriftyOut)
+def get_drifty_analysis(
+    id: int,
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get Drifty intelligence analysis for a specific stock in a watchlist."""
+    return compute_drifty(id, symbol.upper(), user, db)
+
+
+@watchlists_router.get("/{id}/drifty", response_model=DriftyWatchlistOut)
+def get_drifty_watchlist(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get Drifty intelligence ranking for an entire watchlist."""
+    watchlist = _get_watchlist_or_404(db, id, user)
+
+    ranked = []
+    for item in watchlist.items:
+        try:
+            drifty = compute_drifty(id, item.symbol, user, db)
+            ranked.append(
+                DriftyRankedItem(
+                    symbol=item.symbol,
+                    attention_score=drifty.attention_score,
+                    why=", ".join(drifty.why_interesting[:2]) if drifty.why_interesting else "Normal activity",
+                )
+            )
+        except HTTPException:
+            # Skip symbols with no data
+            continue
+
+    # Sort by attention score (descending)
+    ranked.sort(key=lambda x: x.attention_score, reverse=True)
+
+    # Count items needing attention (score > 20)
+    items_needing_attention = sum(1 for item in ranked if item.attention_score > 20)
+
+    return DriftyWatchlistOut(
+        watchlist_id=id,
+        total_items=len(watchlist.items),
+        items_needing_attention=items_needing_attention,
+        ranked=ranked,
+    )
 
 
 @watchlists_router.get("/{id}/benchmark")
