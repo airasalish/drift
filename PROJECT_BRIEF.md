@@ -1,11 +1,10 @@
 # PROJECT_BRIEF.md
 
-## Challenge (verbatim intent, confirmed from the official HackerEarth page)
-"Code, by Groww" — a 72-hour solo build, **Sep 4 11:00 AM to Sep 7 11:00 AM, Asia/Kolkata**. Theme: "Build a Smart Market Watchlist." Minimum: create/manage a watchlist, view latest market info, return later and see what changed. Explicitly open-ended: we decide what "meaningful change" means, what info surfaces, how state persists, how staleness/conflict is handled, how it scales, and where to keep it simple. Explicitly told not to build the obvious watchlist.
+## Product intent
 
-**Required submission** (per the event FAQ, verbatim): source code (ZIP or Git repo) with a README with clear setup instructions, **a 100-word product pitch** explaining what was built, how it was designed, and the thinking behind key choices — plus "submit something that actually works." Video URL / Demo Link / Repository URL fields on the submission form are not marked required — source code + README + the 100-word pitch are the load-bearing deliverables.
+Build a smart market watchlist that surfaces meaningful changes. Minimum: create/manage a watchlist, view latest market info, return later and see what changed. The core challenge: we decide what "meaningful change" means, what info surfaces, how state persists, how staleness/conflict is handled, how it scales, and where to keep it simple.
 
-**Evaluation criteria** (verbatim): "engineering depth, problem interpretation, resilience and edge cases, code quality, simplicity, and originality of thought." Explicitly: "Don't optimise for what you think we want to see. Build the solution you can defend. Because eventually, we're going to ask you why." AI tools are explicitly allowed — the FAQ says they're specifically interested in "what the tools can't decide for you: architecture, judgement, edge cases, trade-offs and why you made the choices you did." This directly validates the ENGINEERING_DECISIONS.md approach already in place.
+The system must not be the obvious watchlist — it should be designed to be defensible, explainable, and resilient to edge cases.
 
 This document turns that into a literal spec with teeth, decided before feature code exists, so every later choice traces back to a rule written here — not a vibe argued after the fact.
 
@@ -61,6 +60,6 @@ One real account per user (bcrypt-hashed password, bearer-token session — see 
 ## Resolved decisions
 
 1. **Auth scope — resolved, in two stages**: started with a single hardcoded demo account (no signup/login UI), deliberately, to protect build time for the actual differentiator. `user_id` was kept a first-class column everywhere from that first stage specifically so real auth could be added later without a rearchitecture — and it was, once the core engine/resilience/deployment work was all done. Real signup/login now exists (bcrypt + bearer tokens), alongside a no-password demo login that resolves to the same seeded account as before. Both decisions, and why the second one's timing made sense, are logged in [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md).
-2. **Deadline — self-imposed, deliberate**: official window is Sep 4 11:00 AM → Sep 7 11:00 AM IST, but **only the first 1,000 of ~2,900 registered submissions get evaluated at all** — so submitting early is a real competitive advantage independent of the 72-hour window. Target is tonight (2026-09-04) through tomorrow morning (2026-09-06), deliberately inside the official window, not a misunderstanding of it. Full process: Build (submit) → Present (Top 40, virtual, 18 Sep — 5 min demo + 5 min live Q&A on the *decisions*, not just the demo) → Finale (Top 20, Groww HQ Bengaluru, 30 Sep). Moving-average crossovers and any news/sentiment signal remain **v2, deferred on purpose** — MVP is price-move + volume-spike + 52-week-cross rules only; extra time goes to polish/resilience/edge cases (explicitly judged) over new rule types.
+2. **Scope — deliberate**: moving-average crossovers and any news/sentiment signal remain **v2, deferred on purpose**. MVP is price-move + volume-spike + 52-week-cross rules only; extra time goes to polish/resilience/edge cases over new rule types.
 3. **Git identity — resolved**: commits authored as `airasalish` / anakhdee12@gmail.com.
 4. **Repo — resolved**: https://github.com/airasalish/drift (recreated once, after the first repo's GitHub UI persistently showed a spurious "claude" contributor entry despite verified-clean commit data — see DEV_LOG.md).
