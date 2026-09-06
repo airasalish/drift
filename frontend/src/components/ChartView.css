@@ -1,0 +1,186 @@
+.chart-view {
+  display: grid;
+  grid-template-columns: 250px 1fr 320px;
+  gap: 1px;
+  height: calc(100vh - 120px);
+  background: var(--border);
+  overflow: hidden;
+}
+
+/* Left Panel - Watchlist Navigator */
+.chart-view-left {
+  background: var(--surface);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.watchlist-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem 0;
+}
+
+.watchlist-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.watchlist-nav-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.watchlist-count {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.watchlist-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.watchlist-item {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.watchlist-item:hover {
+  background: var(--surface-2);
+  border-left-color: var(--accent);
+}
+
+.watchlist-item.active {
+  background: var(--surface-2);
+  border-left-color: var(--accent);
+  font-weight: 500;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.item-symbol {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.attention-badge {
+  color: var(--accent);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.item-price {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  gap: 0.5rem;
+}
+
+.item-price .positive {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.item-price .negative {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* Center Panel - Chart */
+.chart-view-center {
+  background: var(--page-bg);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* Right Panel - Drifty */
+.chart-view-right {
+  background: var(--surface);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1rem;
+}
+
+.drifty-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .chart-view {
+    grid-template-columns: 200px 1fr 280px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .chart-view {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chart-view-left,
+  .chart-view-center,
+  .chart-view-right {
+    border-bottom: 1px solid var(--border);
+    max-height: 60vh;
+  }
+
+  .chart-view-left,
+  .chart-view-right {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-view {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-view-center {
+    height: auto;
+    max-height: none;
+  }
+}
