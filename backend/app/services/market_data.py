@@ -136,15 +136,33 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
 def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     """Fetch chart data for a specific time range.
 
-    Range options: "1M", "3M", "6M", "1Y", "ALL"
+    Supports: 1D, 5D, 1M, 3M, 6M, YTD, 1Y, 5Y, ALL
+    Returns OHLC data where available, degrades to close-only if not.
     All data is daily granularity (no intraday).
+
+    Returns:
+    {
+      symbol: "AAPL",
+      range: "1M",
+      dates: ["2026-08-06", "2026-08-07", ...],
+      opens: [228.0, 227.5, ...],   # Only if available
+      highs: [230.0, 229.0, ...],   # Only if available
+      lows: [226.0, 225.5, ...],    # Only if available
+      closes: [228.17, 227.80, ...],
+      volumes: [50000000, 48000000, ...],  # Optional
+      currency: "USD"
+    }
     """
     # Map range names to yfinance period parameters
     period_map = {
+        "1D": "1d",
+        "5D": "5d",
         "1M": "1mo",
         "3M": "3mo",
         "6M": "6mo",
+        "YTD": "ytd",
         "1Y": "1y",
+        "5Y": "5y",
         "ALL": "max",
     }
 
@@ -167,28 +185,60 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     if hist is None or hist.empty:
         return None
 
-    closes = hist["Close"]
-
-    # Drop NaN/unparseable points entirely rather than pass a null through --
-    # same rule `spark_closes` above already follows: a gap in the chart is
-    # honest, a null reaching the frontend (or failing response validation,
-    # since ChartRangeOut's dates/closes aren't optional) is not.
+    # Build response with available OHLC data
     dates: list[str] = []
-    chart_closes: list[float] = []
-    for idx, close in enumerate(closes):
-        if math.isnan(close):
-            continue
+    opens: list[float | None] = []
+    highs: list[float | None] = []
+    lows: list[float | None] = []
+    closes: list[float] = []
+    volumes: list[float | None] = []
+
+    for idx in range(len(hist)):
         date = hist.index[idx]
         try:
             date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
-            close_val = float(close)
         except (ValueError, TypeError):
             continue
-        dates.append(date_str)
-        chart_closes.append(close_val)
 
-    return {
+        # Get close (required)
+        close = hist["Close"].iloc[idx]
+        if close is None or math.isnan(close):
+            continue  # Skip if close is missing (must have close)
+        close_val = float(close)
+
+        # Get OHLC (optional)
+        open_val = _clean(float(hist["Open"].iloc[idx]) if "Open" in hist.columns else None)
+        high_val = _clean(float(hist["High"].iloc[idx]) if "High" in hist.columns else None)
+        low_val = _clean(float(hist["Low"].iloc[idx]) if "Low" in hist.columns else None)
+        volume_val = _clean(float(hist["Volume"].iloc[idx]) if "Volume" in hist.columns else None)
+
+        dates.append(date_str)
+        opens.append(open_val)
+        highs.append(high_val)
+        lows.append(low_val)
+        closes.append(close_val)
+        volumes.append(volume_val)
+
+    # If we have no valid data points, return None
+    if not dates:
+        return None
+
+    # Build response - only include OHLC if actually available
+    has_ohlc = any(o is not None for o in opens)
+    result = {
+        "symbol": symbol,
+        "range": range_name,
         "dates": dates,
-        "closes": chart_closes,
+        "closes": closes,
         "currency": currency,
     }
+
+    if has_ohlc:
+        result["opens"] = opens
+        result["highs"] = highs
+        result["lows"] = lows
+
+    if any(v is not None for v in volumes):
+        result["volumes"] = volumes
+
+    return result
