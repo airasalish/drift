@@ -136,7 +136,65 @@ class SimilarMovesOut(BaseModel):
 
 class ChartRangeOut(BaseModel):
     symbol: str
-    range_name: str  # "1M", "3M", "6M", "1Y", "ALL"
+    range_name: str  # "1D", "5D", "1M", "3M", "6M", "YTD", "1Y", "5Y", "ALL"
     dates: list[datetime.datetime]
     closes: list[float]
+    opens: list[float | None] | None = None  # OHLC available?
+    highs: list[float | None] | None = None
+    lows: list[float | None] | None = None
+    volumes: list[float | None] | None = None
     currency: str | None
+
+
+# ─── Multi-Watchlist Stock Membership ──
+
+class StockMembershipOut(BaseModel):
+    symbol: str
+    company_name: str | None
+    memberships: list[dict]  # Each has watchlist_id and name
+
+
+# ─── Drifty Intelligence ──
+
+class SelfAnalysisOut(BaseModel):
+    today_pct_change: float
+    normal_daily_move: float
+    move_magnitude: str
+    volume_vs_normal: float
+    context: str
+
+
+class PeerAnalysisOut(BaseModel):
+    watchlist_size: int
+    same_direction_count: int
+    avg_peer_move: float
+    comparison: str
+    cluster: dict | None  # { name: str, symbols: list[str], trend: str } | None
+
+
+class MarketAnalysisOut(BaseModel):
+    benchmark_move: float
+    outperformance: float
+    context: str
+
+
+class DriftyOut(BaseModel):
+    symbol: str
+    attention_score: int
+    self_analysis: SelfAnalysisOut
+    peer_analysis: PeerAnalysisOut
+    market_analysis: MarketAnalysisOut
+    why_interesting: list[str]
+
+
+class DriftyRankedItem(BaseModel):
+    symbol: str
+    attention_score: int
+    why: str
+
+
+class DriftyWatchlistOut(BaseModel):
+    watchlist_id: int
+    total_items: int
+    items_needing_attention: int
+    ranked: list[DriftyRankedItem]
