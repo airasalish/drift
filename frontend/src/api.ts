@@ -79,6 +79,68 @@ export interface BenchmarkOut {
   outperformance_pct: number | null;
 }
 
+export interface ChartRangeOut {
+  symbol: string;
+  range: string;
+  dates: string[];
+  closes: number[];
+  opens: number[] | null;
+  highs: number[] | null;
+  lows: number[] | null;
+  volumes: number[] | null;
+  currency: string | null;
+}
+
+export interface SelfAnalysisOut {
+  today_pct_change: number;
+  normal_daily_move: number;
+  move_magnitude: string;
+  volume_vs_normal: number;
+  context: string;
+}
+
+export interface PeerAnalysisOut {
+  watchlist_size: number;
+  same_direction_count: number;
+  avg_peer_move: number;
+  comparison: string;
+  cluster: { name: string; symbols: string[]; trend: string } | null;
+}
+
+export interface MarketAnalysisOut {
+  benchmark_move: number;
+  outperformance: number;
+  context: string;
+}
+
+export interface DriftyOut {
+  symbol: string;
+  attention_score: number;
+  self_analysis: SelfAnalysisOut;
+  peer_analysis: PeerAnalysisOut;
+  market_analysis: MarketAnalysisOut;
+  why_interesting: string[];
+}
+
+export interface DriftyRankedItem {
+  symbol: string;
+  attention_score: number;
+  why: string;
+}
+
+export interface DriftyWatchlistOut {
+  watchlist_id: number;
+  total_items: number;
+  items_needing_attention: number;
+  ranked: DriftyRankedItem[];
+}
+
+export interface StockMembershipOut {
+  symbol: string;
+  company_name: string | null;
+  memberships: { watchlist_id: number; name: string }[];
+}
+
 export const api = {
   // Existing single-watchlist routes (unchanged for backward compatibility)
   // These resolve to the user's default watchlist
@@ -183,6 +245,26 @@ export const api = {
     resetToSample: (watchlistId: number) =>
       fetch(`${BASE}/watchlists/${watchlistId}/reset`, { method: "POST", headers: authHeaders() }).then((r) =>
         handle<WatchlistItem[]>(r)
+      ),
+
+    chart: (symbol: string, rangeName: string) =>
+      fetch(`${BASE}/watchlists/chart/${encodeURIComponent(symbol)}/${rangeName}`, { headers: authHeaders() }).then((r) =>
+        handle<ChartRangeOut>(r)
+      ),
+
+    drifty: (watchlistId: number, symbol: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/stock/${encodeURIComponent(symbol)}/drifty`, { headers: authHeaders() }).then((r) =>
+        handle<DriftyOut>(r)
+      ),
+
+    driftyRanked: (watchlistId: number) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/drifty`, { headers: authHeaders() }).then((r) =>
+        handle<DriftyWatchlistOut>(r)
+      ),
+
+    memberships: (symbol: string) =>
+      fetch(`${BASE}/watchlists/stock/${encodeURIComponent(symbol)}/memberships`, { headers: authHeaders() }).then((r) =>
+        handle<StockMembershipOut>(r)
       ),
   },
 
