@@ -226,11 +226,14 @@ export function Landing() {
             </fieldset>
           </div>
           <div className="questionnaire-result" aria-live="polite">
-            <div>
+            <div className="questionnaire-result-copy">
               <span className="result-kicker">YOUR STARTING POINT</span>
               <strong>{questionnaireComplete ? "Your watchlist can stay quiet until something meaningful changes." : "Answer both questions to shape your starting point."}</strong>
+              <span className="result-support">Your choices set the context for a calmer first look.</span>
             </div>
-            <button type="button" className="btn btn-primary" onClick={() => navigate("/signup")} disabled={!questionnaireComplete}>Build my watchlist</button>
+            <button type="button" className="btn btn-primary questionnaire-action" onClick={() => navigate("/signup")} disabled={!questionnaireComplete}>
+              {questionnaireComplete ? "Build my watchlist" : "Complete the questions"}
+            </button>
           </div>
         </div>
       </section>

@@ -347,6 +347,16 @@ input:focus-visible,
   text-align: left;
 }
 
+.ai-label {
+  display: inline-block;
+  margin-right: 7px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
 /* ── Add Form ── */
 .add-form {
   display: flex;
