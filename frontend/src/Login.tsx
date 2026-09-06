@@ -1,23 +1,33 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "./api";
 import "./Login.css";
 
-export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; isDemo?: boolean }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pulse, setPulse] = useState(0);
+
+  useEffect(() => {
+    if (isDemo) {
+      handleDemo();
+    }
+    const interval = window.setInterval(() => setPulse((value) => (value + 1) % 3), 3200);
+    return () => window.clearInterval(interval);
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      if (mode === "signup") await api.signup(username.trim(), password, remember);
-      else await api.login(username.trim(), password, remember);
+      await api.login(username.trim(), password, remember);
       onLoggedIn();
+      navigate("/onboarding");
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
     } finally {
@@ -31,6 +41,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
     try {
       await api.loginDemo();
       onLoggedIn();
+      navigate("/onboarding");
     } catch (e) {
       setError(e instanceof Error ? e.message : "couldn't load the demo account");
     } finally {
@@ -58,27 +69,26 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
       </section>
 
       <section className="login-card" aria-label="Sign in to Drift">
-        <div className="login-card-topline"><span className="login-brand"><img src="/drift-d-mark.png" alt="" aria-hidden="true" /> DRIFT</span><span>ACCESS / {mode === "login" ? "01" : "02"}</span></div>
-        <h1>Track what moves you.</h1>
-        <p className="tagline">A calmer watchlist for the changes worth your attention.</p>
-        <p className="auth-contract">Use a username and password. Email verification and recovery are intentionally not required in this version.</p>
+        <div className="login-card-topline"><span className="login-brand"><img src="/drift-d-mark.png" alt="" aria-hidden="true" /> DRIFT</span><span>ACCESS / 01</span></div>
+        <h1>Welcome back.</h1>
+        <p className="tagline">Log in to your watchlist and see what changed.</p>
 
         <form onSubmit={handleSubmit}>
           <label className="field-label" htmlFor="username">Username</label>
-          <input id="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Choose a username" disabled={busy} autoComplete="username" minLength={2} maxLength={40} required />
-          <label className="field-label" htmlFor="password">Password <span>(6+ characters)</span></label>
-          <input id="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? "At least 6 characters" : "Enter your password"} type="password" disabled={busy} autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={6} required />
+          <input id="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="your username" disabled={busy} autoComplete="username" minLength={2} maxLength={40} required />
+          <label className="field-label" htmlFor="password">Password</label>
+          <input id="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" type="password" disabled={busy} autoComplete="current-password" minLength={6} required />
           <label className="login-remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Stay logged in on this device</label>
           <button type="submit" className="login-submit" disabled={busy || !username.trim() || !password}>
-            <span>{busy ? "Connecting…" : mode === "signup" ? "Create account" : "Enter Drift"}</span><span aria-hidden="true">↗</span>
+            <span>{busy ? "Connecting…" : "Enter Drift"}</span><span aria-hidden="true">↗</span>
           </button>
         </form>
 
         {error && <p className="login-error" role="alert">{error}</p>}
 
         <div className="login-links">
-          <button type="button" className="login-mode-toggle" onClick={() => { setError(null); setMode(mode === "signup" ? "login" : "signup"); }} disabled={busy}>
-            {mode === "signup" ? "Already have an account? Log in" : "New here? Create an account"}
+          <button type="button" className="login-mode-toggle" onClick={() => navigate("/signup")} disabled={busy}>
+            New here? Create an account
           </button>
           <span className="login-divider">or</span>
           <button type="button" className="login-demo-btn" onClick={handleDemo} disabled={busy}>Explore the live demo <span aria-hidden="true">→</span></button>
