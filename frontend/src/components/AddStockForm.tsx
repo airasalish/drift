@@ -5,10 +5,11 @@ import { ThesisChips } from "./ThesisChips";
 
 export function AddStockForm({
   onAdd,
-  adding,
 }: {
-  onAdd: (symbol: string, note: string, companyName?: string) => Promise<void>;
-  adding: boolean;
+  // Opens the watchlist picker rather than adding directly -- this form
+  // just captures which symbol and thesis the user means, then hands off
+  // to the same picker every other "add" entry point uses.
+  onAdd: (symbol: string, note: string, companyName?: string) => void;
 }) {
   const [symbol, setSymbol] = useState("");
   const [note, setNote] = useState("");
@@ -27,20 +28,15 @@ export function AddStockForm({
     setSymbol("");
   }
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!symbol.trim()) return;
     const companyName =
       picked && picked.symbol.toUpperCase() === symbol.trim().toUpperCase() ? picked.name : undefined;
-    try {
-      await onAdd(symbol.trim(), note.trim(), companyName);
-      setSymbol("");
-      setNote("");
-      setPicked(null);
-    } catch {
-      // error is already surfaced via the shared error banner -- keep the
-      // form's values in place so the user can just retry
-    }
+    onAdd(symbol.trim(), note.trim(), companyName);
+    setSymbol("");
+    setNote("");
+    setPicked(null);
   }
 
   return (
@@ -54,18 +50,18 @@ export function AddStockForm({
           <div className="symbol-selected-chip">
             <span className="ssc-ticker">{picked.symbol}</span>
             <span className="ssc-name">{picked.name}</span>
-            <button type="button" className="ssc-clear" onClick={clearPicked} disabled={adding} aria-label="Clear selection">
+            <button type="button" className="ssc-clear" onClick={clearPicked} aria-label="Clear selection">
               ✕
             </button>
           </div>
         ) : (
-          <SymbolInput value={symbol} onChange={handleSymbolChange} onSelect={setPicked} disabled={adding} />
+          <SymbolInput value={symbol} onChange={handleSymbolChange} onSelect={setPicked} />
         )}
-        <button type="submit" disabled={adding || !symbol.trim()}>
-          {adding ? "Adding…" : "Add"}
+        <button type="submit" disabled={!symbol.trim()}>
+          Add
         </button>
       </div>
-      <ThesisChips value={note} onChange={setNote} disabled={adding} />
+      <ThesisChips value={note} onChange={setNote} />
     </form>
   );
 }

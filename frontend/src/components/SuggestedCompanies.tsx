@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 const SUGGESTIONS = [
   { symbol: "AAPL", name: "Apple Inc.", sector: "tech" },
@@ -66,10 +66,8 @@ export function SuggestedCompanies({
   onAdd,
 }: {
   trackedSymbols: Set<string>;
-  onAdd: (symbol: string, companyName: string) => Promise<void>;
+  onAdd: (symbol: string, companyName: string) => void;
 }) {
-  const [adding, setAdding] = useState<string | null>(null);
-
   const available = useMemo(() => {
     return SUGGESTIONS
       .filter((item) => !trackedSymbols.has(item.symbol))
@@ -84,15 +82,6 @@ export function SuggestedCompanies({
 
   if (available.length === 0) return null;
 
-  async function add(item: (typeof available)[number]) {
-    setAdding(item.symbol);
-    try {
-      await onAdd(item.symbol, item.name);
-    } finally {
-      setAdding(null);
-    }
-  }
-
   return (
     <section className="suggested-companies" aria-labelledby="suggested-title">
       <div className="suggested-head">
@@ -106,7 +95,7 @@ export function SuggestedCompanies({
       <div className="suggested-grid">
         {available.map((item) => (
           <article className="suggested-card" key={item.symbol}>
-            <div className="suggested-card-top"><strong>{item.symbol}</strong><button type="button" onClick={() => add(item)} disabled={adding !== null}>{adding === item.symbol ? "Adding…" : "+ Add"}</button></div>
+            <div className="suggested-card-top"><strong>{item.symbol}</strong><button type="button" onClick={() => onAdd(item.symbol, item.name)}>+ Add</button></div>
             <span className="suggested-name">{item.name}</span>
             <p><b>Why:</b> {item.reason}</p>
           </article>

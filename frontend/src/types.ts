@@ -8,6 +8,7 @@ export interface Watchlist {
   id: number;
   name: string;
   created_at: string;
+  item_count: number;
 }
 
 export interface Quote {

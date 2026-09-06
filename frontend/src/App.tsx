@@ -11,6 +11,7 @@ import { SinceYouLeft } from "./components/SinceYouLeft";
 import { StockDrawer } from "./components/StockDrawer";
 import { SuggestedCompanies } from "./components/SuggestedCompanies";
 import { WatchlistPanel } from "./components/WatchlistPanel";
+import { WatchlistPickerModal } from "./components/WatchlistPickerModal";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { attentionTier, latestViewedAt } from "./lib/attention";
 import { formatPct } from "./format";
@@ -38,7 +39,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     lastRefreshedAt,
     countdown,
     refresh,
-    add,
     remove,
     markSeen,
     updateNote,
@@ -50,7 +50,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     deleteWatchlist,
     switchWatchlist,
   } = useWatchlist();
-  const [adding, setAdding] = useState(false);
+  const [pickerRequest, setPickerRequest] = useState<{ symbol: string; companyName?: string; note?: string } | null>(null);
   const [demoResetting, setDemoResetting] = useState(false);
   const [digest, setDigest] = useState<string | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
@@ -121,13 +121,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const selectedId = liveDetailItem?.id ?? null;
   const chartSelectedId = chartSelectedItem ? items.find((i) => i.id === chartSelectedItem.id)?.id ?? null : null;
 
-  async function handleAdd(symbol: string, note: string, companyName?: string) {
-    setAdding(true);
-    try {
-      await add(symbol, note, companyName);
-    } finally {
-      setAdding(false);
-    }
+  // Every "add" entry point (suggestions, manual add, the detail drawer's
+  // "manage watchlists") opens the same picker instead of silently
+  // dropping the symbol into whichever watchlist happens to be active --
+  // that silent-add was the bug: with multiple watchlists, "add" has to
+  // mean "add to *which one(s)*", not "add to whatever's active".
+  function openWatchlistPicker(symbol: string, companyName?: string, note?: string) {
+    setPickerRequest({ symbol, companyName, note });
   }
 
   async function handleExplain() {
@@ -262,10 +262,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <SuggestedCompanies
           trackedSymbols={new Set(items.map((item) => item.symbol))}
-          onAdd={(symbol, companyName) => handleAdd(symbol, "", companyName)}
+          onAdd={(symbol, companyName) => openWatchlistPicker(symbol, companyName)}
         />
 
-        <AddStockForm onAdd={handleAdd} adding={adding} />
+        <AddStockForm onAdd={openWatchlistPicker} />
 
         <div className="workspace-shortcuts" aria-label="Workspace shortcuts">
           <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
@@ -374,10 +374,23 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           onSeen={markSeen}
           onRemove={handleRemove}
           onUpdateNote={updateNote}
+          onManageWatchlists={(symbol, companyName) => openWatchlistPicker(symbol, companyName)}
+          onOpenChart={(item) => { setChartSelectedItem(item); setDetailItem(null); setView("chart"); }}
         />
       </div>
 
       <FirstLookTour open={tourOpen && !loading} onClose={() => setTourOpen(false)} />
+      {pickerRequest && (
+        <WatchlistPickerModal
+          symbol={pickerRequest.symbol}
+          companyName={pickerRequest.companyName}
+          note={pickerRequest.note}
+          watchlists={watchlists}
+          onClose={() => setPickerRequest(null)}
+          onCreateWatchlist={createWatchlist}
+          onChanged={refresh}
+        />
+      )}
     </div>
   );
 }

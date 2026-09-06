@@ -127,6 +127,20 @@
   flex: 1;
 }
 
+.rail-watchlist-option-count {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-left: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.rail-watchlist-option.active .rail-watchlist-option-count {
+  color: var(--accent);
+}
+
 .rail-watchlist-active-indicator {
   font-size: 10px;
   margin-left: var(--sp-2);
@@ -255,4 +269,96 @@
 
 .rail-dialog-primary:hover {
   background: var(--accent-border);
+}
+
+.rail-dialog-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rail-dialog-wide {
+  min-width: 340px;
+  max-width: 440px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.rail-create-choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+
+.rail-create-choice-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.rail-create-choice-option:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.rail-create-choice-option strong {
+  font-size: 13px;
+}
+
+.rail-create-choice-option small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.rail-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.rail-template-option {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.rail-template-option:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.rail-template-option strong {
+  font-size: 13px;
+}
+
+.rail-template-option small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rail-template-count {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-3);
+  font-size: 11px;
+  color: var(--muted);
 }

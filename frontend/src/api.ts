@@ -141,6 +141,13 @@ export interface StockMembershipOut {
   memberships: { watchlist_id: number; name: string }[];
 }
 
+export interface WatchlistTemplateOut {
+  template_name: string;
+  display_name: string;
+  description: string;
+  symbol_count: number;
+}
+
 export const api = {
   // Existing single-watchlist routes (unchanged for backward compatibility)
   // These resolve to the user's default watchlist
@@ -219,6 +226,12 @@ export const api = {
     removeItem: (watchlistId: number, itemId: number) =>
       fetch(`${BASE}/watchlists/${watchlistId}/items/${itemId}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
 
+    // Symbol-based remove (vs. removeItem's item-id-based) -- lets the
+    // watchlist picker toggle membership without first knowing the item id
+    // that particular watchlist assigned it.
+    removeItemBySymbol: (watchlistId: number, symbol: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/items/${encodeURIComponent(symbol)}`, { method: "DELETE", headers: authHeaders() }).then((r) => handle(r)),
+
     markSeenItem: (watchlistId: number, itemId: number) =>
       fetch(`${BASE}/watchlists/${watchlistId}/items/${itemId}/seen`, { method: "POST", headers: authHeaders() }).then((r) =>
         handle<WatchlistItem>(r)
@@ -266,6 +279,16 @@ export const api = {
       fetch(`${BASE}/watchlists/stock/${encodeURIComponent(symbol)}/memberships`, { headers: authHeaders() }).then((r) =>
         handle<StockMembershipOut>(r)
       ),
+
+    templates: () =>
+      fetch(`${BASE}/watchlists/templates`, { headers: authHeaders() }).then((r) => handle<WatchlistTemplateOut[]>(r)),
+
+    createFromTemplate: (templateName: string, watchlistName: string) =>
+      fetch(`${BASE}/watchlists/templates/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ template_name: templateName, watchlist_name: watchlistName }),
+      }).then((r) => handle<Watchlist>(r)),
   },
 
   // Shared routes (not watchlist-scoped)

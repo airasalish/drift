@@ -15,6 +15,7 @@ class WatchlistOut(BaseModel):
     id: int
     name: str
     created_at: datetime.datetime
+    item_count: int
 
 
 class WatchlistItemCreate(BaseModel):
