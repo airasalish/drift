@@ -676,6 +676,131 @@ class TestDriftyIntelligence:
         assert result.attention_score < 25  # Should not get the +25 outlier points
 
 
+class TestEngineConsistency:
+    """The two attention surfaces must tell the same story about a stock.
+
+    `change_detection.evaluate()` drives the rail dots, the "since you last
+    looked" feed and the watchlist sort; `compute_drifty()` drives the Charts
+    view's Drifty panel. A user who sees a stock flagged in the list and opens
+    its chart to find out why should see Drifty explain that flag -- so every
+    rule that fires in one has to show up in the other.
+    """
+
+    # rule key from change_detection.evaluate() -> substring that must appear
+    # in the matching Drifty why_interesting entry
+    RULE_TO_DRIFTY_REASON = {
+        "price_move": "normal daily range",
+        "unusual_volume": "volume is",
+        "week52_high": "52-week high",
+        "week52_low": "52-week low",
+    }
+
+    @pytest.mark.parametrize(
+        "symbol,quote_kwargs,expected_rule",
+        [
+            # flagged purely for an unusual move for this stock
+            ("CONSIST_MOVE", dict(price=106.0, prev_close=100.0, volume=1_000_000, avg_volume_20d=1_000_000,
+                                  avg_daily_move_pct_20d=0.01, week52_high=150.0, week52_low=50.0), "price_move"),
+            # flagged purely for a volume spike -- barely moved
+            ("CONSIST_VOL", dict(price=100.0, prev_close=99.8, volume=3_000_000, avg_volume_20d=1_000_000,
+                                 avg_daily_move_pct_20d=0.01, week52_high=150.0, week52_low=50.0), "unusual_volume"),
+            # flagged purely for sitting at a new 52-week high
+            ("CONSIST_52H", dict(price=150.0, prev_close=149.9, volume=1_000_000, avg_volume_20d=1_000_000,
+                                 avg_daily_move_pct_20d=0.01, week52_high=150.0, week52_low=50.0), "week52_high"),
+            # flagged purely for sitting just above a 52-week low
+            ("CONSIST_52L", dict(price=51.0, prev_close=50.95, volume=1_000_000, avg_volume_20d=1_000_000,
+                                 avg_daily_move_pct_20d=0.01, week52_high=150.0, week52_low=50.0), "week52_low"),
+        ],
+    )
+    def test_drifty_explains_every_attention_flag(
+        self, db_session, test_user, test_watchlist, symbol, quote_kwargs, expected_rule
+    ):
+        """A stock change_detection flags must score in Drifty, for the same reason."""
+        from app.routers.watchlist import compute_drifty
+        from app.services import change_detection
+
+        quote = SymbolQuote(
+            symbol=symbol,
+            spark_closes_json=json.dumps([]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+            **quote_kwargs,
+        )
+        db_session.add(quote)
+        db_session.add(
+            WatchlistItem(
+                watchlist_id=test_watchlist.id,
+                symbol=symbol,
+                company_name=f"{symbol} Inc.",
+                added_price=quote_kwargs["prev_close"],
+            )
+        )
+        db_session.commit()
+
+        # No last-view baseline: both engines see exactly the same quote.
+        verdict = change_detection.evaluate(None, quote)
+        fired_rules = {rule["rule"] for rule in verdict["fired"]}
+        assert verdict["attention"] is True
+        assert expected_rule in fired_rules, f"expected {expected_rule}, got {fired_rules}"
+
+        drifty = compute_drifty(test_watchlist.id, symbol, test_user, db_session)
+        assert drifty.attention_score > 0, (
+            f"{symbol} is flagged in the watchlist for {sorted(fired_rules)} "
+            f"but Drifty scores it 0: {drifty.why_interesting}"
+        )
+
+        reasons = " | ".join(drifty.why_interesting).lower()
+        for rule in fired_rules:
+            needle = self.RULE_TO_DRIFTY_REASON[rule]
+            assert needle in reasons, (
+                f"{symbol} fired '{rule}' in change_detection but Drifty never mentions it: "
+                f"{drifty.why_interesting}"
+            )
+
+    def test_drifty_follows_change_detection_thresholds(
+        self, db_session, test_user, test_watchlist, monkeypatch
+    ):
+        """Drifty reads the shared constants, so retuning them retunes both engines."""
+        from app.routers.watchlist import compute_drifty
+        from app.services import change_detection
+
+        quote = SymbolQuote(
+            symbol="SHARED_THRESH",
+            price=104.0,  # +4%, 4x its normal move, on 3x normal volume
+            prev_close=100.0,
+            volume=3_000_000,
+            avg_volume_20d=1_000_000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=150.0,
+            week52_low=50.0,
+            spark_closes_json=json.dumps([]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(quote)
+        db_session.add(
+            WatchlistItem(
+                watchlist_id=test_watchlist.id,
+                symbol="SHARED_THRESH",
+                company_name="Shared Inc.",
+                added_price=100.0,
+            )
+        )
+        db_session.commit()
+
+        before = compute_drifty(test_watchlist.id, "SHARED_THRESH", test_user, db_session)
+        assert any("normal daily range" in r for r in before.why_interesting)
+        assert any("Volume is" in r for r in before.why_interesting)
+
+        monkeypatch.setattr(change_detection, "MOVE_SENSITIVITY", 100.0)
+        monkeypatch.setattr(change_detection, "VOLUME_SPIKE_MULTIPLE", 100.0)
+
+        after = compute_drifty(test_watchlist.id, "SHARED_THRESH", test_user, db_session)
+        assert not any("normal daily range" in r for r in after.why_interesting)
+        assert not any("Volume is" in r for r in after.why_interesting)
+        assert after.attention_score < before.attention_score
+
+
 class TestWatchlistItemCount:
     """Tests for watchlist item count feature."""
 
