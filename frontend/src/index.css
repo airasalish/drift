@@ -29,3 +29,28 @@ input::placeholder { color: #687071; opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
   body::before { display: none; }
 }
+
+
+/* Global editorial theme alignment */
+:root {
+  color: #15201d;
+  background: #f3f4f2;
+}
+
+html,
+body {
+  background: #f3f4f2;
+}
+
+::selection {
+  background: #d6e5dc;
+  color: #15201d;
+}
+
+:where(button, input, [role='button']):focus-visible {
+  outline-color: #6d9582;
+}
+
+input::placeholder {
+  color: #9aa39e;
+}

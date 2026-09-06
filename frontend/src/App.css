@@ -2120,7 +2120,7 @@ button:disabled { cursor: not-allowed; }
   background: #03100d;
   box-shadow: 0 18px 48px rgba(0,0,0,.2);
 }
-.dashboard-cover-art { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(2,10,8,.9) 0%, rgba(2,10,8,.52) 46%, rgba(2,10,8,.18)), url('/drift-dashboard-cover.png') center 48% / cover no-repeat; opacity: .88; }
+.dashboard-cover-art { position: absolute; inset: 0; background: transparent; opacity: 0; }
 .dashboard-cover-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: center; padding: 24px 28px; }
 .dashboard-cover-kicker { color: #72f0bb; font-size: 13px; letter-spacing: .22em; font-weight: 800; line-height: 1.2; text-shadow: 0 0 18px rgba(98,234,180,.25); }
 .dashboard-cover-copy strong { color: #f2faf6; font-size: clamp(24px, 3vw, 38px); line-height: .98; letter-spacing: -.06em; font-weight: 600; }
@@ -2244,7 +2244,7 @@ html { scroll-behavior: smooth; }
 
 /* Reference alignment: the artwork brands the workspace, while the live signal owns the page. */
 .dashboard-cover { height: 118px; margin: -8px 0 22px; border-radius: 5px; }
-.dashboard-cover-art { background: linear-gradient(90deg, rgba(2,10,8,.95) 0%, rgba(2,10,8,.7) 48%, rgba(2,10,8,.25)), url('/drift-dashboard-cover.png') center 48% / cover no-repeat; opacity: .72; }
+.dashboard-cover-art { background: transparent; opacity: 0; }
 .dashboard-cover-copy { justify-content: flex-end; padding: 18px 22px; }
 .dashboard-cover-copy strong { font-size: 20px; letter-spacing: -.04em; }
 .dashboard-cover-copy > span:last-child { font-size: 9px; }
@@ -2343,7 +2343,7 @@ html { scroll-behavior: smooth; }
 .wp-reset-button span { font-size: 15px; line-height: 1; }
 .wp-reset-button:hover { border-color: #70f2bb; background: rgba(30,105,76,.5); transform: translateY(-1px); }
 .confirm-remove { padding: 8px 10px; border: 1px solid rgba(234,166,77,.35); border-radius: 4px; background: rgba(71,45,15,.28); }
-body::after { content: ""; position: fixed; z-index: -1; right: -8vw; bottom: -12vh; width: 65vw; height: 56vh; pointer-events: none; opacity: .075; background: url('/drift-dashboard-cover.png') right bottom / cover no-repeat; mask-image: linear-gradient(135deg, transparent 0%, #000 54%, transparent 100%); }
+body::after { display: none; }
 @media (max-width: 680px) { .wp-reset-control { align-items: stretch; max-width: 170px; } .wp-reset-copy { text-align: left; } body::after { width: 100vw; height: 38vh; opacity: .05; } }
 
 body::after { z-index: 0; }
@@ -2352,7 +2352,7 @@ body::after { z-index: 0; }
 
 /* Full reference artwork mode: the authenticated app sits inside the artwork, not beside it. */
 .app-shell { isolation: isolate; background: #03100d; }
-.app-shell::before { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: url('/drift-dashboard-cover.png') center / cover no-repeat; transform: scale(1.02); }
+.app-shell::before { display: none; }
 .app-shell::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(1,9,7,.93) 0%, rgba(1,9,7,.78) 25%, rgba(1,10,8,.62) 58%, rgba(1,8,7,.7) 100%), linear-gradient(0deg, rgba(1,8,7,.78) 0%, transparent 38%, rgba(1,8,7,.3) 100%); }
 .rail { background: rgba(3,15,12,.82); backdrop-filter: blur(16px); border-right-color: rgba(93,190,155,.18); }
 .page { position: relative; }
@@ -2364,7 +2364,7 @@ body::after { z-index: 0; }
 .watchlist-panel { padding: 18px; border: 1px solid rgba(89,190,153,.16); border-radius: 5px; }
 @media (max-width: 680px) { .app-shell::before { background-position: 58% center; } .app-shell::after { background: linear-gradient(180deg, rgba(1,9,7,.9), rgba(1,10,8,.74) 50%, rgba(1,8,7,.9)); } .hero, .watchlist-panel { padding: 14px; } }
 
-.app-shell { background: linear-gradient(90deg, rgba(1,9,7,.91), rgba(1,10,8,.64) 56%, rgba(1,8,7,.74)), linear-gradient(0deg, rgba(1,8,7,.8), transparent 42%, rgba(1,8,7,.24)), url('/drift-dashboard-cover.png') center / cover fixed no-repeat; }
+.app-shell { background: #020a08; }
 .app-shell::before, .app-shell::after { display: none; }
 
 
@@ -2373,7 +2373,7 @@ body::after { z-index: 0; }
 .app-shell::before, .app-shell::after { display: none; }
 .rail { background: rgba(2,10,8,.96); backdrop-filter: none; }
 .dashboard-cover { height: 276px; margin: -8px 0 22px; border: 1px solid rgba(99,224,176,.22); background: #020c09; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
-.dashboard-cover-art { opacity: 1; mix-blend-mode: normal; background: linear-gradient(90deg, rgba(1,9,7,.82) 0%, rgba(1,9,7,.38) 42%, rgba(1,9,7,.08) 78%), linear-gradient(0deg, rgba(1,8,7,.78) 0%, transparent 48%), url('/drift-dashboard-cover.png') center 52% / cover no-repeat; }
+.dashboard-cover-art { opacity: 0; background: transparent; }
 .dashboard-cover-copy { justify-content: center; padding: 28px 34px; }
 .dashboard-cover-copy strong { font-size: clamp(26px, 4vw, 48px); }
 .dashboard-cover-copy > span:last-child { display: block; font-size: 11px; }
@@ -2478,3 +2478,570 @@ html { scrollbar-color: #29483e #07100d; scrollbar-width: thin; }
 .hero-summary span { color: #82aa9a; }
 @media (min-width: 981px) { .add-form { grid-row: 6; } .suggested-companies { grid-row: 7; } .workspace-shortcuts { grid-row: 8; } .demo-start-card { grid-row: 9; } .workspace-notice, .error-row { grid-row: 10; } .watchlist-panel { grid-row: 11; } .ignored-disclosure { grid-row: 12; } }
 @media (max-width: 520px) { .add-form-heading > div { display: block; } .add-form-heading span { display: block; margin-top: 3px; } }
+
+
+/* ─────────────────────────────────────────────────────────────
+   Editorial clarity pass
+   Replace the cinematic artwork with a quiet, premium market workspace.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --bg: #f3f4f2;
+  --surface: #fbfcfb;
+  --surface-2: #f1f3f1;
+  --surface-3: #e8ece9;
+  --border: #d7ded9;
+  --border-soft: #e3e8e4;
+  --text: #15201d;
+  --text-dim: #5d6b65;
+  --muted: #7d8983;
+  --faint: #9aa49e;
+  --green: #2f765e;
+  --green-dim: rgba(47, 118, 94, .11);
+  --red: #b65d60;
+  --red-dim: rgba(182, 93, 96, .10);
+  --amber: #a9783f;
+  --amber-dim: rgba(169, 120, 63, .11);
+  --blue: #4c7897;
+  --blue-dim: rgba(76, 120, 151, .10);
+  --accent: #315b52;
+  --accent-dim: rgba(49, 91, 82, .10);
+  --accent-border: rgba(49, 91, 82, .28);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+}
+
+html,
+body {
+  background: var(--bg) !important;
+  color: var(--text);
+}
+
+body::after,
+.app-shell::before,
+.app-shell::after {
+  display: none !important;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background: var(--bg) !important;
+}
+
+.rail {
+  background: #f8faf8 !important;
+  border-right: 1px solid var(--border) !important;
+  box-shadow: 8px 0 28px rgba(26, 43, 37, .03);
+  backdrop-filter: none !important;
+}
+
+.rail-brand {
+  margin-bottom: 22px;
+  padding: 0 11px 19px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  box-shadow: 0 5px 14px rgba(49, 91, 82, .12);
+}
+
+.rail-label,
+.section-context,
+.status-meta,
+.rail-preview-label {
+  color: var(--muted);
+}
+
+.rail-nav-item,
+.rail-item {
+  color: var(--text-dim);
+}
+
+.rail-nav-item:hover,
+.rail-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail-nav-item.selected,
+.rail-item.selected {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.rail-item.selected {
+  box-shadow: inset 2px 0 var(--accent);
+}
+
+.rail-dot.tier-needs-attention {
+  background: var(--accent);
+}
+
+.rail-dot.tier-worth-checking {
+  background: var(--amber);
+}
+
+.rail-dot.tier-quiet {
+  background: #aab4ae;
+}
+
+.rail-upgrade {
+  border: 1px solid #d0ddd6;
+  background: #eef4f0;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.rail-upgrade:hover {
+  border-color: #9db7aa;
+  background: #e8f1eb;
+}
+
+.rail-upgrade-title b,
+.rail-upgrade-copy {
+  color: var(--accent);
+}
+
+.rail-upgrade-glow {
+  opacity: .35;
+}
+
+.page {
+  max-width: 1180px;
+  padding: 34px clamp(20px, 4vw, 56px) 96px;
+  background: transparent !important;
+}
+
+.header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+}
+
+.brand h1,
+.command-center-head h2,
+.hero-headline,
+.wp-head h2,
+.suggested-head h2,
+.login-card h1 {
+  color: var(--text);
+}
+
+.brand h1 {
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+
+.brand .tagline {
+  color: var(--muted);
+}
+
+.header-right .account {
+  gap: 8px;
+}
+
+.status-meta {
+  font-size: 10px;
+}
+
+.status-meta .dot {
+  background: var(--green);
+}
+
+.status-meta .dot.stale {
+  background: var(--amber);
+}
+
+.refresh-btn,
+.share-btn,
+.logout-btn,
+.beginner-toggle {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-dim);
+}
+
+.refresh-btn:hover,
+.share-btn:hover,
+.logout-btn:hover,
+.beginner-toggle:hover,
+.beginner-toggle.on {
+  border-color: #a9bdb3;
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.dashboard-cover {
+  height: auto !important;
+  min-height: 258px;
+  margin: -8px 0 30px !important;
+  overflow: hidden;
+  border: 1px solid #d6ded9 !important;
+  border-radius: 18px !important;
+  background: #fbfcfb !important;
+  box-shadow: 0 18px 42px rgba(30, 48, 41, .07) !important;
+}
+
+.dashboard-cover-art {
+  display: none !important;
+}
+
+.dashboard-cover-copy {
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 36px 38px !important;
+}
+
+.dashboard-cover-kicker {
+  color: #718078 !important;
+  font-size: 10px !important;
+  letter-spacing: .18em;
+  text-shadow: none !important;
+}
+
+.dashboard-cover-copy strong {
+  max-width: 650px;
+  color: var(--text) !important;
+  font-family: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: clamp(34px, 5.1vw, 64px) !important;
+  line-height: .97;
+  letter-spacing: -.075em;
+  font-weight: 700;
+}
+
+.dashboard-cover-copy > span:last-child {
+  color: var(--text-dim) !important;
+  font-size: 12px !important;
+  letter-spacing: 0;
+}
+
+.dashboard-cover-signal {
+  top: 24px;
+  right: 26px;
+  color: #718078 !important;
+}
+
+.dashboard-cover-signal i {
+  background: #6e9885 !important;
+  box-shadow: 0 0 0 4px rgba(110, 152, 133, .12) !important;
+}
+
+.dashboard-cover:hover .dashboard-cover-art {
+  transform: none;
+  filter: none;
+}
+
+.command-center-head {
+  border-bottom-color: var(--border);
+}
+
+.command-kicker,
+.demo-start-kicker,
+.suggested-kicker {
+  color: var(--accent) !important;
+}
+
+.command-center-head h2 {
+  font-family: 'Manrope', 'Inter', sans-serif;
+  font-weight: 700;
+}
+
+.command-center-head p,
+.hero-calm-copy,
+.hero-summary {
+  color: var(--text-dim);
+}
+
+.command-nav,
+.mobile-workspace-nav {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.command-nav button,
+.mobile-workspace-nav button {
+  color: var(--muted);
+}
+
+.command-nav button:hover,
+.command-nav button.active,
+.mobile-workspace-nav button.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.workspace-metric,
+.workspace-shortcut,
+.add-form,
+.suggested-companies,
+.watchlist-panel,
+.hero,
+.history-panel,
+.workspace-notice,
+.demo-start-card,
+.watchlist-filter-wrap {
+  border-color: var(--border) !important;
+  background: var(--surface) !important;
+  box-shadow: 0 10px 25px rgba(36, 53, 46, .035);
+  backdrop-filter: none !important;
+}
+
+.workspace-metric,
+.workspace-shortcut {
+  border-radius: 12px;
+}
+
+.workspace-metric:hover,
+.workspace-shortcut:hover {
+  border-color: #a5bcb0;
+  background: #f8fbf9 !important;
+  transform: translateY(-1px);
+}
+
+.workspace-metric span,
+.workspace-metric small,
+.workspace-shortcut small,
+.add-form-heading span,
+.wp-summary-hint,
+.wp-summary-freshness {
+  color: var(--muted);
+}
+
+.workspace-metric strong,
+.workspace-shortcut strong,
+.add-form-heading strong {
+  color: var(--text);
+}
+
+.workspace-metric.metric-attention,
+.workspace-metric.metric-benchmark {
+  border-color: #c1d2c9 !important;
+}
+
+.workspace-metric.metric-attention strong,
+.workspace-metric.metric-benchmark strong {
+  color: var(--accent);
+}
+
+.shortcut-icon {
+  border-color: #cbdad2;
+  background: #eff5f1;
+  color: var(--accent);
+}
+
+.workspace-shortcut b {
+  color: var(--accent);
+}
+
+.hero {
+  padding: 26px 28px 28px !important;
+  border-radius: 14px !important;
+}
+
+.hero-eyebrow {
+  color: var(--accent) !important;
+}
+
+.hero-headline {
+  font-family: 'Manrope', 'Inter', sans-serif;
+  font-weight: 700;
+}
+
+.hero-summary strong {
+  color: var(--text);
+}
+
+.hero-summary span {
+  color: var(--muted);
+}
+
+.add-form,
+.suggested-companies {
+  border-radius: 12px !important;
+}
+
+.add-form-heading kbd {
+  border-color: #c4d1ca;
+  color: var(--muted);
+  background: #f3f6f4;
+}
+
+.suggested-head p,
+.suggested-name,
+.suggested-card p {
+  color: var(--muted);
+}
+
+.suggested-card {
+  border-color: var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.suggested-card:hover {
+  border-color: #a5bcb0;
+}
+
+.suggested-card-top strong {
+  color: var(--text);
+}
+
+.suggested-card-top button,
+.wp-reset-button {
+  border-color: #abc1b5;
+  background: #f2f7f3;
+  color: var(--accent);
+}
+
+.suggested-card-top button:hover:not(:disabled),
+.wp-reset-button:hover {
+  border-color: #6f9b86;
+  background: #e9f2ec;
+}
+
+.watchlist-panel {
+  border-radius: 14px !important;
+  padding: 22px !important;
+}
+
+.wp-head {
+  border-bottom-color: var(--border);
+}
+
+.watchlist-columns {
+  color: #8b9690;
+}
+
+.watchlist-row {
+  border-color: var(--border-soft) !important;
+}
+
+.watchlist-row:hover {
+  background: #f5f8f6 !important;
+}
+
+.demo-start-card {
+  border-color: #c7d8ce !important;
+  background: #f0f6f2 !important;
+}
+
+.demo-start-card h3 {
+  color: var(--text);
+}
+
+.demo-start-card p {
+  color: var(--text-dim);
+}
+
+.demo-start-card button,
+.tour-next,
+.login-submit {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.demo-start-card button:hover:not(:disabled),
+.tour-next:hover {
+  background: #23453e;
+}
+
+.workspace-notice {
+  color: var(--text-dim);
+}
+
+.error {
+  color: #98595b;
+}
+
+.drawer {
+  border-left-color: var(--border) !important;
+  background: var(--surface) !important;
+  box-shadow: -20px 0 60px rgba(31, 47, 40, .12) !important;
+}
+
+.tour-tooltip {
+  border-color: #c6d7cd;
+  background: var(--surface);
+  box-shadow: 0 18px 54px rgba(31, 47, 40, .15);
+}
+
+.tour-step-meta {
+  color: var(--accent);
+}
+
+.tour-spot {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 22px rgba(49, 91, 82, .16);
+}
+
+html {
+  scrollbar-color: #b8c6be #eef1ef;
+}
+
+*::-webkit-scrollbar-track {
+  background: #eef1ef;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-color: #eef1ef;
+  background: #b8c6be;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #8ea99b;
+}
+
+@media (min-width: 981px) {
+  .rail {
+    width: 218px;
+  }
+
+  .app-shell {
+    grid-template-columns: 218px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .page {
+    padding: 22px 16px 70px;
+  }
+
+  .dashboard-cover {
+    min-height: 220px;
+    margin: 0 0 22px !important;
+    border-radius: 14px !important;
+  }
+
+  .dashboard-cover-copy {
+    padding: 28px 24px !important;
+  }
+
+  .dashboard-cover-copy strong {
+    font-size: 34px !important;
+  }
+
+  .dashboard-cover-signal {
+    top: 18px;
+    right: 20px;
+  }
+
+  .hero {
+    padding: 22px 20px 24px !important;
+  }
+
+  .watchlist-panel {
+    padding: 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-cover,
+  .page,
+  .workspace-shortcuts {
+    animation: none !important;
+  }
+}
