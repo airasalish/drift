@@ -21,6 +21,17 @@ PORTFOLIO_MOVE_THRESHOLD = 0.02  # 2% move required to count as "moved"
 PORTFOLIO_MIN_SYMBOLS = 3  # minimum number of symbols moving together
 
 
+def unusual_move_threshold(avg_daily_move_pct: float | None) -> float:
+    """The move size (as a fraction, e.g. 0.015 == 1.5%) at which a move stops
+    being normal for this symbol: MOVE_SENSITIVITY times its own trailing
+    average daily move, floored at MIN_MOVE_THRESHOLD.
+
+    Anything answering "is this move unusual for this stock" -- here or in the
+    Drifty engine -- goes through this, so the two surfaces cannot drift apart.
+    """
+    return max(MIN_MOVE_THRESHOLD, MOVE_SENSITIVITY * (avg_daily_move_pct or 0.0))
+
+
 def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fired: frozenset[str] | None = None) -> dict:
     """Returns fired rules (each with a human-readable message and the raw
     number behind it), a numeric attention score, whether this symbol
@@ -52,7 +63,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
     if price_at_last_view and price_at_last_view > 0:
         pct_change = (quote.price - price_at_last_view) / price_at_last_view
         avg_move = quote.avg_daily_move_pct_20d or 0.0
-        threshold = max(MIN_MOVE_THRESHOLD, MOVE_SENSITIVITY * avg_move)
+        threshold = unusual_move_threshold(avg_move)
         if abs(pct_change) >= threshold:
             direction = "Up" if pct_change >= 0 else "Down"
             fired.append(
@@ -71,7 +82,7 @@ def evaluate(price_at_last_view: float | None, quote: SymbolQuote, previously_fi
     elif quote.prev_close and quote.prev_close > 0:
         day_pct = (quote.price - quote.prev_close) / quote.prev_close
         avg_move = quote.avg_daily_move_pct_20d or 0.0
-        day_threshold = max(0.02, MOVE_SENSITIVITY * avg_move)
+        day_threshold = max(0.02, unusual_move_threshold(avg_move))
         if abs(day_pct) >= day_threshold:
             direction = "Up" if day_pct >= 0 else "Down"
             fired.append(
