@@ -10,6 +10,25 @@ from app.sector_data import get_sector_for_symbol, get_symbols_in_sector, seed_s
 from app.services.market_data import fetch_chart_data
 
 
+@pytest.fixture
+def db_session():
+    """Override the database dependency for testing."""
+    from app.database import engine, Base, get_db
+
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+
+    # Use a single session for the test
+    SessionLocal = get_db
+    session = next(SessionLocal())
+
+    yield session
+
+    # Cleanup
+    session.close()
+    Base.metadata.drop_all(bind=engine)
+
+
 # ─── Watchlist Templates Tests ─────────────────────────────────────────
 
 def test_template_data_exists():
@@ -18,6 +37,12 @@ def test_template_data_exists():
     assert len(WATCHLIST_TEMPLATES) > 0
     assert "technology" in WATCHLIST_TEMPLATES
     assert "ai_semiconductors" in WATCHLIST_TEMPLATES
+    # Verify new templates exist
+    assert "nifty_50" in WATCHLIST_TEMPLATES
+    assert "pharma" in WATCHLIST_TEMPLATES
+    assert "dividends" in WATCHLIST_TEMPLATES
+    # Should have 9 templates total
+    assert len(WATCHLIST_TEMPLATES) == 9
 
 
 def test_template_symbols_are_valid():
@@ -32,6 +57,103 @@ def test_template_symbols_are_valid():
             assert SYMBOL_RE.match(symbol), f"Invalid symbol format in {template_name}: {symbol}"
             assert company_name, f"Missing company name in {template_name}: {symbol}"
             assert note, f"Missing note in {template_name}: {symbol}"
+
+
+def test_new_templates_have_correct_structure():
+    """Verify that new templates (nifty_50, pharma, dividends) have correct structure."""
+    from app.demo_user import WATCHLIST_TEMPLATES
+
+    # Check nifty_50 template
+    assert "nifty_50" in WATCHLIST_TEMPLATES
+    nifty_symbols = WATCHLIST_TEMPLATES["nifty_50"]
+    assert len(nifty_symbols) == 5
+    assert all(sym.endswith(".NS") for sym, _, _ in nifty_symbols)  # All NSE symbols
+
+    # Check pharma template
+    assert "pharma" in WATCHLIST_TEMPLATES
+    pharma_symbols = WATCHLIST_TEMPLATES["pharma"]
+    assert len(pharma_symbols) == 5
+    # Mix of US and Indian symbols
+    has_us = any(not sym.endswith(".NS") for sym, _, _ in pharma_symbols)
+    has_indian = any(sym.endswith(".NS") for sym, _, _ in pharma_symbols)
+    assert has_us and has_indian
+
+    # Check dividends template
+    assert "dividends" in WATCHLIST_TEMPLATES
+    dividend_symbols = WATCHLIST_TEMPLATES["dividends"]
+    assert len(dividend_symbols) == 5
+    # Mix of US and Indian symbols
+    has_us = any(not sym.endswith(".NS") for sym, _, _ in dividend_symbols)
+    has_indian = any(sym.endswith(".NS") for sym, _, _ in dividend_symbols)
+    assert has_us and has_indian
+
+
+def test_template_metadata_complete():
+    """Verify that TEMPLATE_METADATA includes all templates."""
+    from app.routers.watchlist import TEMPLATE_METADATA
+    from app.demo_user import WATCHLIST_TEMPLATES
+
+    # All templates in WATCHLIST_TEMPLATES should have metadata
+    for template_name in WATCHLIST_TEMPLATES.keys():
+        assert template_name in TEMPLATE_METADATA, f"Missing metadata for {template_name}"
+        assert "display_name" in TEMPLATE_METADATA[template_name]
+        assert "description" in TEMPLATE_METADATA[template_name]
+
+    # Should have 9 templates total
+    assert len(TEMPLATE_METADATA) == 9
+
+
+def test_templates_endpoint_returns_nine_templates():
+    """Test that GET /api/watchlists/templates returns 9 templates."""
+    from app.routers.watchlist import list_watchlist_templates
+
+    result = list_watchlist_templates()
+
+    # Should return 9 templates
+    assert len(result) == 9
+
+    # Verify all expected template names are present
+    template_names = {t.template_name for t in result}
+    expected_templates = {
+        "technology",
+        "ai_semiconductors",
+        "indian_large_caps",
+        "us_mega_caps",
+        "banking",
+        "ev_mobility",
+        "nifty_50",
+        "pharma",
+        "dividends",
+    }
+    assert template_names == expected_templates
+
+    # Verify each template has correct structure
+    for template in result:
+        assert template.template_name
+        assert template.display_name
+        assert template.description
+        assert template.symbol_count > 0
+
+
+def test_create_new_templates_from_template(db_session):
+    """Test that new templates can be created with correct item counts."""
+    from app.demo_user import WATCHLIST_TEMPLATES
+    from app.services.market_data import fetch_symbol_stats
+
+    # Test each new template's symbols resolve correctly
+    new_templates = ["nifty_50", "pharma", "dividends"]
+
+    for template_name in new_templates:
+        template_symbols = WATCHLIST_TEMPLATES[template_name]
+
+        # Verify template has 5 symbols
+        assert len(template_symbols) == 5, f"{template_name} should have 5 symbols"
+
+        # Verify all symbols resolve via fetch_symbol_stats
+        for symbol, company_name, note in template_symbols:
+            stats = fetch_symbol_stats(symbol)
+            assert stats is not None, f"Symbol {symbol} in {template_name} failed to resolve"
+            assert stats["price"] is not None, f"Symbol {symbol} in {template_name} has no price"
 
 
 # ─── Bulk Import Tests ─────────────────────────────────────────────────
