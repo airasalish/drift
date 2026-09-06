@@ -2313,7 +2313,7 @@ html { scroll-behavior: smooth; }
 /* Exact composition pass: contextual hero left, market cards right, actions below. */
 @media (min-width: 981px) {
   .page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 340px); column-gap: 24px; align-content: start; }
-  .dashboard-cover, .header, .command-center-head, .mobile-workspace-nav, .add-form, .workspace-shortcuts, .workspace-notice, .error-row, .watchlist-panel, .ignored-disclosure { grid-column: 1 / -1; }
+  .dashboard-cover, .header, .command-center-head, .mobile-workspace-nav, .add-form, .workspace-shortcuts, .workspace-notice, .error-row, .watchlist-panel, .ignored-disclosure, .chart-view, .history-panel, .skeleton-block { grid-column: 1 / -1; }
   .dashboard-cover { grid-row: 1; }
   .header { grid-row: 2; }
   .command-center-head { grid-row: 3; display: flex; }
@@ -2325,6 +2325,22 @@ html { scroll-behavior: smooth; }
   .workspace-notice, .error-row { grid-row: 8; }
   .watchlist-panel { grid-row: 9; }
   .ignored-disclosure { grid-row: 10; }
+  /* Charts/History/loading replace the hero+watchlist-panel+ignored-
+     disclosure group (mutually exclusive -- see the view === "..."
+     conditional in App.tsx), but .workspace-metrics is NOT conditional
+     and stays pinned to row 5/col 2 regardless of view. Row 5 is
+     therefore taken; give these their own row (past everything else)
+     instead of overlapping it -- this grid predates the Charts view and
+     never accounted for it, so .chart-view previously fell through to
+     default auto-placement and rendered squeezed into hero's 1fr column. */
+  /* Row 13: deliberately past every other explicit grid-row this file
+     assigns to .page's children (checked: highest is 12, several
+     "polish pass" blocks below reassign add-form/suggested-companies/
+     workspace-shortcuts/demo-start-card/watchlist-panel/ignored-
+     disclosure to different row numbers over time, so anchor past all
+     of them rather than a number that looked safe against just the
+     nearest block). */
+  .chart-view, .history-panel, .skeleton-block { grid-row: 13; }
   .command-center-head { padding-bottom: 14px; margin-bottom: 0; }
   .command-center-head .command-nav { margin-left: auto; }
   .workspace-metric { min-height: 74px; }
