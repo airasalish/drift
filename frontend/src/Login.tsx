@@ -10,14 +10,11 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
     if (isDemo) {
       handleDemo();
     }
-    const interval = window.setInterval(() => setPulse((value) => (value + 1) % 3), 3200);
-    return () => window.clearInterval(interval);
   }, []);
 
   async function handleSubmit(e: FormEvent) {
