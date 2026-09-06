@@ -141,7 +141,7 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     available, and gracefully degrades to close-only data when OHLC is not available.
 
     Supported timeframes:
-    - "1D": 1 day (daily granularity)
+    - "1D": latest daily session return, shown with recent daily bars for context
     - "5D": 5 days (daily granularity)
     - "1M": 1 month (daily granularity)
     - "3M": 3 months (daily granularity)
@@ -193,7 +193,11 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     """
     # Map range names to yfinance period parameters
     period_map = {
-        "1D": "1d",
+        # yfinance can return only one daily bar for period=1d, which cannot
+        # render a meaningful chart. Use real recent daily bars for the view;
+        # the frontend calculates the 1D return from the cached live quote and
+        # previous close, so this is never confused with a range return.
+        "1D": "5d",
         "5D": "5d",
         "1M": "1mo",
         "3M": "3mo",
