@@ -4,7 +4,7 @@
 
 <h1 align="center">Drift</h1>
 
-<p align="center"><strong>Not just prices — what actually drifted since you last looked.</strong></p>
+<p align="center"><strong>See what changed. Know why it matters.</strong></p>
 
 <p align="center">
   A calmer, explainable market watchlist that helps investors focus on meaningful change instead of scanning every ticker.
