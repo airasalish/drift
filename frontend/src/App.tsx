@@ -60,7 +60,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [watchlistQuery, setWatchlistQuery] = useState("");
-  const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
   // per-viewer display preference only -- never a source of truth, the
   // rule engine's output is identical either way, this just rewords it
   const [beginnerMode, setBeginnerMode] = useState(() => {
@@ -202,7 +201,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         }}
         onShowHistory={handleShowHistory}
         onShowInsights={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-        onShowPro={() => setWorkspaceNotice("Pro is planned for a future release. The current Drift workspace is free to use with live watchlist signals.")}
         watchlists={watchlists}
         activeWatchlistId={activeWatchlistId}
         onCreateWatchlist={createWatchlist}
@@ -212,15 +210,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
       />
 
       <div className="page">
-        <section className="dashboard-cover" aria-label="Drift workspace introduction">
-          <div className="dashboard-cover-art" aria-hidden="true" />
-          <div className="dashboard-cover-copy">
-            <span className="dashboard-cover-kicker">DRIFT / MARKET WORKSPACE</span>
-            <strong>Markets move.<br />So do you.</strong>
-            <span>Track what matters. Return with context.</span>
-          </div>
-          <span className="dashboard-cover-signal">LIVE CONTEXT <i /></span>
-        </section>
         <Header
           username={username}
           onLogout={onLogout}
@@ -279,13 +268,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           </button>
         </div>
 
-        {workspaceNotice && (
-          <div className="workspace-notice" role="status">
-            <span>{workspaceNotice}</span>
-            <button type="button" onClick={() => setWorkspaceNotice(null)} aria-label="Dismiss notice">×</button>
-          </div>
-        )}
-
         {username?.toLowerCase() === "demo" && view === "watchlist" && (
           <section className="demo-start-card" data-tour="demo-reset">
             <div>
@@ -322,7 +304,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
             {portfolioItem && (
               <div className="portfolio-signal" data-tour="portfolio-signal">
                 <div className="portfolio-signal-header">
-                  <span className="portfolio-signal-icon">📊</span>
+                  <span className="portfolio-signal-icon">PORTFOLIO</span>
                   <h3>Portfolio-wide signal</h3>
                 </div>
                 <ul className="reasons">

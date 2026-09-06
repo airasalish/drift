@@ -44,17 +44,17 @@ export function Landing() {
           <h2>The problem with most watchlists</h2>
           <div className="problem-grid">
             <div className="problem-card">
-              <div className="icon">📊</div>
+              <div className="icon" aria-hidden="true">01</div>
               <h3>Too much noise</h3>
               <p>Every price move gets flagged. You end up ignoring everything.</p>
             </div>
             <div className="problem-card">
-              <div className="icon">⏰</div>
+              <div className="icon" aria-hidden="true">02</div>
               <h3>Forgetting context</h3>
               <p>Was this stock always volatile? Did it really change? You have to remember.</p>
             </div>
             <div className="problem-card">
-              <div className="icon">🔍</div>
+              <div className="icon" aria-hidden="true">03</div>
               <h3>No narrative</h3>
               <p>You get a number. You don't get *why* it matters.</p>
             </div>
@@ -97,42 +97,42 @@ export function Landing() {
           <h2>Built for serious investors</h2>
           <div className="features-list">
             <div className="feature">
-              <div className="feature-icon">📈</div>
+              <div className="feature-icon" aria-hidden="true">01</div>
               <div>
                 <h4>Volatility-adjusted rules</h4>
                 <p>A 2% move means different things for different stocks. Drift knows the difference.</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">🧠</div>
+              <div className="feature-icon" aria-hidden="true">02</div>
               <div>
                 <h4>Drifty intelligence</h4>
                 <p>Compare a stock against itself, your watchlist, and the market. Get ranked by what deserves attention.</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">🔐</div>
+              <div className="feature-icon" aria-hidden="true">03</div>
               <div>
                 <h4>Account-based persistence</h4>
                 <p>Your watchlists and "since you last looked" state follow you across devices.</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">📊</div>
+              <div className="feature-icon" aria-hidden="true">04</div>
               <div>
                 <h4>Multiple watchlists</h4>
                 <p>Organize by strategy, sector, or time horizon. Stocks can belong to multiple watchlists.</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">🎯</div>
+              <div className="feature-icon" aria-hidden="true">05</div>
               <div>
                 <h4>Real-time market data</h4>
                 <p>Powered by live market data. Refreshed every 60 seconds.</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">📝</div>
+              <div className="feature-icon" aria-hidden="true">06</div>
               <div>
                 <h4>Transparent rules</h4>
                 <p>No black box. Every signal is explainable. You know exactly why something was flagged.</p>

@@ -362,3 +362,9 @@
   font-size: 11px;
   color: var(--muted);
 }
+
+/* The sidebar is intentionally utility-only; promotional upgrade surfaces are removed. */
+.rail-upgrade { display: none !important; }
+
+/* The sidebar is intentionally utility-only; promotional upgrade surfaces are removed. */
+.rail-upgrade { display: none !important; }
