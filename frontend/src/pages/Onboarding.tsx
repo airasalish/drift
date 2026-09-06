@@ -44,7 +44,6 @@ const STEPS = [
 export function Onboarding() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
-  const [skipped, setSkipped] = useState(false)
 
   const current = STEPS[step]
   const isLastStep = step === STEPS.length - 1
@@ -64,7 +63,6 @@ export function Onboarding() {
   }
 
   const handleSkip = () => {
-    setSkipped(true)
     navigate('/')
   }
 

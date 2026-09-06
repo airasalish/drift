@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BrandMark } from './components/BrandMark'
-import { signup } from './api'
+import { api } from './api'
 import './Auth.css'
 
 export function Signup({ onLoggedIn }: { onLoggedIn: () => void }) {
@@ -19,7 +19,7 @@ export function Signup({ onLoggedIn }: { onLoggedIn: () => void }) {
     setLoading(true)
 
     try {
-      await signup(username, email, password)
+      await api.signup(username.trim(), password, true)
       onLoggedIn()
       navigate('/onboarding')
     } catch (err: any) {

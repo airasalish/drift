@@ -1,18 +1,12 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import "./Landing.css";
 
 export function Landing() {
   const navigate = useNavigate();
-  const [scrollY, setScrollY] = useState(0);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollY((e.target as HTMLDivElement).scrollTop);
-  };
 
   return (
-    <div className="landing" onScroll={handleScroll}>
+    <div className="landing">
       {/* Header */}
       <header className="landing-header">
         <div className="landing-container">
@@ -173,7 +167,7 @@ export function Landing() {
             </div>
             <div className="rule">
               <h4>Portfolio-level signal</h4>
-              <p>3+ stocks move >2% in the same direction on the same day.</p>
+              <p>3+ stocks move &gt;2% in the same direction on the same day.</p>
               <div className="example">Example: Your tech stocks all down 2%+ — not an isolated move.</div>
             </div>
           </div>
