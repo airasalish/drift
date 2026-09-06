@@ -281,6 +281,9 @@ TEMPLATE_METADATA = {
     "us_mega_caps": {"display_name": "US Mega Caps", "description": "Largest US companies by market cap"},
     "banking": {"display_name": "Banking", "description": "Major financial institutions"},
     "ev_mobility": {"display_name": "EV & Mobility", "description": "Electric vehicle and mobility companies"},
+    "nifty_50": {"display_name": "Nifty 50", "description": "Major NSE-listed index constituents"},
+    "pharma": {"display_name": "Pharma", "description": "Major pharmaceutical companies"},
+    "dividends": {"display_name": "Dividends", "description": "Stocks with consistent dividend payouts"},
 }
 
 

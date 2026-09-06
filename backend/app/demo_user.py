@@ -92,6 +92,27 @@ WATCHLIST_TEMPLATES = {
         ("LCID", "Lucid Group Inc.", "EV manufacturing"),
         ("RIVN", "Rivian Automotive Inc.", "EV manufacturing"),
     ],
+    "nifty_50": [
+        ("RELIANCE.NS", "Reliance Industries Limited", "Energy conglomerate"),
+        ("HDFCBANK.NS", "HDFC Bank Limited", "Private banking"),
+        ("ICICIBANK.NS", "ICICI Bank Limited", "Private banking"),
+        ("INFY.NS", "Infosys Limited", "IT services"),
+        ("ITC.NS", "ITC Limited", "FMCG conglomerate"),
+    ],
+    "pharma": [
+        ("PFE", "Pfizer Inc.", "Pharmaceuticals"),
+        ("JNJ", "Johnson & Johnson", "Healthcare"),
+        ("SUNPHARMA.NS", "Sun Pharmaceutical Industries", "Indian pharma"),
+        ("DRREDDY.NS", "Dr. Reddy's Laboratories", "Indian pharma"),
+        ("CIPLA.NS", "Cipla Limited", "Indian pharma"),
+    ],
+    "dividends": [
+        ("JNJ", "Johnson & Johnson", "Dividend aristocrat"),
+        ("KO", "The Coca-Cola Company", "Dividend king"),
+        ("PG", "Procter & Gamble Co.", "Consumer staples"),
+        ("VZ", "Verizon Communications", "Telecom dividends"),
+        ("ITC.NS", "ITC Limited", "High dividend yield"),
+    ],
 }
 
 
