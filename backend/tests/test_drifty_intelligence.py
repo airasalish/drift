@@ -801,6 +801,112 @@ class TestEngineConsistency:
         assert after.attention_score < before.attention_score
 
 
+class TestPerUserSensitivity:
+    """A user's sensitivity setting scales the shared move threshold for both
+    engines -- same stock, same quote, different outcome per user.
+    """
+
+    def _quote(self, symbol: str, price: float) -> SymbolQuote:
+        # avg_daily_move_pct_20d=0.02 with a +2.5% move: sits between
+        # aggressive's lowered threshold (2.1%) and balanced/conservative's
+        # (3% / 4.2%) -- deliberately in the gap the three levels create.
+        return SymbolQuote(
+            symbol=symbol,
+            price=price,
+            prev_close=100.0,
+            volume=1_000_000,
+            avg_volume_20d=1_000_000,
+            avg_daily_move_pct_20d=0.02,
+            week52_high=150.0,
+            week52_low=50.0,
+            spark_closes_json=json.dumps([]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+
+    def test_same_move_different_verdict_per_sensitivity(self, db_session):
+        from app.services import change_detection
+
+        quote = self._quote("SENS_BOUNDARY", price=102.5)  # +2.5% from prev_close
+
+        aggressive = change_detection.evaluate(100.0, quote, sensitivity="aggressive")
+        balanced = change_detection.evaluate(100.0, quote, sensitivity="balanced")
+        conservative = change_detection.evaluate(100.0, quote, sensitivity="conservative")
+
+        assert aggressive["attention"] is True, "a 2.5% move should clear aggressive's lowered bar"
+        assert balanced["attention"] is False, "the same 2.5% move should NOT clear balanced's default bar"
+        assert conservative["attention"] is False, "conservative should be at least as strict as balanced"
+
+    def test_unknown_sensitivity_falls_back_to_balanced(self, db_session):
+        from app.services import change_detection
+
+        quote = self._quote("SENS_FALLBACK", price=102.5)
+        unknown = change_detection.evaluate(100.0, quote, sensitivity="not-a-real-level")
+        balanced = change_detection.evaluate(100.0, quote, sensitivity="balanced")
+        assert unknown["attention"] == balanced["attention"]
+
+    def test_drifty_respects_user_sensitivity(self, db_session):
+        """compute_drifty() reads the same per-user setting, not a second number."""
+        from app.routers.watchlist import compute_drifty
+
+        quote = self._quote("SENS_DRIFTY", price=102.5)
+        db_session.add(quote)
+
+        aggressive_user = User(name="agg_user", password_hash="hashed", sensitivity="aggressive")
+        conservative_user = User(name="cons_user", password_hash="hashed", sensitivity="conservative")
+        db_session.add_all([aggressive_user, conservative_user])
+        db_session.commit()
+
+        # Each user owns their own watchlist containing the identical quote --
+        # only the owning user's sensitivity differs between the two calls.
+        agg_watchlist = Watchlist(user_id=aggressive_user.id, name="Agg")
+        cons_watchlist = Watchlist(user_id=conservative_user.id, name="Cons")
+        db_session.add_all([agg_watchlist, cons_watchlist])
+        db_session.commit()
+
+        db_session.add_all([
+            WatchlistItem(watchlist_id=agg_watchlist.id, symbol="SENS_DRIFTY", company_name="Sensitivity Inc.", added_price=100.0),
+            WatchlistItem(watchlist_id=cons_watchlist.id, symbol="SENS_DRIFTY", company_name="Sensitivity Inc.", added_price=100.0),
+        ])
+        db_session.commit()
+
+        aggressive_result = compute_drifty(agg_watchlist.id, "SENS_DRIFTY", aggressive_user, db_session)
+        conservative_result = compute_drifty(cons_watchlist.id, "SENS_DRIFTY", conservative_user, db_session)
+
+        assert any("normal daily range" in r for r in aggressive_result.why_interesting)
+        assert not any("normal daily range" in r for r in conservative_result.why_interesting)
+
+
+class TestSettingsEndpoint:
+    """GET/PATCH /api/users/me/settings -- called directly as functions, the
+    same convention every other test in this file uses rather than spinning
+    up an HTTP TestClient.
+    """
+
+    def test_get_settings_returns_default(self, test_user):
+        from app.routers.users import get_settings
+
+        result = get_settings(user=test_user)
+        assert result.sensitivity == "balanced"
+
+    def test_patch_settings_updates_and_returns_new_value(self, db_session, test_user):
+        from app.routers.users import update_settings, SettingsUpdate
+
+        result = update_settings(SettingsUpdate(sensitivity="aggressive"), db=db_session, user=test_user)
+        assert result.sensitivity == "aggressive"
+        db_session.refresh(test_user)
+        assert test_user.sensitivity == "aggressive"
+
+    def test_patch_settings_rejects_invalid_value(self, db_session, test_user):
+        from fastapi import HTTPException
+
+        from app.routers.users import update_settings, SettingsUpdate
+
+        with pytest.raises(HTTPException) as exc_info:
+            update_settings(SettingsUpdate(sensitivity="extreme"), db=db_session, user=test_user)
+        assert exc_info.value.status_code == 400
+
+
 class TestWatchlistItemCount:
     """Tests for watchlist item count feature."""
 
