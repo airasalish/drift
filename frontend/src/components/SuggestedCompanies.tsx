@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { BrandMark } from "./BrandMark";
 
 const SUGGESTIONS = [
   { symbol: "AAPL", name: "Apple Inc.", sector: "tech" },
@@ -86,6 +87,7 @@ export function SuggestedCompanies({
     <section className="suggested-companies" aria-labelledby="suggested-title">
       <div className="suggested-head">
         <div>
+          <div className="suggested-brand"><BrandMark /><span>DRIFT</span></div>
           <span className="suggested-kicker">IDEAS TO EXPLORE</span>
           <h2 id="suggested-title">Build a more useful watchlist</h2>
           <p>Computed from real gaps in what you track right now -- not financial advice. Each symbol still runs through Drift's live rules after you add it.</p>
