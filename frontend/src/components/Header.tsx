@@ -95,7 +95,6 @@ export function Header({
             onClick={onToggleBeginnerMode}
             title="Reword rule explanations into plain language -- deterministic rewording, not AI: same rule, same numbers, simpler sentence"
           >
-            <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">Aa</span>
             {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
           </button>
           <span className="beginner-help">Simpler explanations, same signals</span>
