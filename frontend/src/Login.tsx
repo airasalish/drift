@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { api } from "./api";
 import "./Login.css";
 
@@ -9,12 +9,6 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pulse, setPulse] = useState(0);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setPulse((value) => (value + 1) % 3), 3200);
-    return () => window.clearInterval(interval);
-  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -44,7 +38,7 @@ export function Login({ onLoggedIn }: { onLoggedIn: () => void }) {
     }
   }
 
-  const signalCopy = ["Your market, with context.", "Notice what changed.", "Track the move that matters."][pulse];
+  const signalCopy = "Markets move. So do you.";
 
   return (
     <main className="login-page">
