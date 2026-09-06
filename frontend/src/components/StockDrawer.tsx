@@ -159,7 +159,7 @@ export function StockDrawer({
             <div className="drawer-section-head">
               <h3>Why Drift surfaced this</h3>
               <button className="explain-btn" onClick={handleExplain} disabled={digestLoading} title="AI-generated summary in plain English -- the rule list below is what actually decided this stock got flagged">
-                <span style={{ opacity: 0.75, marginRight: 4 }} aria-hidden="true">✨</span>
+                <span className="ai-label">Drifty AI</span>
                 {digestLoading ? "Summarizing…" : "Explain this"}
               </button>
             </div>
@@ -170,7 +170,7 @@ export function StockDrawer({
             {digest && (
               <p className="digest">
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", opacity: 0.65, display: "block", marginBottom: 4 }}>
-                  ✨ AI SUMMARY
+                  DRIFTY AI SUMMARY
                 </span>
                 {digest}
               </p>

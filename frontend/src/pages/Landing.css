@@ -506,5 +506,10 @@
 .answer-option span { min-width: 0; }
 .answer-option strong, .answer-option small { overflow-wrap: anywhere; }
 .questionnaire-result { max-width: 820px; margin-top: 1.5rem; }
-@media (max-width: 768px) { .rules-grid { grid-template-columns: 1fr; } .markets-banner { font-size: .68rem; letter-spacing: .1em; } }
+.questionnaire-result { align-items: center; padding: 1.35rem 1.5rem; }
+.questionnaire-result-copy { display: grid; gap: .35rem; }
+.questionnaire-result-copy strong { max-width: 560px; line-height: 1.35; }
+.result-support { color: var(--landing-muted); font-size: .82rem; }
+.questionnaire-action { min-width: 190px; white-space: nowrap; }
+@media (max-width: 768px) { .rules-grid { grid-template-columns: 1fr; } .markets-banner { font-size: .68rem; letter-spacing: .1em; } .questionnaire-result { align-items: stretch; flex-direction: column; } .questionnaire-action { width: 100%; } }
 @media (max-width: 768px) { .landing-hero { padding: 6rem 0 5rem; } .landing-hero h1 { font-size: 3rem; } .questionnaire-grid { grid-template-columns: 1fr; } .questionnaire-result { align-items: stretch; flex-direction: column; } }
