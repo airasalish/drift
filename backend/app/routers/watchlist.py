@@ -667,7 +667,28 @@ def get_stock_memberships(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Get all watchlists that contain a specific symbol."""
+    """Get all watchlists that contain a specific symbol.
+
+    This endpoint helps users understand where a particular stock is tracked
+    across all their watchlists. This is useful for multi-watchlist workflows
+    where a stock might be in multiple watchlists (e.g., one for trading,
+    one for long-term holdings).
+
+    Args:
+        symbol: Stock symbol (case-insensitive)
+        db: Database session
+        user: Authenticated user
+
+    Returns:
+        StockMembershipOut with:
+        - symbol: The requested symbol (uppercased)
+        - company_name: Company name if found in any watchlist
+        - memberships: List of {watchlist_id, name} for each watchlist containing the symbol
+
+    Note:
+        Returns empty memberships list if symbol is not in any watchlist.
+        Does not raise 404 for missing symbols - always returns valid structure.
+    """
     symbol = symbol.upper()
 
     # Get all watchlists for the current user
@@ -698,13 +719,34 @@ def remove_watchlist_item_by_symbol(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Remove a stock from a watchlist by symbol (alternative to item_id-based removal)."""
+    """Remove a stock from a watchlist by symbol.
+
+    This is an alternative to the item_id-based removal endpoint. It's more
+    convenient when you have the symbol but not the item ID.
+
+    Important: This only removes the stock from the specified watchlist.
+    The stock may still exist in other watchlists. This is intentional for
+    multi-watchlist workflows.
+
+    Args:
+        id: Watchlist ID
+        symbol: Stock symbol to remove (case-insensitive)
+        db: Database session
+        user: Authenticated user
+
+    Returns:
+        {"ok": true} on success
+
+    Raises:
+        HTTPException 404: Symbol not found in the watchlist
+        HTTPException 404: Watchlist doesn't exist or user doesn't own it
+    """
     watchlist = _get_watchlist_or_404(db, id, user)
     symbol = symbol.upper()
 
     item = next((i for i in watchlist.items if i.symbol == symbol), None)
     if item is None:
-        raise HTTPException(404, "not found")
+        raise HTTPException(404, f"symbol '{symbol}' not found in watchlist")
 
     db.delete(item)
     db.commit()
@@ -911,23 +953,56 @@ def get_watchlist_digest(
 # ============================================================================
 
 def detect_cluster(watchlist_items: list[WatchlistItem], db: Session) -> dict | None:
-    """Detect if 3+ stocks are moving >2% in the same direction."""
-    MIN_CLUSTER_MOVE = 0.02  # 2%
-    MIN_CLUSTER_SIZE = 3
+    """Detect if 3+ stocks are moving >2% in the same direction.
+
+    This function identifies market-wide movements by clustering stocks that
+    are all moving significantly in the same direction. This helps distinguish
+    between stock-specific events and sector/market-wide trends.
+
+    Algorithm:
+    1. For each stock in the watchlist, calculate its daily percentage change
+    2. Group stocks by direction (up/down) if move magnitude >= 2%
+    3. If any direction group has >= 3 stocks, return cluster information
+
+    Args:
+        watchlist_items: List of WatchlistItem objects to analyze
+        db: Database session for fetching SymbolQuote data
+
+    Returns:
+        dict with cluster info: {"name": str, "symbols": list[str], "trend": str}
+        or None if no cluster detected
+
+    Cluster example:
+        {
+            "name": "market movers",
+            "symbols": ["AAPL", "MSFT", "GOOGL"],
+            "trend": "up 2.5%+"
+        }
+    """
+    MIN_CLUSTER_MOVE = 0.02  # 2% - threshold for "significant" movement
+    MIN_CLUSTER_SIZE = 3  # Minimum stocks to qualify as a cluster
 
     direction_groups = {"up": [], "down": []}
 
     for item in watchlist_items:
         quote = db.get(SymbolQuote, item.symbol)
-        if quote and quote.price and quote.prev_close and quote.prev_close > 0:
-            day_pct = (quote.price - quote.prev_close) / quote.prev_close
-            if abs(day_pct) >= MIN_CLUSTER_MOVE:
-                if day_pct > 0:
-                    direction_groups["up"].append((item.symbol, day_pct))
-                else:
-                    direction_groups["down"].append((item.symbol, day_pct))
+        if not quote:
+            continue
 
-    # Check if any direction has enough symbols
+        # Validate quote data
+        if not quote.price or not quote.prev_close or quote.prev_close <= 0:
+            continue
+
+        day_pct = (quote.price - quote.prev_close) / quote.prev_close
+
+        # Only include stocks with significant movement
+        if abs(day_pct) >= MIN_CLUSTER_MOVE:
+            if day_pct > 0:
+                direction_groups["up"].append((item.symbol, day_pct))
+            else:
+                direction_groups["down"].append((item.symbol, day_pct))
+
+    # Check if any direction has enough symbols to form a cluster
     for direction, symbols_moves in direction_groups.items():
         if len(symbols_moves) >= MIN_CLUSTER_SIZE:
             avg_move = sum(move for _, move in symbols_moves) / len(symbols_moves)
@@ -942,106 +1017,203 @@ def detect_cluster(watchlist_items: list[WatchlistItem], db: Session) -> dict | 
 
 
 def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> DriftyOut:
-    """Compute the intelligence layer for a stock within a watchlist context."""
-    # Get the quote
+    """Compute the intelligence layer for a stock within a watchlist context.
+
+    Drifty Intelligence Engine analyzes a stock across three dimensions:
+    1. Self Analysis: How unusual is this stock's movement compared to its own history?
+    2. Peer Analysis: How does this stock compare to other stocks in the same watchlist?
+    3. Market Analysis: How does this stock perform relative to the market benchmark?
+
+    The engine combines these signals into a single attention score (0-100) that
+    ranks stocks by how "interesting" they are. All thresholds are named and auditable.
+
+    Scoring Algorithm:
+    - Self move magnitude > 2× normal: +30 points
+    - Outlier in watchlist (different direction from majority): +25 points
+    - Market out/underperformance > 1.5%: +20 points
+    - Part of a market cluster: +15 points
+    - Volume spike >= 2× normal: +15 points
+
+    Args:
+        watchlist_id: ID of the watchlist to analyze within
+        symbol: Stock symbol to analyze (will be uppercased)
+        user: Current user for authorization
+        db: Database session
+
+    Returns:
+        DriftyOut object with analysis results and attention score
+
+    Raises:
+        HTTPException: 404 if stock has no market data
+        HTTPException: 404 if watchlist doesn't exist or user doesn't own it
+    """
+    # Validate and fetch quote data
+    symbol = symbol.upper()
     quote = db.get(SymbolQuote, symbol)
     if not quote or quote.price is None:
-        raise HTTPException(404, "no data for symbol")
+        raise HTTPException(404, f"no market data for symbol '{symbol}'")
 
+    # Validate watchlist ownership
+    watchlist = _get_watchlist_or_404(db, watchlist_id, user)
+
+    # Validate symbol is in watchlist
+    if not any(item.symbol == symbol for item in watchlist.items):
+        raise HTTPException(404, f"symbol '{symbol}' not in watchlist")
+
+    # ============================================================================
     # SELF ANALYSIS
     # Compare today's move against the stock's own volatility
-    today_pct = (quote.price - quote.prev_close) / quote.prev_close if quote.prev_close else 0
-    normal_move = quote.avg_daily_move_pct_20d or 0.01
-    self_move_magnitude = abs(today_pct) / normal_move if normal_move > 0 else 0
+    # ============================================================================
+    # Calculate today's percentage change with division by zero protection
+    if quote.prev_close and quote.prev_close > 0:
+        today_pct = (quote.price - quote.prev_close) / quote.prev_close
+    else:
+        today_pct = 0.0
 
+    # Get normal daily move (20-day average), with fallback to 1%
+    # Handle both None and 0 values
+    if quote.avg_daily_move_pct_20d and quote.avg_daily_move_pct_20d > 0:
+        normal_move = quote.avg_daily_move_pct_20d
+    else:
+        normal_move = 0.01
+
+    # Calculate move magnitude (how many times larger than normal)
+    # Protected against division by zero
+    if normal_move > 0:
+        self_move_magnitude = abs(today_pct) / normal_move
+    else:
+        self_move_magnitude = 0.0
+
+    # Calculate volume ratio (today's volume vs 20-day average)
     volume_vs_normal = 0.0
     if quote.volume and quote.avg_volume_20d and quote.avg_volume_20d > 0:
         volume_vs_normal = quote.volume / quote.avg_volume_20d
 
+    # ============================================================================
     # PEER ANALYSIS
-    # Get all other stocks in the watchlist
-    watchlist = _get_watchlist_or_404(db, watchlist_id, user)
+    # Compare against other stocks in the same watchlist
+    # ============================================================================
     peer_quotes = []
     for item in watchlist.items:
         if item.symbol != symbol:
             q = db.get(SymbolQuote, item.symbol)
-            if q:
+            if q and q.price is not None:
                 peer_quotes.append(q)
 
     # Count how many peers moved in the same direction
     same_direction = 0
     peer_moves = []
     for q in peer_quotes:
-        if q.price and q.prev_close and q.prev_close > 0:
+        # Calculate peer's daily change with protection
+        if q.prev_close and q.prev_close > 0:
             peer_pct = (q.price - q.prev_close) / q.prev_close
             peer_moves.append(peer_pct)
-            if (today_pct * peer_pct) > 0:  # Same direction
+
+            # Check if moving in same direction (both positive or both negative)
+            # Handle edge case where today_pct is 0 (shouldn't count as same direction)
+            if today_pct != 0 and peer_pct != 0 and (today_pct * peer_pct) > 0:
                 same_direction += 1
 
-    avg_peer_move = sum(peer_moves) / len(peer_moves) if peer_moves else 0
+    # Calculate average peer move with empty list protection
+    avg_peer_move = sum(peer_moves) / len(peer_moves) if peer_moves else 0.0
 
-    # Detect if this is part of a cluster
+    # Detect if this stock is part of a market-wide cluster
     cluster = detect_cluster(watchlist.items, db)
 
+    # ============================================================================
     # MARKET ANALYSIS
-    # Compare against Nifty 50
+    # Compare against Nifty 50 benchmark
+    # ============================================================================
     benchmark = db.get(SymbolQuote, BENCHMARK_SYMBOL)
     benchmark_move = 0.0
+
     if benchmark and benchmark.price and benchmark.prev_close and benchmark.prev_close > 0:
         benchmark_move = (benchmark.price - benchmark.prev_close) / benchmark.prev_close
 
+    # Calculate outperformance (how much better/worse than market)
     outperformance = today_pct - benchmark_move
 
-    # ATTENTION SCORE
-    # Simple: combine signals with weights
+    # ============================================================================
+    # ATTENTION SCORE CALCULATION
+    # Combine signals with weighted thresholds
+    # ============================================================================
     score = 0
     reasons = []
 
+    # Signal 1: High move magnitude (stock moving unusually compared to itself)
     if self_move_magnitude > 2.0:
         score += 30
         reasons.append(f"Moving {self_move_magnitude:.1f}× its normal daily range")
 
-    if peer_quotes and same_direction < len(peer_quotes) / 2:  # Outlier
+    # Signal 2: Outlier in watchlist (moving differently from peers)
+    # Only meaningful if we have peers to compare against
+    if peer_quotes and same_direction < len(peer_quotes) / 2:
         score += 25
-        reasons.append(f"Outlier in your watchlist (others moving differently)")
+        reasons.append("Outlier in your watchlist (others moving differently)")
 
-    if abs(outperformance) > 0.015:  # 1.5%
+    # Signal 3: Market out/underperformance
+    # Threshold: 1.5% difference from benchmark
+    if abs(outperformance) > 0.015:
         if outperformance > 0:
             reasons.append(f"Outperforming market by {outperformance * 100:.1f}%")
         else:
             reasons.append(f"Underperforming market by {abs(outperformance) * 100:.1f}%")
         score += 20
 
-    if cluster and symbol in cluster["symbols"]:
+    # Signal 4: Part of a market cluster
+    if cluster and symbol in cluster.get("symbols", []):
         score += 15
         reasons.append(f"{len(cluster['symbols'])} {cluster['name']} stocks {cluster['trend']}")
 
-    # Volume spike as additional signal
+    # Signal 5: Volume spike
     if volume_vs_normal >= 2.0:
         score += 15
         reasons.append(f"Volume is {volume_vs_normal:.1f}× normal")
 
+    # Cap score at 100
+    final_score = min(score, 100)
+
+    # Build context strings for human readability
+    self_context = (
+        f"{symbol} is moving {self_move_magnitude:.1f}× its normal daily range"
+        if self_move_magnitude > 1.0
+        else f"{symbol} normal move"
+    )
+
+    peer_context = (
+        f"{symbol} is {'the outlier' if same_direction < len(peer_quotes) / 2 else 'in line with peers'}. "
+        f"Other stocks are {'mostly flat' if abs(avg_peer_move) < 0.01 else f'moving {avg_peer_move * 100:.1f}%'}"
+        if peer_quotes
+        else "No peers in watchlist"
+    )
+
+    market_context = (
+        f"{symbol} is {'outperforming' if outperformance > 0 else 'underperforming'} the market by {abs(outperformance) * 100:.1f}%"
+        if abs(outperformance) > 0.005
+        else f"{symbol} is in line with market"
+    )
+
     return DriftyOut(
         symbol=symbol,
-        attention_score=min(score, 100),
+        attention_score=final_score,
         self_analysis=SelfAnalysisOut(
             today_pct_change=today_pct,
             normal_daily_move=normal_move,
             move_magnitude=f"{self_move_magnitude:.1f}× normal",
             volume_vs_normal=volume_vs_normal,
-            context=f"{symbol} is moving {self_move_magnitude:.1f}× its normal daily range" if self_move_magnitude > 1.0 else f"{symbol} normal move",
+            context=self_context,
         ),
         peer_analysis=PeerAnalysisOut(
             watchlist_size=len(watchlist.items),
             same_direction_count=same_direction,
             avg_peer_move=avg_peer_move,
-            comparison=f"{symbol} is {'the outlier' if same_direction < len(peer_quotes) / 2 else 'in line with peers'}. Other tech stocks are {'mostly flat' if abs(avg_peer_move) < 0.01 else f'moving {avg_peer_move * 100:.1f}%'}." if peer_quotes else "No peers in watchlist",
+            comparison=peer_context,
             cluster=cluster,
         ),
         market_analysis=MarketAnalysisOut(
             benchmark_move=benchmark_move,
             outperformance=outperformance,
-            context=f"{symbol} is {'outperforming' if outperformance > 0 else 'underperforming'} the market by {abs(outperformance) * 100:.1f}%" if abs(outperformance) > 0.005 else f"{symbol} is in line with market",
+            context=market_context,
         ),
         why_interesting=reasons,
     )
@@ -1054,7 +1226,35 @@ def get_drifty_analysis(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Get Drifty intelligence analysis for a specific stock in a watchlist."""
+    """Get Drifty intelligence analysis for a specific stock in a watchlist.
+
+    This endpoint provides comprehensive intelligence analysis by comparing
+    the stock against three dimensions:
+    - Self: How unusual is its movement compared to its own history?
+    - Peers: How does it compare to other stocks in this watchlist?
+    - Market: How does it perform relative to the Nifty 50 benchmark?
+
+    The analysis returns an attention score (0-100) that ranks how "interesting"
+    the stock is, along with detailed explanations for why it scored that way.
+
+    Args:
+        id: Watchlist ID
+        symbol: Stock symbol (case-insensitive)
+        db: Database session
+        user: Authenticated user
+
+    Returns:
+        DriftyOut with:
+        - attention_score: 0-100 score
+        - self_analysis: Self-comparison metrics
+        - peer_analysis: Peer comparison metrics
+        - market_analysis: Market comparison metrics
+        - why_interesting: List of reasons for the score
+
+    Raises:
+        HTTPException 404: Stock not in watchlist or has no market data
+        HTTPException 404: Watchlist doesn't exist or user doesn't own it
+    """
     return compute_drifty(id, symbol.upper(), user, db)
 
 
@@ -1064,7 +1264,28 @@ def get_drifty_watchlist(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Get Drifty intelligence ranking for an entire watchlist."""
+    """Get Drifty intelligence ranking for an entire watchlist.
+
+    This endpoint computes Drifty analysis for every stock in the watchlist
+    and returns them ranked by attention score (highest first). This allows
+    the frontend to display a prioritized list of stocks that deserve attention.
+
+    The ranking includes:
+    - total_items: Total number of stocks in watchlist
+    - items_needing_attention: Count of stocks with score > 20
+    - ranked: List of stocks sorted by attention score (descending)
+
+    Args:
+        id: Watchlist ID
+        db: Database session
+        user: Authenticated user
+
+    Returns:
+        DriftyWatchlistOut with ranked list of stocks by attention score
+
+    Raises:
+        HTTPException 404: Watchlist doesn't exist or user doesn't own it
+    """
     watchlist = _get_watchlist_or_404(db, id, user)
 
     ranked = []
@@ -1079,13 +1300,13 @@ def get_drifty_watchlist(
                 )
             )
         except HTTPException:
-            # Skip symbols with no data
+            # Skip symbols with no data - they won't appear in ranking
             continue
 
-    # Sort by attention score (descending)
+    # Sort by attention score (descending) - highest scores first
     ranked.sort(key=lambda x: x.attention_score, reverse=True)
 
-    # Count items needing attention (score > 20)
+    # Count items needing attention (score > 20 threshold)
     items_needing_attention = sum(1 for item in ranked if item.attention_score > 20)
 
     return DriftyWatchlistOut(

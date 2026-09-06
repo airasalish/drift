@@ -136,22 +136,60 @@ def fetch_symbol_stats(symbol: str) -> dict | None:
 def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     """Fetch chart data for a specific time range.
 
-    Supports: 1D, 5D, 1M, 3M, 6M, YTD, 1Y, 5Y, ALL
-    Returns OHLC data where available, degrades to close-only if not.
-    All data is daily granularity (no intraday).
+    This function retrieves historical price data from yfinance for a given
+    symbol and time range. It returns OHLC (Open, High, Low, Close) data when
+    available, and gracefully degrades to close-only data when OHLC is not available.
+
+    Supported timeframes:
+    - "1D": 1 day (daily granularity)
+    - "5D": 5 days (daily granularity)
+    - "1M": 1 month (daily granularity)
+    - "3M": 3 months (daily granularity)
+    - "6M": 6 months (daily granularity)
+    - "YTD": Year-to-date (daily granularity)
+    - "1Y": 1 year (daily granularity)
+    - "5Y": 5 years (daily granularity)
+    - "ALL": All available data (daily granularity)
+
+    Data Handling:
+    - All data is daily granularity (no intraday data)
+    - NaN values are cleaned to None to prevent JSON encoding errors
+    - Data points with missing close prices are skipped entirely
+    - OHLC fields are optional and only included when available
+    - Volume data is optional and only included when available
+
+    Args:
+        symbol: Stock ticker symbol (e.g., "AAPL", "^NSEI")
+        range_name: Time range identifier from supported list above
 
     Returns:
-    {
-      symbol: "AAPL",
-      range: "1M",
-      dates: ["2026-08-06", "2026-08-07", ...],
-      opens: [228.0, 227.5, ...],   # Only if available
-      highs: [230.0, 229.0, ...],   # Only if available
-      lows: [226.0, 225.5, ...],    # Only if available
-      closes: [228.17, 227.80, ...],
-      volumes: [50000000, 48000000, ...],  # Optional
-      currency: "USD"
-    }
+        dict with chart data structure:
+        {
+            "symbol": str,           # The requested symbol
+            "range": str,             # The requested range
+            "dates": list[str],       # List of date strings (YYYY-MM-DD)
+            "closes": list[float],    # Required: Close prices (never None)
+            "opens": list[float | None] | None,  # Optional: Open prices
+            "highs": list[float | None] | None,  # Optional: High prices
+            "lows": list[float | None] | None,   # Optional: Low prices
+            "volumes": list[float | None] | None, # Optional: Volume data
+            "currency": str | None    # Currency code if available
+        }
+
+        Returns None if:
+        - Invalid range_name provided
+        - yfinance request fails
+        - No data available for the symbol/range
+
+    Raises:
+        No exceptions raised; errors return None and are logged
+
+    Notes:
+        - The function uses the _clean() helper to convert NaN to None
+        - Date strings are in ISO format (YYYY-MM-DD)
+        - All lists are guaranteed to be the same length when present
+        - Required fields (dates, closes) will never contain None values
+        - Optional fields (opens, highs, lows, volumes) may be None or contain None values
     """
     # Map range names to yfinance period parameters
     period_map = {
@@ -166,7 +204,9 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
         "ALL": "max",
     }
 
+    # Validate range name
     if range_name not in period_map:
+        logger.warning("Invalid chart range '%s' for symbol '%s'", range_name, symbol)
         return None
 
     period = period_map[range_name]
@@ -174,6 +214,8 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     try:
         ticker = yf.Ticker(symbol)
         hist = ticker.history(period=period, interval="1d", auto_adjust=False)
+
+        # Try to get currency info, but don't fail if unavailable
         try:
             currency = ticker.fast_info.currency
         except Exception:
@@ -182,7 +224,9 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
         logger.exception("yfinance chart fetch failed for %s (range: %s)", symbol, range_name)
         return None
 
+    # Validate response
     if hist is None or hist.empty:
+        logger.warning("No chart data returned for %s (range: %s)", symbol, range_name)
         return None
 
     # Build response with available OHLC data
@@ -198,15 +242,16 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
         try:
             date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
         except (ValueError, TypeError):
+            logger.warning("Failed to parse date for %s at index %d", symbol, idx)
             continue
 
-        # Get close (required)
+        # Get close (required) - skip if missing
         close = hist["Close"].iloc[idx]
         if close is None or math.isnan(close):
-            continue  # Skip if close is missing (must have close)
+            continue  # Skip data points with missing close prices
         close_val = float(close)
 
-        # Get OHLC (optional)
+        # Get OHLC (optional) - use _clean to handle NaN
         open_val = _clean(float(hist["Open"].iloc[idx]) if "Open" in hist.columns else None)
         high_val = _clean(float(hist["High"].iloc[idx]) if "High" in hist.columns else None)
         low_val = _clean(float(hist["Low"].iloc[idx]) if "Low" in hist.columns else None)
@@ -221,6 +266,7 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
 
     # If we have no valid data points, return None
     if not dates:
+        logger.warning("No valid data points after cleaning for %s (range: %s)", symbol, range_name)
         return None
 
     # Build response - only include OHLC if actually available
@@ -233,11 +279,13 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
         "currency": currency,
     }
 
+    # Only include OHLC fields if we have actual data
     if has_ohlc:
         result["opens"] = opens
         result["highs"] = highs
         result["lows"] = lows
 
+    # Only include volume if we have actual data
     if any(v is not None for v in volumes):
         result["volumes"] = volumes
 

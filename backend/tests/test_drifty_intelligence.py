@@ -50,84 +50,96 @@ def test_watchlist(db_session, test_user):
 @pytest.fixture
 def test_quotes(db_session):
     """Create test symbol quotes with different characteristics."""
+    # Check if quotes already exist to avoid UNIQUE constraint errors
+    existing_symbols = {q.symbol for q in db_session.query(SymbolQuote).all()}
+
     # Normal stock (small move)
-    normal_quote = SymbolQuote(
-        symbol="NORMAL",
-        price=100.0,
-        prev_close=99.5,
-        volume=1000000,
-        avg_volume_20d=1000000,
-        avg_daily_move_pct_20d=0.01,
-        week52_high=110.0,
-        week52_low=90.0,
-        spark_closes_json=json.dumps([99.0, 99.5, 100.0]),
-        similar_moves_json=json.dumps([]),
-        fetched_at=None,
-    )
+    if "NORMAL" not in existing_symbols:
+        normal_quote = SymbolQuote(
+            symbol="NORMAL",
+            price=100.0,
+            prev_close=99.5,
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([99.0, 99.5, 100.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(normal_quote)
 
     # High mover (2.5x normal move)
-    high_mover = SymbolQuote(
-        symbol="HIGHMOVER",
-        price=105.0,
-        prev_close=100.0,
-        volume=5000000,
-        avg_volume_20d=1000000,
-        avg_daily_move_pct_20d=0.02,
-        week52_high=120.0,
-        week52_low=80.0,
-        spark_closes_json=json.dumps([100.0, 102.0, 105.0]),
-        similar_moves_json=json.dumps([]),
-        fetched_at=None,
-    )
+    if "HIGHMOVER" not in existing_symbols:
+        high_mover = SymbolQuote(
+            symbol="HIGHMOVER",
+            price=105.0,
+            prev_close=100.0,
+            volume=5000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.02,
+            week52_high=120.0,
+            week52_low=80.0,
+            spark_closes_json=json.dumps([100.0, 102.0, 105.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(high_mover)
 
     # Outlier (down while others up)
-    outlier = SymbolQuote(
-        symbol="OUTLIER",
-        price=95.0,
-        prev_close=100.0,
-        volume=2000000,
-        avg_volume_20d=1000000,
-        avg_daily_move_pct_20d=0.01,
-        week52_high=110.0,
-        week52_low=85.0,
-        spark_closes_json=json.dumps([100.0, 98.0, 95.0]),
-        similar_moves_json=json.dumps([]),
-        fetched_at=None,
-    )
+    if "OUTLIER" not in existing_symbols:
+        outlier = SymbolQuote(
+            symbol="OUTLIER",
+            price=95.0,
+            prev_close=100.0,
+            volume=2000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=110.0,
+            week52_low=85.0,
+            spark_closes_json=json.dumps([100.0, 98.0, 95.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(outlier)
 
     # Volume spike
-    volume_spike = SymbolQuote(
-        symbol="VOLSPIKE",
-        price=101.0,
-        prev_close=100.0,
-        volume=5000000,
-        avg_volume_20d=1000000,
-        avg_daily_move_pct_20d=0.01,
-        week52_high=115.0,
-        week52_low=85.0,
-        spark_closes_json=json.dumps([100.0, 100.5, 101.0]),
-        similar_moves_json=json.dumps([]),
-        fetched_at=None,
-    )
+    if "VOLSPIKE" not in existing_symbols:
+        volume_spike = SymbolQuote(
+            symbol="VOLSPIKE",
+            price=101.0,
+            prev_close=100.0,
+            volume=5000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=115.0,
+            week52_low=85.0,
+            spark_closes_json=json.dumps([100.0, 100.5, 101.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(volume_spike)
 
     # Benchmark (Nifty 50)
-    benchmark = SymbolQuote(
-        symbol="^NSEI",
-        price=20000.0,
-        prev_close=19950.0,
-        volume=0,
-        avg_volume_20d=0,
-        avg_daily_move_pct_20d=0.005,
-        week52_high=22000.0,
-        week52_low=18000.0,
-        spark_closes_json=json.dumps([19900.0, 19950.0, 20000.0]),
-        similar_moves_json=json.dumps([]),
-        fetched_at=None,
-    )
+    if "^NSEI" not in existing_symbols:
+        benchmark = SymbolQuote(
+            symbol="^NSEI",
+            price=20000.0,
+            prev_close=19950.0,
+            volume=0,
+            avg_volume_20d=0,
+            avg_daily_move_pct_20d=0.005,
+            week52_high=22000.0,
+            week52_low=18000.0,
+            spark_closes_json=json.dumps([19900.0, 19950.0, 20000.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(benchmark)
 
-    db_session.add_all([normal_quote, high_mover, outlier, volume_spike, benchmark])
     db_session.commit()
-    return [normal_quote, high_mover, outlier, volume_spike, benchmark]
+    return [db_session.get(SymbolQuote, s) for s in ["NORMAL", "HIGHMOVER", "OUTLIER", "VOLSPIKE", "^NSEI"]]
 
 
 class TestDriftyIntelligence:
@@ -283,6 +295,292 @@ class TestDriftyIntelligence:
         if result.peer_analysis.cluster:
             assert len(result.peer_analysis.cluster["symbols"]) >= 3
             assert any("cluster" in reason.lower() or "market movers" in reason.lower() for reason in result.why_interesting)
+
+    def test_drifty_symbol_not_in_watchlist(self, db_session, test_user, test_watchlist, test_quotes):
+        """Test Drifty analysis fails when symbol is not in watchlist."""
+        from app.routers.watchlist import compute_drifty
+        from fastapi import HTTPException
+
+        # First, add the symbol to the database (so it has market data)
+        not_in_watchlist_stock = SymbolQuote(
+            symbol="NOTINWATCHLIST",
+            price=100.0,
+            prev_close=99.0,
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([99.0, 100.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(not_in_watchlist_stock)
+        db_session.commit()
+
+        try:
+            compute_drifty(test_watchlist.id, "NOTINWATCHLIST", test_user, db_session)
+            assert False, "Should have raised HTTPException"
+        except HTTPException as e:
+            assert e.status_code == 404
+            assert "not in watchlist" in str(e.detail).lower()
+
+    def test_drifty_division_by_zero_protection(self, db_session, test_user, test_watchlist):
+        """Test Drifty handles division by zero gracefully."""
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock with prev_close = 0 to test division by zero
+        zero_div_stock = SymbolQuote(
+            symbol="ZERODIV",
+            price=100.0,
+            prev_close=0.0,  # This would cause division by zero
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(zero_div_stock)
+        db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="ZERODIV",
+            company_name="Zero Div Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Should not crash, should handle gracefully
+        result = compute_drifty(test_watchlist.id, "ZERODIV", test_user, db_session)
+        assert result.self_analysis.today_pct_change == 0.0  # Should default to 0
+        assert result.attention_score >= 0  # Should have valid score
+
+    def test_drifty_empty_watchlist(self, db_session, test_user, test_watchlist):
+        """Test Drifty ranking with empty watchlist."""
+        from app.routers.watchlist import get_drifty_watchlist
+
+        result = get_drifty_watchlist(test_watchlist.id, db_session, test_user)
+
+        assert result.watchlist_id == test_watchlist.id
+        assert result.total_items == 0
+        assert result.items_needing_attention == 0
+        assert len(result.ranked) == 0
+
+    def test_drifty_missing_avg_daily_move(self, db_session, test_user, test_watchlist):
+        """Test Drifty handles missing avg_daily_move_pct_20d gracefully."""
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock with missing avg_daily_move_pct_20d
+        missing_avg = SymbolQuote(
+            symbol="MISSAVG",
+            price=105.0,
+            prev_close=100.0,
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=None,  # Missing data
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0, 105.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(missing_avg)
+        db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="MISSAVG",
+            company_name="Missing Avg Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Should use fallback value and not crash
+        result = compute_drifty(test_watchlist.id, "MISSAVG", test_user, db_session)
+        assert result.self_analysis.normal_daily_move == 0.01  # Fallback value
+        assert result.attention_score >= 0
+
+    def test_drifty_zero_normal_move(self, db_session, test_user, test_watchlist):
+        """Test Drifty handles zero normal_move gracefully."""
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock with avg_daily_move_pct_20d = 0
+        zero_normal = SymbolQuote(
+            symbol="ZERONORMAL",
+            price=105.0,
+            prev_close=100.0,
+            volume=1000000,
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.0,  # Zero would cause division by zero
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0, 105.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(zero_normal)
+        db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="ZERONORMAL",
+            company_name="Zero Normal Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Should use fallback (0.01) and not crash
+        result = compute_drifty(test_watchlist.id, "ZERONORMAL", test_user, db_session)
+        # When avg_daily_move_pct_20d is 0, it uses fallback of 0.01
+        # So move magnitude = 5% / 1% = 5.0× normal
+        assert result.self_analysis.move_magnitude == "5.0× normal"
+        assert result.attention_score >= 0
+
+    def test_drifty_missing_volume_data(self, db_session, test_user, test_watchlist):
+        """Test Drifty handles missing volume data gracefully."""
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock with missing volume data
+        missing_vol = SymbolQuote(
+            symbol="MISSVOL",
+            price=105.0,
+            prev_close=100.0,
+            volume=None,  # Missing volume
+            avg_volume_20d=None,  # Missing avg volume
+            avg_daily_move_pct_20d=0.02,
+            week52_high=110.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0, 105.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(missing_vol)
+        db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="MISSVOL",
+            company_name="Missing Vol Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Should default to 0 and not crash
+        result = compute_drifty(test_watchlist.id, "MISSVOL", test_user, db_session)
+        assert result.self_analysis.volume_vs_normal == 0.0
+        assert result.attention_score >= 0
+
+    def test_drifty_single_stock_watchlist(self, db_session, test_user, test_watchlist, test_quotes):
+        """Test Drifty analysis with only one stock in watchlist (no peers)."""
+        from app.routers.watchlist import compute_drifty
+
+        # Add only one stock
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="NORMAL",
+            company_name="Normal Inc.",
+            added_price=99.5,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        result = compute_drifty(test_watchlist.id, "NORMAL", test_user, db_session)
+
+        # Should handle empty peer list gracefully
+        assert result.peer_analysis.watchlist_size == 1
+        assert result.peer_analysis.same_direction_count == 0
+        assert result.peer_analysis.avg_peer_move == 0.0
+        assert "No peers" in result.peer_analysis.comparison
+        assert result.attention_score >= 0
+
+    def test_drifty_case_insensitive_symbol(self, db_session, test_user, test_watchlist, test_quotes):
+        """Test Drifty handles symbol case insensitivity."""
+        from app.routers.watchlist import compute_drifty
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="NORMAL",
+            company_name="Normal Inc.",
+            added_price=99.5,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Test with lowercase
+        result = compute_drifty(test_watchlist.id, "normal", test_user, db_session)
+        assert result.symbol == "NORMAL"  # Should be uppercased
+
+        # Test with mixed case
+        result = compute_drifty(test_watchlist.id, "NoRmAl", test_user, db_session)
+        assert result.symbol == "NORMAL"  # Should be uppercased
+
+    def test_drifty_score_capping(self, db_session, test_user, test_watchlist):
+        """Test Drifty attention score is capped at 100."""
+        from app.routers.watchlist import compute_drifty
+
+        # Create a stock that would trigger all signals (extreme outlier)
+        extreme_stock = SymbolQuote(
+            symbol="EXTREME",
+            price=120.0,  # 20% move
+            prev_close=100.0,
+            volume=10000000,  # 10× volume
+            avg_volume_20d=1000000,
+            avg_daily_move_pct_20d=0.01,  # 20× normal move
+            week52_high=130.0,
+            week52_low=90.0,
+            spark_closes_json=json.dumps([100.0, 120.0]),
+            similar_moves_json=json.dumps([]),
+            fetched_at=None,
+        )
+        db_session.add(extreme_stock)
+        db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="EXTREME",
+            company_name="Extreme Inc.",
+            added_price=100.0,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        result = compute_drifty(test_watchlist.id, "EXTREME", test_user, db_session)
+
+        # Should be capped at 100 even with extreme values
+        assert result.attention_score <= 100
+
+    def test_drifty_market_analysis_without_benchmark(self, db_session, test_user, test_watchlist, test_quotes):
+        """Test Drifty handles missing benchmark data gracefully."""
+        from app.routers.watchlist import compute_drifty
+
+        # Remove benchmark from database
+        benchmark = db_session.get(SymbolQuote, "^NSEI")
+        if benchmark:
+            db_session.delete(benchmark)
+            db_session.commit()
+
+        item = WatchlistItem(
+            watchlist_id=test_watchlist.id,
+            symbol="NORMAL",
+            company_name="Normal Inc.",
+            added_price=99.5,
+        )
+        db_session.add(item)
+        db_session.commit()
+
+        # Should handle missing benchmark gracefully
+        result = compute_drifty(test_watchlist.id, "NORMAL", test_user, db_session)
+        assert result.market_analysis.benchmark_move == 0.0
+        assert result.market_analysis.outperformance == result.self_analysis.today_pct_change
+        assert result.attention_score >= 0
 
 
 class TestEnhancedChartData:
