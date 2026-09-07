@@ -97,7 +97,7 @@ export function Header({
           >
             {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
           </button>
-          <span className="beginner-help">Simpler explanations, same signals</span>
+          <span className="beginner-help">Plain-language explanations</span>
           <button
             type="button"
             className="refresh-btn"
@@ -106,7 +106,6 @@ export function Header({
             title="Refresh market data now"
             aria-label="Refresh market data now"
           >
-            <span className={loading ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
             <span>{loading ? "Updating" : "Refresh"}</span>
           </button>
           <button
@@ -116,7 +115,6 @@ export function Header({
             title="Share Drift"
             aria-label="Share Drift"
           >
-            <span aria-hidden="true">⇪</span>
             <span>{shareStatus === "shared" ? "Shared" : shareStatus === "copied" ? "Link copied" : shareStatus === "failed" ? "Couldn't share" : "Share"}</span>
           </button>
           {username && (

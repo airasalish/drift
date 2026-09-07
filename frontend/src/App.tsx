@@ -259,13 +259,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <div className="workspace-shortcuts" aria-label="Workspace shortcuts">
           <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
-            <span className="shortcut-icon">⌁</span><span><strong>Track what matters</strong><small>Focus on real moves, not noise.</small></span><b>›</b>
+            <span className="shortcut-copy"><strong>Filter watchlist</strong><small>Find a tracked symbol quickly.</small></span>
           </button>
           <button type="button" className="workspace-shortcut" onClick={toggleBeginnerMode}>
-            <span className="shortcut-icon">◌</span><span><strong>Get clearer explanations</strong><small>{beginnerMode ? "Beginner mode is on." : "Translate signals into plain language."}</small></span><b>›</b>
+            <span className="shortcut-copy"><strong>Beginner mode</strong><small>{beginnerMode ? "Plain-language explanations are on." : "Use simpler explanations for the same signals."}</small></span>
           </button>
           <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
-            <span className="shortcut-icon">▥</span><span><strong>Make better decisions</strong><small>See what changed after you looked.</small></span><b>›</b>
+            <span className="shortcut-copy"><strong>View history</strong><small>Review changes from earlier visits.</small></span>
           </button>
         </div>
 

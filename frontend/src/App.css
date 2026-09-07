@@ -3700,10 +3700,18 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 .tour-scrim { background: rgba(0,0,0,.76) !important; }
 .chart-panel, .market-chart-wrap, .tv-topbar, .chart-footer { background: #07090b !important; }
 .chart-heading, .chart-toolbar { background: #090c0e !important; border-color: #17201f !important; }
+.account { align-items: center; gap: 8px; }
+.beginner-help { margin-right: 4px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.refresh-btn, .share-btn, .logout-btn, .beginner-toggle { min-height: 34px; padding: 7px 11px; font-size: 11px; }
+.workspace-shortcut { grid-template-columns: 1fr; min-height: 68px; padding: 14px 16px; }
+.workspace-shortcut .shortcut-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.workspace-shortcut .shortcut-copy strong { font-size: 12px; }
+.workspace-shortcut .shortcut-copy small { white-space: normal; line-height: 1.4; }
 .drawer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
 .drawer-actions > button { width: 100%; min-height: 38px; padding: 9px 10px; line-height: 1.2; }
 .drawer-actions .confirm-remove { grid-column: 1 / -1; justify-content: flex-end; min-height: 38px; }
 @media (max-width: 560px) {
+  .beginner-help { order: 2; width: 100%; margin: -3px 0 2px; }
   .drawer-actions { grid-template-columns: 1fr; }
   .drawer-actions .confirm-remove { grid-column: auto; justify-content: flex-start; }
 }
