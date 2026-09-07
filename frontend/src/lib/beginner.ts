@@ -1,9 +1,9 @@
 import type { FiredRule } from "../types";
 
-// Rewords the rule engine's precise phrasing into plain language for
-// display -- it never changes what fired or why (the rule engine still
-// decides everything), only how the same fact is worded. Applied
-// unconditionally everywhere a fired rule is shown.
+// Beginner mode swaps the rule engine's precise phrasing for plain
+// language -- it never changes what fired or why (the rule engine still
+// decides everything), only how the same fact is worded. A toggle, not a
+// separate mode of the product: the exact same data either way.
 export function simplifyRuleMessage(f: FiredRule): string {
   switch (f.rule) {
     case "price_move": {

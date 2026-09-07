@@ -19,6 +19,8 @@ import { formatPct } from "./format";
 import type { HistoryEvent, WatchlistItem } from "./types";
 import "./App.css";
 
+const BEGINNER_MODE_KEY = "drift_beginner_mode";
+
 function isMarketOpen(): boolean {
   const now = new Date();
   const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
@@ -59,11 +61,15 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [watchlistQuery, setWatchlistQuery] = useState("");
-  // Collapses the persistent nav rail to free width for the chart --
-  // session-only (not persisted), so a fresh page load always starts from
-  // the normal layout and only narrows in response to an actual "go to
-  // Charts" action.
-  const [railCollapsed, setRailCollapsed] = useState(false);
+  // per-viewer display preference only -- never a source of truth, the
+  // rule engine's output is identical either way, this just rewords it
+  const [beginnerMode, setBeginnerMode] = useState(() => {
+    try {
+      return localStorage.getItem(BEGINNER_MODE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [tourOpen, setTourOpen] = useState(() => {
     try {
       return sessionStorage.getItem("drift_pending_tour") === "1";
@@ -158,11 +164,6 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     setView("history");
     setDetailItem(null);
     setHistoryLoading(true);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.querySelector(".history-panel")?.scrollIntoView({ block: "start" });
-      });
-    });
     try {
       setHistoryEvents(activeWatchlistId
         ? await api.watchlists.history(activeWatchlistId)
@@ -174,24 +175,16 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     }
   }
 
-  // The single entry point for "go to Charts" -- the rail's own Charts
-  // button, the command-nav tab, the mobile nav tab, and "Open full chart"
-  // from a stock's drawer all funnel through this so the behavior (jump
-  // straight to the chart, not the top of the page; collapse the nav rail
-  // for width) is consistent no matter where the click came from.
-  function handleShowChart() {
-    setView("chart");
-    setDetailItem(null);
-    setRailCollapsed(true);
-    // ChartView (and the rail collapsing beside it) needs to actually be
-    // painted before scrolling to it -- a single requestAnimationFrame can
-    // still land inside that same layout pass, so wait for two: the first
-    // to let this render commit, the second to run after the browser has
-    // painted it.
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.querySelector(".chart-view")?.scrollIntoView({ block: "start" });
-      });
+  function toggleBeginnerMode() {
+    setBeginnerMode((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(BEGINNER_MODE_KEY, next ? "1" : "0");
+      } catch {
+        // localStorage unavailable (private mode, etc.) -- the toggle
+        // still works for this session, it just won't persist
+      }
+      return next;
     });
   }
 
@@ -201,6 +194,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     requestAnimationFrame(() => {
       document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus();
     });
+  }
+
+  function openBeginnerMode() {
+    setView("watchlist");
+    setDetailItem(null);
+    toggleBeginnerMode();
   }
 
   function showInsights() {
@@ -217,15 +216,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         items={items}
         selectedId={selectedId}
         view={view}
-        collapsed={railCollapsed}
-        onToggleCollapsed={() => setRailCollapsed((v) => !v)}
         onSelect={handleSelect}
         onShowHome={() => {
           setView("watchlist");
           setDetailItem(null);
           setWatchlistQuery("");
         }}
-        onShowChart={handleShowChart}
         onShowHistory={handleShowHistory}
         onShowInsights={showInsights}
         watchlists={watchlists}
@@ -246,6 +242,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           countdown={countdown}
           loading={loading}
           error={error}
+          beginnerMode={beginnerMode}
+          onToggleBeginnerMode={openBeginnerMode}
           onRefresh={refresh}
         />
 
@@ -257,14 +255,14 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           </div>
           <div className="command-nav" aria-label="Workspace sections">
             <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
-            <button type="button" className={view === "chart" ? "active" : ""} onClick={handleShowChart}>Charts</button>
+            <button type="button" className={view === "chart" ? "active" : ""} onClick={() => { setView("chart"); setDetailItem(null); }}>Charts</button>
             <button type="button" onClick={showInsights}>Insights</button>
           </div>
         </section>
 
         <nav className="mobile-workspace-nav" aria-label="Workspace navigation">
           <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Home <span>{items.length}</span></button>
-          <button type="button" className={view === "chart" ? "active" : ""} onClick={handleShowChart}>Charts</button>
+          <button type="button" className={view === "chart" ? "active" : ""} onClick={() => { setView("chart"); setDetailItem(null); }}>Charts</button>
           <button type="button" className={view === "history" ? "active" : ""} onClick={handleShowHistory}>History</button>
         </nav>
 
@@ -285,8 +283,8 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <button type="button" className="workspace-shortcut" onClick={focusWatchlistFilter}>
             <span className="shortcut-copy"><strong>Filter watchlist</strong><small>Find a tracked symbol quickly.</small></span>
           </button>
-          <button type="button" className="workspace-shortcut" onClick={handleShowChart}>
-            <span className="shortcut-copy"><strong>Open a chart</strong><small>See price history for any tracked symbol.</small></span>
+          <button type="button" className="workspace-shortcut" onClick={openBeginnerMode}>
+            <span className="shortcut-copy"><strong>Beginner mode</strong><small>{beginnerMode ? "Plain-language explanations are on." : "Use simpler explanations for the same signals."}</small></span>
           </button>
           <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
             <span className="shortcut-copy"><strong>View history</strong><small>Review changes from earlier visits.</small></span>
@@ -335,7 +333,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
                 <ul className="reasons">
                   {portfolioItem.fired.map((f, idx) => (
                     <li key={idx} className={f.rule}>
-                      {simplifyRuleMessage(f)}
+                      {beginnerMode ? simplifyRuleMessage(f) : f.message}
                     </li>
                   ))}
                 </ul>
@@ -349,6 +347,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
               benchmark={benchmark}
               digest={digest}
               digestLoading={digestLoading}
+              beginnerMode={beginnerMode}
               onExplain={handleExplain}
               onSeen={markSeen}
               onOpenDetail={handleSelect}
@@ -375,12 +374,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <StockDrawer
           item={liveDetailItem}
+          beginnerMode={beginnerMode}
           onClose={() => setDetailItem(null)}
           onSeen={markSeen}
           onRemove={handleRemove}
           onUpdateNote={updateNote}
           onManageWatchlists={(symbol, companyName) => openWatchlistPicker(symbol, companyName)}
-          onOpenChart={(item) => { setChartSelectedItem(item); handleShowChart(); }}
+          onOpenChart={(item) => { setChartSelectedItem(item); setDetailItem(null); setView("chart"); }}
         />
       </div>
 

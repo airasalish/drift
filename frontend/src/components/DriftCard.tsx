@@ -6,10 +6,12 @@ import type { WatchlistItem } from "../types";
 
 export function DriftCard({
   item,
+  beginnerMode,
   onOpenDetail,
   onSeen,
 }: {
   item: WatchlistItem;
+  beginnerMode: boolean;
   onOpenDetail: (item: WatchlistItem) => void;
   onSeen: (id: number) => void;
 }) {
@@ -64,7 +66,7 @@ export function DriftCard({
       <ul className="reasons">
         {topReasons.map((f, idx) => (
           <li key={idx} className={f.rule}>
-            {simplifyRuleMessage(f)}
+            {beginnerMode ? simplifyRuleMessage(f) : f.message}
           </li>
         ))}
       </ul>

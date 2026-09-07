@@ -13,6 +13,7 @@ import { ThesisChips } from "./ThesisChips";
 // "what happened to this stock while I was away" -- nothing that doesn't.
 export function StockDrawer({
   item,
+  beginnerMode,
   onClose,
   onSeen,
   onRemove,
@@ -21,6 +22,7 @@ export function StockDrawer({
   onOpenChart,
 }: {
   item: WatchlistItem | null;
+  beginnerMode: boolean;
   onClose: () => void;
   onSeen: (id: number) => void;
   onRemove: (id: number) => void;
@@ -176,7 +178,7 @@ export function StockDrawer({
             <ul className="reasons">
               {item.fired.map((f, idx) => (
                 <li key={idx} className={f.rule}>
-                  {simplifyRuleMessage(f)}
+                  {beginnerMode ? simplifyRuleMessage(f) : f.message}
                 </li>
               ))}
             </ul>
