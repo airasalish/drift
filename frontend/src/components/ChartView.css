@@ -1,18 +1,52 @@
 .chart-view {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: 250px 1fr 320px;
   gap: 1px;
   height: calc(100vh - 120px);
   background: var(--border);
   overflow: hidden;
 }
 
+.chart-view.left-collapsed {
+  grid-template-columns: 34px 1fr 320px;
+}
+
 /* Left Panel - Watchlist Navigator */
 .chart-view-left {
-  display: none;
+  position: relative;
   background: var(--surface);
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.chart-view-left-toggle {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  z-index: 2;
+}
+.chart-view-left-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+.chart-view.left-collapsed .chart-view-left {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+}
+.chart-view.left-collapsed .chart-view-left-toggle {
+  position: static;
 }
 
 .watchlist-nav {
@@ -26,7 +60,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem 1rem;
+  padding: 0 2.1rem 1rem 1rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -162,6 +196,9 @@
 @media (max-width: 1400px) {
   .chart-view {
     grid-template-columns: 200px 1fr 280px;
+  }
+  .chart-view.left-collapsed {
+    grid-template-columns: 34px 1fr 280px;
   }
 }
 
