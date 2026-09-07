@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "./api";
 import "./Login.css";
@@ -15,9 +15,20 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // React 18 StrictMode intentionally mounts effects twice in dev, which
+  // fired two concurrent POST /api/auth/demo requests on every "Try the
+  // demo" click -- one usually succeeded, but the race could leave the
+  // page showing the manual login form instead of proceeding in (the
+  // failing request's catch-block error could land after the successful
+  // one's redirect). A ref survives StrictMode's extra mount/unmount
+  // cycle (unlike state), so this guard makes the auto-trigger genuinely
+  // run once, without blocking the "Explore the live demo" button below,
+  // which calls the same handler on a real, single click.
+  const autoDemoTriggered = useRef(false);
 
   useEffect(() => {
-    if (isDemo) {
+    if (isDemo && !autoDemoTriggered.current) {
+      autoDemoTriggered.current = true;
       handleDemo();
     }
   }, []);
