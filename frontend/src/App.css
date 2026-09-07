@@ -3700,3 +3700,10 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 .tour-scrim { background: rgba(0,0,0,.76) !important; }
 .chart-panel, .market-chart-wrap, .tv-topbar, .chart-footer { background: #07090b !important; }
 .chart-heading, .chart-toolbar { background: #090c0e !important; border-color: #17201f !important; }
+.drawer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+.drawer-actions > button { width: 100%; min-height: 38px; padding: 9px 10px; line-height: 1.2; }
+.drawer-actions .confirm-remove { grid-column: 1 / -1; justify-content: flex-end; min-height: 38px; }
+@media (max-width: 560px) {
+  .drawer-actions { grid-template-columns: 1fr; }
+  .drawer-actions .confirm-remove { grid-column: auto; justify-content: flex-start; }
+}
