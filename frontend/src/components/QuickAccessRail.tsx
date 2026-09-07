@@ -273,6 +273,17 @@ export function QuickAccessRail({
             <span className="rail-watchlist-count">{watchlists.length}</span>
             <span className="rail-watchlist-chevron" aria-hidden="true"><IconChevronDown /></span>
           </button>
+          <button
+            type="button"
+            className="rail-watchlist-add"
+            onClick={() => {
+              setShowWatchlistMenu(false);
+              setCreateStep("choice");
+            }}
+          >
+            <span aria-hidden="true">+</span>
+            Add new watchlist
+          </button>
 
           {showWatchlistMenu && menuPos && createPortal(
             <div className="rail-watchlist-menu" style={{ top: menuPos.top, left: menuPos.left }}>

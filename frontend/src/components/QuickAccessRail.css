@@ -77,6 +77,34 @@
   color: var(--accent);
 }
 
+.rail-watchlist-add {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 7px;
+  padding: 7px var(--sp-2);
+  background: transparent;
+  border: 1px dashed var(--accent-border);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rail-watchlist-add span {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.rail-watchlist-add:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
 .rail-watchlist-name {
   overflow: hidden;
   text-overflow: ellipsis;
