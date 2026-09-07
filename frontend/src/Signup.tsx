@@ -5,7 +5,6 @@ import './Auth.css'
 
 export function Signup({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,19 +43,6 @@ export function Signup({ onLoggedIn }: { onLoggedIn: () => void }) {
               placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
             />
