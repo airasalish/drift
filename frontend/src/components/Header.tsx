@@ -63,10 +63,7 @@ export function Header({
     <header className="header">
       <div className="brand">
         <BrandMark />
-        <div>
-          <h1>Drift</h1>
-          <p className="tagline">Not just prices, what actually drifted since you last looked.</p>
-        </div>
+        <h1>Drift</h1>
       </div>
 
       <div className="header-right">
@@ -88,16 +85,16 @@ export function Header({
             </span>
           </div>
         )}
-        <div className="account">
+        <div className="header-toolbar">
           <button
             type="button"
             className={`beginner-toggle${beginnerMode ? " on" : ""}`}
             onClick={onToggleBeginnerMode}
-            title="Reword rule explanations into plain language -- deterministic rewording, not AI: same rule, same numbers, simpler sentence"
+            title="Beginner mode: reword rule explanations into plain language -- deterministic rewording, not AI: same rule, same numbers, simpler sentence"
           >
             {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
           </button>
-          <span className="beginner-help">Plain-language explanations</span>
+          <span className="header-toolbar-divider" aria-hidden="true" />
           <button
             type="button"
             className="refresh-btn"
@@ -118,9 +115,12 @@ export function Header({
             <span>{shareStatus === "shared" ? "Shared" : shareStatus === "copied" ? "Link copied" : shareStatus === "failed" ? "Couldn't share" : "Share"}</span>
           </button>
           {username && (
-            <button className="logout-btn" onClick={onLogout}>
-              Log out
-            </button>
+            <>
+              <span className="header-toolbar-divider" aria-hidden="true" />
+              <button className="logout-btn" onClick={onLogout}>
+                Log out
+              </button>
+            </>
           )}
         </div>
       </div>
