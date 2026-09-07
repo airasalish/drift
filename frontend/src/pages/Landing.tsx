@@ -19,8 +19,7 @@ export function Landing() {
             <span>Drift</span>
           </div>
           <nav className="landing-nav">
-            <button onClick={() => navigate("/login")} className="nav-btn">Log in</button>
-            <button onClick={() => navigate("/signup")} className="nav-btn primary">Sign up</button>
+            <button onClick={() => navigate("/login")} className="nav-btn primary">Get started</button>
           </nav>
         </div>
       </header>
@@ -33,11 +32,8 @@ export function Landing() {
           <p className="hero-subtitle">
             Your watchlist remembers. Drift notices what changed. You focus on what matters.
           </p>
-          <button onClick={() => navigate("/demo")} className="cta-btn demo">
-            Try the demo
-          </button>
-          <button onClick={() => navigate("/signup")} className="cta-btn signup">
-            Create an account
+          <button onClick={() => navigate("/login")} className="cta-btn signup">
+            Get started
           </button>
         </div>
       </section>
@@ -231,8 +227,8 @@ export function Landing() {
               <strong>{questionnaireComplete ? "Your watchlist can stay quiet until something meaningful changes." : "Answer both questions to shape your starting point."}</strong>
               <span className="result-support">Your choices set the context for a calmer first look.</span>
             </div>
-            <button type="button" className="btn btn-primary questionnaire-action" onClick={() => navigate("/signup")} disabled={!questionnaireComplete}>
-              {questionnaireComplete ? "Build my watchlist" : "Complete the questions"}
+            <button type="button" className="btn btn-primary questionnaire-action" onClick={() => navigate("/login")} disabled={!questionnaireComplete}>
+              {questionnaireComplete ? "Get started" : "Complete the questions"}
             </button>
           </div>
         </div>
@@ -243,11 +239,8 @@ export function Landing() {
         <div className="landing-container">
           <h2>Ready to focus on what actually changed?</h2>
           <div className="cta-buttons">
-            <button onClick={() => navigate("/demo")} className="btn btn-outline">
-              Try the demo first
-            </button>
-            <button onClick={() => navigate("/signup")} className="btn btn-primary">
-              Create your watchlist
+            <button onClick={() => navigate("/login")} className="btn btn-primary">
+              Get started
             </button>
           </div>
         </div>
@@ -265,7 +258,7 @@ export function Landing() {
               <h4>Links</h4>
               <nav className="footer-nav">
                 <a href="#about">About</a>
-                <a href="/signup">Get started</a>
+                <a href="/login">Get started</a>
               </nav>
             </div>
           </div>
