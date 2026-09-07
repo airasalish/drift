@@ -19,7 +19,7 @@ export function Landing() {
             <span>Drift</span>
           </div>
           <nav className="landing-nav">
-            <button onClick={() => navigate("/login")} className="nav-btn primary">Get started</button>
+            <button onClick={() => navigate("/login")} className="nav-btn primary">Get started <span aria-hidden="true">→</span></button>
           </nav>
         </div>
       </header>
@@ -33,7 +33,7 @@ export function Landing() {
             Your watchlist remembers. Drift notices what changed. You focus on what matters.
           </p>
           <button onClick={() => navigate("/login")} className="cta-btn signup">
-            Get started
+            Get started <span aria-hidden="true">→</span>
           </button>
         </div>
       </section>
@@ -228,7 +228,7 @@ export function Landing() {
               <span className="result-support">Your choices set the context for a calmer first look.</span>
             </div>
             <button type="button" className="btn btn-primary questionnaire-action" onClick={() => navigate("/login")} disabled={!questionnaireComplete}>
-              {questionnaireComplete ? "Get started" : "Complete the questions"}
+              {questionnaireComplete ? <>Get started <span aria-hidden="true">→</span></> : "Complete the questions"}
             </button>
           </div>
         </div>
@@ -240,7 +240,7 @@ export function Landing() {
           <h2>Ready to focus on what actually changed?</h2>
           <div className="cta-buttons">
             <button onClick={() => navigate("/login")} className="btn btn-primary">
-              Get started
+              Get started <span aria-hidden="true">→</span>
             </button>
           </div>
         </div>

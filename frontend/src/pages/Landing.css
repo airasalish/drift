@@ -60,13 +60,31 @@
 }
 
 .nav-btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #173b34;
+  border-color: #173b34;
   color: white;
+  box-shadow: 0 3px 10px rgba(23, 59, 52, 0.2);
 }
 
 .nav-btn.primary:hover {
-  background: var(--accent-border);
+  background: #0f2c26;
+  border-color: #0f2c26;
+  color: white;
+}
+
+.nav-btn.primary span,
+.cta-btn.signup span,
+.landing .btn-primary span {
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 1.1em;
+  transition: transform 0.15s ease;
+}
+
+.nav-btn.primary:hover span,
+.cta-btn.signup:hover span,
+.landing .btn-primary:hover span {
+  transform: translateX(3px);
 }
 
 /* Hero */
@@ -116,12 +134,28 @@
 }
 
 .cta-btn.signup {
-  background: var(--accent);
+  background: #173b34;
+  border: 1px solid #173b34;
   color: white;
+  box-shadow: 0 5px 16px rgba(23, 59, 52, 0.22);
 }
 
 .cta-btn.signup:hover {
-  background: var(--accent-border);
+  background: #0f2c26;
+  border-color: #0f2c26;
+}
+
+.landing .btn-primary {
+  background: #173b34;
+  border-color: #173b34;
+  color: white;
+  box-shadow: 0 4px 14px rgba(23, 59, 52, 0.18);
+}
+
+.landing .btn-primary:hover:not(:disabled) {
+  background: #0f2c26;
+  border-color: #0f2c26;
+  color: white;
 }
 
 /* Sections */
