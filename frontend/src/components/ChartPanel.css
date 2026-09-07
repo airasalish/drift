@@ -1,28 +1,24 @@
 /* Uses the app's shared theme tokens (--bg/--surface/--border/etc, see
-   App.css :root) instead of its own hardcoded hex palette -- the chart
-   used to render a few shades lighter than the rest of the near-black
-   theme, which is what made this section feel disconnected from the
-   page around it. */
+   App.css :root) instead of a hardcoded palette, so this stays in sync
+   with the rest of the dark theme automatically. */
 .chart-panel {
   height: 100%;
-  min-height: 620px;
+  min-height: 560px;
   background: var(--bg);
   color: var(--text);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding: 18px 22px 14px;
+  gap: 4px;
 }
-.tv-topbar {
-  height: 54px;
+
+.chart-symbol-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: 10px;
+  margin-bottom: 10px;
 }
-.tv-symbol { display: flex; align-items: center; gap: 10px; }
-.tv-symbol-badge {
+.chart-symbol-badge {
   display: grid;
   place-items: center;
   width: 27px;
@@ -32,91 +28,107 @@
   color: var(--bg);
   font-size: 10px;
   font-weight: 800;
+  flex-shrink: 0;
 }
-.tv-symbol strong { font-size: 14px; letter-spacing: .01em; }
-.tv-symbol small { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
-.tv-actions { display: flex; align-items: center; gap: 5px; }
-.tv-actions button, .chart-toolbar button {
-  border: 0;
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 11px;
-  padding: 7px 9px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.tv-actions button:hover, .chart-toolbar button:hover { background: var(--surface-2); color: var(--text); }
-.chart-heading {
+.chart-symbol-row strong { font-size: 14px; letter-spacing: .01em; }
+.chart-symbol-row small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+.chart-price-block { margin-bottom: 4px; }
+.chart-price-main {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -.02em;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 18px 22px 13px;
-  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+  gap: 6px;
 }
-.chart-price-line { display: flex; align-items: baseline; gap: 12px; }
-.chart-price-line strong { font-size: 27px; letter-spacing: -.04em; }
-.chart-price-line span { font-size: 12px; font-weight: 700; }
-.chart-price-line span small { font-size: 10px; font-weight: 600; opacity: .78; }
-.chart-price-line .up { color: var(--green); }
-.chart-price-line .down { color: var(--red); }
-.chart-meta { display: block; color: var(--muted); font-size: 11px; margin-top: 6px; }
-.chart-meta .up { color: var(--green); font-weight: 600; }
-.chart-meta .down { color: var(--red); font-weight: 600; }
-.range-tabs { display: flex; gap: 3px; }
-.range-tabs button { background: transparent; color: var(--text-dim); border: 0; padding: 7px 9px; font-size: 11px; cursor: pointer; border-radius: 5px; }
-.range-tabs button:hover { color: var(--text); background: var(--surface-2); }
-.range-tabs button.active { color: var(--text); background: var(--surface-3); }
-.chart-toolbar {
-  height: 41px;
+.chart-currency { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.chart-change-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--border);
-  color: var(--muted);
+  gap: 8px;
+  margin-top: 6px;
 }
-.chart-toolbar > div { display: flex; align-items: center; gap: 2px; }
-.chart-toolbar button.selected { color: var(--accent); background: var(--accent-dim); }
-.toolbar-separator { padding: 0 8px; color: var(--faint); }
-.market-chart-wrap { position: relative; flex: 1; min-height: 360px; padding: 7px 12px 0; background: var(--bg); }
-.market-chart { display: block; width: 100%; height: 100%; min-height: 360px; overflow: visible; }
-.grid-line { stroke: var(--border-soft); stroke-width: 1; stroke-dasharray: 2 4; }
+.chart-change-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.chart-change-pill.up { color: var(--green); background: color-mix(in srgb, var(--green) 16%, transparent); }
+.chart-change-pill.down { color: var(--red); background: color-mix(in srgb, var(--red) 16%, transparent); }
+.chart-change-abs { font-size: 13px; font-weight: 600; }
+.chart-change-abs.up { color: var(--green); }
+.chart-change-abs.down { color: var(--red); }
+
+.chart-meta-line { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.range-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 14px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+.range-tabs button {
+  background: transparent;
+  color: var(--text-dim);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.range-tabs button:hover { color: var(--text); }
+.range-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.market-chart-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 260px;
+  padding-top: 8px;
+}
+.market-chart { display: block; width: 100%; height: 100%; min-height: 260px; overflow: visible; cursor: crosshair; }
+
+.reference-line { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 3; }
+.reference-label { font-size: 10px; fill: var(--muted); font-family: Inter, system-ui, sans-serif; }
 .axis-label { font-size: 10px; fill: var(--muted); font-family: Inter, system-ui, sans-serif; }
-.candle-group { cursor: crosshair; }
-.candle-group:hover rect { filter: brightness(1.25); }
-.crosshair { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.crosshair { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 2 3; }
+
 .chart-footer {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 22px;
   flex-wrap: wrap;
-  padding: 13px 20px;
+  padding: 12px 0 2px;
   border-top: 1px solid var(--border);
-  background: var(--surface);
+  margin-top: 10px;
   color: var(--muted);
   font-size: 11px;
 }
+.chart-footer strong { color: var(--text); font-weight: 600; margin-left: 3px; }
 .footer-live { margin-left: auto; color: var(--green); }
+
 .chart-loading, .chart-error, .chart-empty {
-  min-height: 400px;
+  flex: 1;
+  min-height: 260px;
   display: grid;
   place-items: center;
   color: var(--muted);
   font-size: 13px;
 }
 .chart-error { color: var(--red); }
+
 @media (max-width: 900px) {
-  .tv-actions button:nth-child(n+3) { display: none; }
-  .chart-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
-  .chart-footer { gap: 10px; }
-  .footer-live { margin-left: 0; }
+  .chart-panel { padding: 14px 16px 10px; }
+  .chart-price-main { font-size: 24px; }
 }
 @media (max-width: 560px) {
-  .tv-topbar { padding: 0 10px; }
-  .tv-actions { display: none; }
-  .chart-heading { padding-left: 13px; padding-right: 13px; }
-  .chart-toolbar { padding: 0 10px; }
-  .chart-toolbar > div:last-child span { display: none; }
-  .chart-footer { font-size: 10px; padding: 10px 12px; gap: 8px; }
-  .market-chart-wrap { padding-left: 0; padding-right: 0; }
+  .chart-footer { gap: 12px; font-size: 10px; }
+  .footer-live { margin-left: 0; }
 }
