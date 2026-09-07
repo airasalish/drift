@@ -28,6 +28,11 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
   const [drifty, setDrifty] = useState<DriftyOut | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Fetched separately from the main analysis, not blocking it -- this is a
+  // short AI-generated synthesis of the verdicts above, not the analysis
+  // itself. If it's slow, fails, or the keys are exhausted, the rest of the
+  // panel (real numbers, already computed) is unaffected either way.
+  const [insight, setInsight] = useState<string | null>(null);
 
   useEffect(() => {
     if (!watchlistId) {
@@ -48,6 +53,19 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
       }
     }
     loadDrifty();
+    return () => { cancelled = true; };
+  }, [item.symbol, watchlistId]);
+
+  useEffect(() => {
+    if (!watchlistId) {
+      setInsight(null);
+      return;
+    }
+    let cancelled = false;
+    setInsight(null);
+    api.watchlists.driftyInsight(watchlistId, item.symbol)
+      .then((r) => { if (!cancelled) setInsight(r.insight); })
+      .catch(() => { if (!cancelled) setInsight(null); });
     return () => { cancelled = true; };
   }, [item.symbol, watchlistId]);
 
@@ -77,6 +95,18 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
               </div>
             </div>
           </div>
+
+          {/* Drifty AI: one conversational sentence synthesizing the three
+              verdicts below, not replacing them -- the labeled sections
+              underneath are still the real, auditable analysis; this is
+              just a readable front door to it, same "AI rephrases, rules
+              decide" split as the digest feature elsewhere in the app. */}
+          {insight && (
+            <div className="drifty-section drifty-insight">
+              <span className="ai-label">Drifty AI</span>
+              <p className="drifty-insight-text"><TypewriterText text={insight} /></p>
+            </div>
+          )}
 
           {/* Why Interesting */}
           {drifty.why_interesting.length > 0 && (

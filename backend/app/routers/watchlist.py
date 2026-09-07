@@ -41,7 +41,7 @@ from app.schemas import (
 )
 from app.services import change_detection
 from app.services.auth import get_current_user
-from app.services.digest import generate_digest
+from app.services.digest import generate_digest, generate_drifty_insight
 from app.services.market_data import fetch_symbol_stats, fetch_chart_data, lookup_company_website
 from app.services.poller import BENCHMARK_SYMBOL
 
@@ -1316,6 +1316,33 @@ def get_drifty_analysis(
         HTTPException 404: Watchlist doesn't exist or user doesn't own it
     """
     return compute_drifty(id, symbol.upper(), user, db)
+
+
+@watchlists_router.get("/{id}/stock/{symbol}/drifty/insight")
+def get_drifty_insight(
+    id: int,
+    symbol: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Short, conversational AI synthesis of the three Drifty verdicts for one
+    stock -- purely a readability layer over compute_drifty's already-decided
+    facts (same principle as /digest): the rule-based analysis still decides
+    everything, this just rephrases it as one natural sentence instead of
+    three separate paragraphs. Returns {"insight": null} on any failure
+    (missing keys, rate limit, timeout) rather than erroring -- the panel's
+    numbers and verdicts are already fully shown without this.
+    """
+    symbol = symbol.upper()
+    drifty = compute_drifty(id, symbol, user, db)
+    facts = {
+        "attention_score": drifty.attention_score,
+        "self_context": drifty.self_analysis.context,
+        "peer_comparison": drifty.peer_analysis.comparison,
+        "market_context": drifty.market_analysis.context,
+        "reasons": drifty.why_interesting,
+    }
+    return {"insight": generate_drifty_insight(symbol, facts)}
 
 
 @watchlists_router.get("/{id}/drifty", response_model=DriftyWatchlistOut)

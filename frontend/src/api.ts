@@ -270,6 +270,11 @@ export const api = {
         handle<DriftyOut>(r)
       ),
 
+    driftyInsight: (watchlistId: number, symbol: string) =>
+      fetch(`${BASE}/watchlists/${watchlistId}/stock/${encodeURIComponent(symbol)}/drifty/insight`, { headers: authHeaders() }).then((r) =>
+        handle<{ insight: string | null }>(r)
+      ),
+
     driftyRanked: (watchlistId: number) =>
       fetch(`${BASE}/watchlists/${watchlistId}/drifty`, { headers: authHeaders() }).then((r) =>
         handle<DriftyWatchlistOut>(r)

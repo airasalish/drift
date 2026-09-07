@@ -73,3 +73,57 @@ def generate_digest(fired_facts: list[dict]) -> str | None:
             continue
 
     return None
+
+
+DRIFTY_INSIGHT_SYSTEM_PROMPT = (
+    "You are Drifty, giving a one-stock read in a single short, conversational "
+    "sentence (two at most). You are given three already-computed verdicts for "
+    "one stock: how it's moving compared to its own history, compared to the "
+    "user's other tracked stocks, and compared to the market benchmark, plus an "
+    "attention score. Weave them into ONE natural, casual sentence a sharp "
+    "friend would say -- actually synthesize what the three verdicts mean "
+    "together, don't just restate each one in turn. Use only the numbers and "
+    "facts given. Never guess or invent a reason why the stock moved -- you "
+    "have no news data, so if you don't know why, don't mention why at all."
+)
+
+
+def generate_drifty_insight(symbol: str, facts: dict) -> str | None:
+    """One-line conversational synthesis of compute_drifty's self/peer/market
+    verdicts for a single stock -- a readability layer, same principle as
+    generate_digest above: the rule engine already decided everything (the
+    score, what fired, why), this only rephrases the already-decided facts
+    into one natural sentence instead of three separate labeled paragraphs.
+    """
+    facts_text = (
+        f"Symbol: {symbol}\n"
+        f"Attention score: {facts['attention_score']}/100\n"
+        f"Self (vs own history): {facts['self_context']}\n"
+        f"Peer (vs watchlist): {facts['peer_comparison']}\n"
+        f"Market (vs benchmark): {facts['market_context']}\n"
+    )
+    if facts.get("reasons"):
+        facts_text += f"Flagged reasons: {', '.join(facts['reasons'])}\n"
+
+    for key in _keys():
+        try:
+            client = Groq(api_key=key)
+            resp = client.chat.completions.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": DRIFTY_INSIGHT_SYSTEM_PROMPT},
+                    {"role": "user", "content": facts_text},
+                ],
+                max_tokens=120,
+                reasoning_effort="low",
+                temperature=0.4,
+                timeout=8,
+            )
+            text = resp.choices[0].message.content
+            if text:
+                return text.strip()
+        except Exception:
+            logger.exception("groq drifty insight failed with one key, trying next if available")
+            continue
+
+    return None

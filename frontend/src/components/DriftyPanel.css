@@ -91,6 +91,24 @@
   line-height: 1.5;
 }
 
+/* Drifty AI: a short conversational synthesis, visually distinct from the
+   plain rule sections below it (accent-tinted background/edge) so it reads
+   as the AI voice specifically, matching how "Drifty AI" is called out
+   elsewhere in the app (StockDrawer, SinceYouLeft's explain digest). */
+.drifty-insight {
+  padding: 0.75rem 0.85rem;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: 0.5rem;
+  gap: 0.4rem;
+}
+.drifty-insight-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 .cluster-note {
   padding: 0.6rem 0.75rem;
   background: var(--surface-2);
