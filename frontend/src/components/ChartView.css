@@ -122,10 +122,11 @@
 
 /* Center Panel - Chart */
 .chart-view-center {
-  background: var(--page-bg);
+  background: var(--bg);
   overflow: auto;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .chart-empty {
