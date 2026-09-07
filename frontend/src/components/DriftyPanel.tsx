@@ -3,6 +3,27 @@ import { api, type DriftyOut } from '../api';
 import type { WatchlistItem } from '../types';
 import './DriftyPanel.css';
 
+// Reveals a generated sentence a few characters at a time, purely as a
+// presentational flourish -- the data behind it already finished loading,
+// this never adds real latency. Fast on purpose (a full sentence finishes
+// well under a second): a slow, dramatic typewriter would read as making
+// the user wait for something that's actually already there.
+function TypewriterText({ text }: { text: string }) {
+  const [shown, setShown] = useState('');
+  useEffect(() => {
+    setShown('');
+    if (!text) return;
+    let i = 0;
+    const id = setInterval(() => {
+      i += 3;
+      setShown(text.slice(0, i));
+      if (i >= text.length) clearInterval(id);
+    }, 10);
+    return () => clearInterval(id);
+  }, [text]);
+  return <>{shown}</>;
+}
+
 export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchlistId: number | null }) {
   const [drifty, setDrifty] = useState<DriftyOut | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +84,7 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
               <div className="drifty-label">Why Flagged</div>
               <ul className="why-list">
                 {drifty.why_interesting.map((reason, idx) => (
-                  <li key={idx}>{reason}</li>
+                  <li key={idx}><TypewriterText text={reason} /></li>
                 ))}
               </ul>
             </div>
@@ -73,7 +94,7 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
           <div className="drifty-section">
             <div className="drifty-label">Self (vs own history)</div>
             <div className="analysis-block">
-              <p>{drifty.self_analysis.context}</p>
+              <p><TypewriterText text={drifty.self_analysis.context} /></p>
               <div className="data-grid">
                 <div className="data-item">
                   <span className="data-label">Today</span>
@@ -106,7 +127,7 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
           <div className="drifty-section">
             <div className="drifty-label">Peer (vs watchlist)</div>
             <div className="analysis-block">
-              <p>{drifty.peer_analysis.comparison}</p>
+              <p><TypewriterText text={drifty.peer_analysis.comparison} /></p>
               {drifty.peer_analysis.watchlist_size > 1 && (
                 <div className="data-grid">
                   <div className="data-item">
@@ -133,7 +154,7 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
           <div className="drifty-section">
             <div className="drifty-label">Market (vs benchmark)</div>
             <div className="analysis-block">
-              <p>{drifty.market_analysis.context}</p>
+              <p><TypewriterText text={drifty.market_analysis.context} /></p>
               <div className="data-grid">
                 <div className="data-item">
                   <span className="data-label">Nifty 50 today</span>

@@ -228,20 +228,24 @@ export function QuickAccessRail({
 
   return (
     <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label="Watched symbols" data-tour="rail">
+      {/* One button, always in this exact spot right under the logo, in both
+          states -- previously the expand control (collapsed) rendered as a
+          separate element in a different place than the collapse control
+          (expanded), so toggling back and forth meant hunting for it in a
+          new spot each time instead of clicking the same place twice. */}
       <div className="rail-brand">
         <BrandMark />
-        {!collapsed && (
-          <button type="button" className="rail-collapse-toggle" onClick={onToggleCollapsed} aria-label="Collapse sidebar" title="Collapse sidebar">
-            <span aria-hidden="true">‹</span> Collapse
-          </button>
-        )}
-      </div>
-
-      {collapsed && (
-        <button type="button" className="rail-expand-toggle" onClick={onToggleCollapsed} aria-label="Expand sidebar" title="Expand sidebar">
-          <span aria-hidden="true">›</span>
+        <button
+          type="button"
+          className="rail-collapse-toggle"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <span aria-hidden="true">{collapsed ? "›" : "‹"}</span>
+          {!collapsed && " Collapse"}
         </button>
-      )}
+      </div>
 
       {/* Watchlist switcher: always reachable so "+ New watchlist" (inside
           the menu below) isn't locked behind already having a second one.

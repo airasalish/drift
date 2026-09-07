@@ -3717,16 +3717,22 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 }
 
 /* Collapsible nav rail: shrinks to an icon-only strip so Charts (or any
-   view) can use the freed width, with a deliberately hard-to-miss toggle
-   both ways -- a labeled "‹ Collapse" row while expanded, and a large
-   accent-tinted button front-and-center while collapsed (not a small
-   icon buried next to the logo, which is easy to overlook entirely). */
+   view) can use the freed width. The toggle is ONE button that stays in
+   the same spot (directly under the logo, left-aligned) in both states --
+   it used to be two different elements in two different places (a row
+   next to the logo when expanded, a separate centered button below it
+   when collapsed), which meant the cursor had to travel to a new spot
+   every time you toggled instead of clicking the same place twice. */
+.rail-brand {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
 .rail-collapse-toggle {
   width: 100%;
-  margin-top: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 6px;
   border: 1px solid var(--border);
   border-radius: 7px;
@@ -3735,35 +3741,28 @@ html, body, #root { background: #030505 !important; color: var(--text); }
   cursor: pointer;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 7px 0;
+  padding: 7px 9px;
 }
 .rail-collapse-toggle:hover { color: var(--text); border-color: var(--accent); background: var(--surface-3); }
-
-.rail-expand-toggle {
-  width: 34px;
-  height: 34px;
-  margin: 4px auto 0;
-  border-radius: 50%;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-border);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-  flex-shrink: 0;
-}
-.rail-expand-toggle:hover { background: var(--accent); color: #07130f; }
 
 .rail.collapsed {
   width: 52px;
   padding-left: var(--sp-1, 6px);
   padding-right: var(--sp-1, 6px);
 }
-.rail.collapsed .rail-brand { justify-content: center; }
+.rail.collapsed .rail-collapse-toggle {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+}
+.rail.collapsed .rail-collapse-toggle:hover { background: var(--accent); color: #07130f; }
 .rail.collapsed .rail-nav-label { display: none; }
 .rail.collapsed .rail-nav-item {
   justify-content: center;
