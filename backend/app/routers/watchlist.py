@@ -1133,19 +1133,23 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
             if q and q.price is not None:
                 peer_quotes.append(q)
 
-    # Count how many peers moved in the same direction
-    same_direction = 0
+    # Count how many peers ALSO moved unusually today, by each peer's own
+    # volatility-relative threshold -- not just "same sign as today_pct".
+    # Same direction alone is a weak comparison: a stock up 0.3% while a
+    # peer is up 0.31% counted as "agreeing" under the old definition,
+    # identical to peers actually rallying hard. Using each peer's own
+    # unusual_move_threshold (the same function Self analysis uses on this
+    # stock) means "outlier" now means uniquely-moving, not just
+    # minority-direction on a day everyone's basically flat.
+    peers_unusual = 0
     peer_moves = []
     for q in peer_quotes:
-        # Calculate peer's daily change with protection
         if q.prev_close and q.prev_close > 0:
             peer_pct = (q.price - q.prev_close) / q.prev_close
             peer_moves.append(peer_pct)
-
-            # Check if moving in same direction (both positive or both negative)
-            # Handle edge case where today_pct is 0 (shouldn't count as same direction)
-            if today_pct != 0 and peer_pct != 0 and (today_pct * peer_pct) > 0:
-                same_direction += 1
+            peer_threshold = change_detection.unusual_move_threshold(q.avg_daily_move_pct_20d, user.sensitivity)
+            if abs(peer_pct) >= peer_threshold:
+                peers_unusual += 1
 
     # Calculate average peer move with empty list protection
     avg_peer_move = sum(peer_moves) / len(peer_moves) if peer_moves else 0.0
@@ -1178,17 +1182,19 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
         score += 30
         reasons.append(f"Moving {self_move_magnitude:.1f}× its normal daily range")
 
-    # Signal 2: Outlier in watchlist (moving differently from peers)
+    # Signal 2: Outlier in watchlist (uniquely moving, not just moving)
     # Only meaningful if we have peers to compare against AND the stock's own move is significant
     # This prevents noise where a stock with sub-normal movement gets flagged as an outlier
     # just because peers happened to move in a different direction on a quiet day
-    if peer_quotes and abs(today_pct) >= move_threshold and same_direction < len(peer_quotes) / 2:
+    if peer_quotes and abs(today_pct) >= move_threshold and peers_unusual < len(peer_quotes) / 2:
         score += 25
-        reasons.append("Outlier in your watchlist (others moving differently)")
+        reasons.append("Outlier in your watchlist (others aren't moving unusually)")
 
-    # Signal 3: Market out/underperformance
-    # Threshold: 1.5% difference from benchmark
-    if abs(outperformance) > 0.015:
+    # Signal 3: Market out/underperformance -- volatility-relative like Self,
+    # rather than a flat percentage. A stock that normally moves 0.4% a day
+    # shouldn't need the same 1.5-point gap from the benchmark as one that
+    # normally moves 4% to count as a real divergence.
+    if abs(outperformance) >= move_threshold:
         if outperformance > 0:
             reasons.append(f"Outperforming market by {outperformance * 100:.1f}%")
         else:
@@ -1235,15 +1241,15 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
     )
 
     peer_context = (
-        f"{symbol} is {'the outlier' if same_direction < len(peer_quotes) / 2 else 'in line with peers'}. "
-        f"Other stocks are {'mostly flat' if abs(avg_peer_move) < 0.01 else f'moving {avg_peer_move * 100:.1f}%'}"
+        f"{symbol} is {'the outlier' if peers_unusual < len(peer_quotes) / 2 else 'moving with the pack'}. "
+        f"{peers_unusual} of {len(peer_quotes)} peer{'s' if len(peer_quotes) != 1 else ''} also moving unusually today"
         if peer_quotes
         else "No peers in watchlist"
     )
 
     market_context = (
         f"{symbol} is {'outperforming' if outperformance > 0 else 'underperforming'} the market by {abs(outperformance) * 100:.1f}%"
-        if abs(outperformance) > 0.005
+        if abs(outperformance) > move_threshold / 3
         else f"{symbol} is in line with market"
     )
 
@@ -1259,7 +1265,7 @@ def compute_drifty(watchlist_id: int, symbol: str, user: User, db: Session) -> D
         ),
         peer_analysis=PeerAnalysisOut(
             watchlist_size=len(watchlist.items),
-            same_direction_count=same_direction,
+            peers_unusual_count=peers_unusual,
             avg_peer_move=avg_peer_move,
             comparison=peer_context,
             cluster=cluster,

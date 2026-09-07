@@ -167,7 +167,7 @@ class SelfAnalysisOut(BaseModel):
 
 class PeerAnalysisOut(BaseModel):
     watchlist_size: int
-    same_direction_count: int
+    peers_unusual_count: int  # peers also moving unusually today, by their own volatility-relative threshold
     avg_peer_move: float
     comparison: str
     cluster: dict | None  # { name: str, symbols: list[str], trend: str } | None

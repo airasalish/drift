@@ -89,15 +89,38 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
                   <span className="data-label">Normal move</span>
                   <span className="data-value">{(drifty.self_analysis.normal_daily_move * 100).toFixed(2)}%</span>
                 </div>
+                {drifty.self_analysis.volume_vs_normal > 0 && (
+                  <div className="data-item">
+                    <span className="data-label">Volume</span>
+                    <span className="data-value">{drifty.self_analysis.volume_vs_normal.toFixed(1)}× normal</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Peer Analysis */}
+          {/* Peer Analysis -- the real numbers behind "outlier"/"with the pack"
+              (how many peers, how many of them also moved unusually) are
+              computed on the backend either way; showing them turns a vague
+              adjective into evidence instead of leaving it invisible. */}
           <div className="drifty-section">
             <div className="drifty-label">Peer (vs watchlist)</div>
             <div className="analysis-block">
               <p>{drifty.peer_analysis.comparison}</p>
+              {drifty.peer_analysis.watchlist_size > 1 && (
+                <div className="data-grid">
+                  <div className="data-item">
+                    <span className="data-label">Peers also unusual</span>
+                    <span className="data-value">{drifty.peer_analysis.peers_unusual_count} of {drifty.peer_analysis.watchlist_size - 1}</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="data-label">Avg peer move</span>
+                    <span className={`data-value ${drifty.peer_analysis.avg_peer_move >= 0 ? 'positive' : 'negative'}`}>
+                      {drifty.peer_analysis.avg_peer_move >= 0 ? '+' : ''}{(drifty.peer_analysis.avg_peer_move * 100).toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              )}
               {drifty.peer_analysis.cluster && (
                 <div className="cluster-note">
                   {drifty.peer_analysis.cluster.symbols.length} {drifty.peer_analysis.cluster.name} stocks {drifty.peer_analysis.cluster.trend}
@@ -111,6 +134,20 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
             <div className="drifty-label">Market (vs benchmark)</div>
             <div className="analysis-block">
               <p>{drifty.market_analysis.context}</p>
+              <div className="data-grid">
+                <div className="data-item">
+                  <span className="data-label">Nifty 50 today</span>
+                  <span className={`data-value ${drifty.market_analysis.benchmark_move >= 0 ? 'positive' : 'negative'}`}>
+                    {drifty.market_analysis.benchmark_move >= 0 ? '+' : ''}{(drifty.market_analysis.benchmark_move * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="data-item">
+                  <span className="data-label">Vs. benchmark</span>
+                  <span className={`data-value ${drifty.market_analysis.outperformance >= 0 ? 'positive' : 'negative'}`}>
+                    {drifty.market_analysis.outperformance >= 0 ? '+' : ''}{(drifty.market_analysis.outperformance * 100).toFixed(2)}%
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </>

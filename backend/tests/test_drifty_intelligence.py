@@ -167,13 +167,35 @@ class TestDriftyIntelligence:
         assert any("× its normal daily range" in reason for reason in result.why_interesting)
 
     def test_drifty_single_stock_outlier(self, db_session, test_user, test_watchlist, test_quotes):
-        """Test Drifty analysis for an outlier stock."""
+        """Test Drifty analysis for an outlier stock: unusual move while peers stay quiet.
+
+        Uses a dedicated quiet peer rather than HIGHMOVER from the shared
+        fixture -- HIGHMOVER is deliberately volatile (that's its whole
+        purpose elsewhere), so it isn't a valid "peer is calm" peer for this
+        scenario now that peer-outlier status is based on each peer's own
+        unusual-move threshold, not just which direction they moved.
+        """
         from app.routers.watchlist import compute_drifty
+
+        if not db_session.get(SymbolQuote, "QUIETPEER"):
+            db_session.add(SymbolQuote(
+                symbol="QUIETPEER",
+                price=100.2,
+                prev_close=100.0,
+                volume=1000000,
+                avg_volume_20d=1000000,
+                avg_daily_move_pct_20d=0.01,
+                week52_high=110.0,
+                week52_low=90.0,
+                spark_closes_json=json.dumps([100.0, 100.1, 100.2]),
+                similar_moves_json=json.dumps([]),
+                fetched_at=None,
+            ))
 
         # Add multiple stocks so we can detect outlier behavior
         items = [
             WatchlistItem(watchlist_id=test_watchlist.id, symbol="NORMAL", company_name="Normal Inc.", added_price=99.5),
-            WatchlistItem(watchlist_id=test_watchlist.id, symbol="HIGHMOVER", company_name="High Mover Inc.", added_price=100.0),
+            WatchlistItem(watchlist_id=test_watchlist.id, symbol="QUIETPEER", company_name="Quiet Peer Inc.", added_price=100.0),
             WatchlistItem(watchlist_id=test_watchlist.id, symbol="OUTLIER", company_name="Outlier Inc.", added_price=100.0),
         ]
         db_session.add_all(items)
@@ -181,8 +203,8 @@ class TestDriftyIntelligence:
 
         result = compute_drifty(test_watchlist.id, "OUTLIER", test_user, db_session)
 
-        # OUTLIER is down while others are up - should detect outlier
-        assert result.peer_analysis.same_direction_count < len(test_watchlist.items) - 1
+        # OUTLIER is moving unusually (-5%) while both peers are quiet -- should detect outlier
+        assert result.peer_analysis.peers_unusual_count == 0
         assert any("outlier" in reason.lower() for reason in result.why_interesting)
 
     def test_drifty_single_stock_volume_spike(self, db_session, test_user, test_watchlist, test_quotes):
@@ -496,7 +518,7 @@ class TestDriftyIntelligence:
 
         # Should handle empty peer list gracefully
         assert result.peer_analysis.watchlist_size == 1
-        assert result.peer_analysis.same_direction_count == 0
+        assert result.peer_analysis.peers_unusual_count == 0
         assert result.peer_analysis.avg_peer_move == 0.0
         assert "No peers" in result.peer_analysis.comparison
         assert result.attention_score >= 0
@@ -628,8 +650,9 @@ class TestDriftyIntelligence:
         db_session.add(item)
         db_session.commit()
 
-        # Add peers that move in opposite direction (simulating the DKNG scenario)
-        # Add 3 peers moving up, so same_direction_count would be 0 < 3/2
+        # Add peers that move in opposite direction (simulating the DKNG scenario) --
+        # +1% on a 1% normal move needs 1.5% to count as unusual for them, so
+        # peers_unusual_count should be 0 regardless of direction.
         for i in range(3):
             peer_symbol = f"PEER_OUTLIER{i}"
             existing_peer = db_session.get(SymbolQuote, peer_symbol)
@@ -666,7 +689,7 @@ class TestDriftyIntelligence:
         # Verify the fix: sub-normal move should NOT trigger outlier signal
         # even though peers are moving in opposite direction
         assert result.self_analysis.move_magnitude == "0.3× normal"  # Sub-normal move
-        assert result.peer_analysis.same_direction_count == 0  # All peers opposite direction
+        assert result.peer_analysis.peers_unusual_count == 0  # peers moved, but not unusually for them
         assert result.peer_analysis.watchlist_size == 4  # 1 target + 3 peers
 
         # The key assertion: should NOT have outlier in reasons

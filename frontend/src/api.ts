@@ -101,7 +101,7 @@ export interface SelfAnalysisOut {
 
 export interface PeerAnalysisOut {
   watchlist_size: number;
-  same_direction_count: number;
+  peers_unusual_count: number;
   avg_peer_move: number;
   comparison: string;
   cluster: { name: string; symbols: string[]; trend: string } | null;
