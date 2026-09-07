@@ -34,8 +34,6 @@ export function Header({
   countdown,
   loading,
   error,
-  beginnerMode,
-  onToggleBeginnerMode,
   onRefresh,
 }: {
   username: string | null;
@@ -46,8 +44,6 @@ export function Header({
   countdown: number;
   loading: boolean;
   error: string | null;
-  beginnerMode: boolean;
-  onToggleBeginnerMode: () => void;
   onRefresh: () => void;
 }) {
   const [shareStatus, setShareStatus] = useState<"idle" | "shared" | "copied" | "failed">("idle");
@@ -86,15 +82,6 @@ export function Header({
           </div>
         )}
         <div className="header-toolbar">
-          <button
-            type="button"
-            className={`beginner-toggle${beginnerMode ? " on" : ""}`}
-            onClick={onToggleBeginnerMode}
-            title="Beginner mode: reword rule explanations into plain language -- deterministic rewording, not AI: same rule, same numbers, simpler sentence"
-          >
-            {beginnerMode ? "Beginner mode: on" : "Beginner mode"}
-          </button>
-          <span className="header-toolbar-divider" aria-hidden="true" />
           <button
             type="button"
             className="refresh-btn"

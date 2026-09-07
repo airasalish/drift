@@ -18,8 +18,11 @@ export function QuickAccessRail({
   items,
   selectedId,
   view,
+  collapsed,
+  onToggleCollapsed,
   onSelect,
   onShowHome,
+  onShowChart,
   onShowHistory,
   onShowInsights,
   watchlists,
@@ -32,8 +35,11 @@ export function QuickAccessRail({
   items: WatchlistItem[];
   selectedId: number | null;
   view: "watchlist" | "history" | "chart";
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   onSelect: (item: WatchlistItem) => void;
   onShowHome: () => void;
+  onShowChart: () => void;
   onShowHistory: () => void;
   onShowInsights: () => void;
   watchlists: Watchlist[];
@@ -170,14 +176,25 @@ export function QuickAccessRail({
   }
 
   return (
-    <nav className="rail" aria-label="Watched symbols" data-tour="rail">
+    <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label="Watched symbols" data-tour="rail">
       <div className="rail-brand">
         <BrandMark />
+        <button
+          type="button"
+          className="rail-collapse-toggle"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? "›" : "‹"}
+        </button>
       </div>
 
       {/* Watchlist switcher: always reachable so "+ New watchlist" (inside
-          the menu below) isn't locked behind already having a second one. */}
-      <>
+          the menu below) isn't locked behind already having a second one.
+          Hidden while collapsed -- a secondary control, not one of the
+          four primary destinations below. */}
+      {!collapsed && (
         <div className="rail-watchlist-section">
           <button
             type="button"
@@ -244,18 +261,30 @@ export function QuickAccessRail({
             document.body
           )}
         </div>
-      </>
+      )}
 
       <button
         type="button"
         className={`rail-nav-item${view === "watchlist" ? " selected" : ""}`}
         onClick={onShowHome}
-        aria-label="Open home"
+        aria-label="Open overview"
         aria-current={view === "watchlist" ? "page" : undefined}
         data-tooltip="Your tracked symbols, grouped by how much attention each one needs right now."
       >
         <span className="rail-nav-icon" aria-hidden="true">⌂</span>
-        Home
+        <span className="rail-nav-label">Overview</span>
+      </button>
+
+      <button
+        type="button"
+        className={`rail-nav-item${view === "chart" ? " selected" : ""}`}
+        onClick={onShowChart}
+        aria-label="Open charts"
+        aria-current={view === "chart" ? "page" : undefined}
+        data-tooltip="Full-size price charts for any tracked symbol, with Drifty's analysis alongside."
+      >
+        <span className="rail-nav-icon" aria-hidden="true">📈</span>
+        <span className="rail-nav-label">Charts</span>
       </button>
 
       <button
@@ -267,7 +296,7 @@ export function QuickAccessRail({
         data-tooltip="A timeline of everything Drift has flagged, and when you acknowledged it."
       >
         <span className="rail-nav-icon" aria-hidden="true">◷</span>
-        History
+        <span className="rail-nav-label">History</span>
       </button>
 
       <button
@@ -277,9 +306,9 @@ export function QuickAccessRail({
         data-tooltip="Jumps to the attention feed below: the exact rule and numbers behind each flagged symbol."
       >
         <span className="rail-nav-icon" aria-hidden="true">⌁</span>
-        Insights
+        <span className="rail-nav-label">Insights</span>
       </button>
-      {sorted.length > 0 && (
+      {!collapsed && sorted.length > 0 && (
         <div className="rail-list">
           <span className="rail-label">Watching</span>
           {sorted.map((item) => (
