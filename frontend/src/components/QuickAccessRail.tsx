@@ -40,6 +40,22 @@ function IconInsights() {
     </svg>
   );
 }
+function IconLayers() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m12 3 8.5 4.5L12 12 3.5 7.5Z" />
+      <path d="m3.5 12 8.5 4.5 8.5-4.5" />
+      <path d="m3.5 16.5 8.5 4.5 8.5-4.5" />
+    </svg>
+  );
+}
+function IconChevronDown() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
 
 // A persistent quick-jump list plus a real second destination (History),
 // not fake page navigation -- Drift doesn't get a "Markets" or
@@ -236,7 +252,7 @@ export function QuickAccessRail({
           <button
             type="button"
             ref={watchlistToggleRef}
-            className="rail-watchlist-toggle"
+            className={`rail-watchlist-toggle${showWatchlistMenu ? " open" : ""}`}
             onClick={() => {
               if (!showWatchlistMenu && watchlistToggleRef.current) {
                 const rect = watchlistToggleRef.current.getBoundingClientRect();
@@ -246,9 +262,12 @@ export function QuickAccessRail({
             }}
             aria-expanded={showWatchlistMenu}
             aria-label="Switch watchlist"
+            data-tooltip="Tap to switch between your watchlists, or create a new one."
           >
+            <span className="rail-nav-icon" aria-hidden="true"><IconLayers /></span>
             <span className="rail-watchlist-name">{activeWatchlist?.name || "Watchlist"}</span>
             <span className="rail-watchlist-count">{watchlists.length}</span>
+            <span className="rail-watchlist-chevron" aria-hidden="true"><IconChevronDown /></span>
           </button>
 
           {showWatchlistMenu && menuPos && createPortal(

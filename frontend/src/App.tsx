@@ -257,7 +257,13 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <div>
             <span className="command-kicker">{view === "chart" ? "CHARTS" : view === "history" ? "HISTORY" : "OVERVIEW"}</span>
             <h2>{greeting}{displayName ? `, ${displayName}` : ""}.</h2>
-            <p>Here is what changed while you were away.</p>
+            <p>
+              {view === "chart"
+                ? "Full price history and Drifty's read on any tracked symbol."
+                : view === "history"
+                  ? "A timeline of everything Drift has flagged, and when you acknowledged it."
+                  : "Here is what changed while you were away."}
+            </p>
           </div>
           <div className="command-nav" aria-label="Workspace sections">
             <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>

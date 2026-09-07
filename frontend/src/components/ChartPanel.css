@@ -111,6 +111,32 @@
 }
 .chart-zoom-reset:hover { color: var(--text) !important; border-color: var(--accent) !important; }
 
+.chart-style-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.chart-style-toggle button {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 4px 10px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+  background: transparent !important;
+  margin-bottom: 0 !important;
+}
+.chart-style-toggle button:hover { color: var(--text) !important; }
+.chart-style-toggle button.active {
+  color: var(--accent) !important;
+  background: var(--accent-dim) !important;
+}
+
 .market-chart-wrap {
   position: relative;
   flex: 1;

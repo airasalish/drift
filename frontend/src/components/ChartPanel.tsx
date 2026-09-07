@@ -21,12 +21,30 @@ function formatDate(raw: string) {
 // Real OHLC candlesticks + volume for daily and intraday ranges. The 1D view
 // requests 5-minute bars when the provider has them, and falls back to the
 // previous-close/current-price line only when intraday data is unavailable.
+const CHART_STYLE_KEY = "drift_chart_style";
+
 export function ChartPanel({ item }: { item: WatchlistItem }) {
   const [range, setRange] = useState<TimeRange>("1M");
   const [data, setData] = useState<Point[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  // Remembered across symbols/sessions -- a style preference, not
+  // something tied to any one stock.
+  const [chartStyle, setChartStyle] = useState<"candle" | "line">(() => {
+    try {
+      return localStorage.getItem(CHART_STYLE_KEY) === "line" ? "line" : "candle";
+    } catch {
+      return "candle";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHART_STYLE_KEY, chartStyle);
+    } catch {
+      // ignore -- private browsing / storage disabled
+    }
+  }, [chartStyle]);
 
   useEffect(() => {
     let cancelled = false;
@@ -200,11 +218,14 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
 
   // Candlesticks are available for 1D when real intraday OHLC is returned.
   // The fallback points intentionally remain a line because they have no
-  // honest open/high/low values.
-  const candleMode =
+  // honest open/high/low values. Whether to actually draw candles when
+  // they ARE available is a separate, user-facing choice (chartStyle) --
+  // volume, though, is independent of that choice and shows in either style.
+  const hasOHLC =
     windowed.length >= 2 &&
     windowed.every((p) => Number.isFinite(p.open) && Number.isFinite(p.high) && Number.isFinite(p.low));
-  const hasVolume = candleMode && windowed.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
+  const showCandles = hasOHLC && chartStyle === "candle";
+  const hasVolume = hasOHLC && windowed.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
 
   // The reference line only pins the y-axis range when showing the full
   // series -- once zoomed into a sub-range, the axis autoscales to what's
@@ -225,14 +246,15 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const plotTop = 16;
   const axisLabelSpace = 26;
   const usableHeight = Math.max(40, totalHeight - plotTop - axisLabelSpace);
-  // Candle mode reserves a band under the price plot for volume bars,
-  // sized as a share of whatever height is actually available; line mode
-  // uses the full usable height, matching the original layout.
-  const volumeGap = candleMode && hasVolume ? 14 : 0;
-  const volumeBandHeight = candleMode && hasVolume ? Math.max(36, usableHeight * 0.2) : 0;
+  // A band under the price plot is reserved for volume bars whenever
+  // volume data exists, sized as a share of whatever height is actually
+  // available -- independent of candle vs. line, since volume is useful
+  // context either way.
+  const volumeGap = hasVolume ? 14 : 0;
+  const volumeBandHeight = hasVolume ? Math.max(36, usableHeight * 0.2) : 0;
   const plotBottom = plotTop + Math.max(40, usableHeight - volumeGap - volumeBandHeight);
   const volumeTop = plotBottom + volumeGap;
-  const volumeBottom = candleMode && hasVolume ? volumeTop + volumeBandHeight : plotBottom;
+  const volumeBottom = hasVolume ? volumeTop + volumeBandHeight : plotBottom;
   const plotWidth = width - plotLeft - plotRight;
   const plotHeight = plotBottom - plotTop;
   const yFor = (value: number) => plotTop + ((max - value) / span) * plotHeight;
@@ -313,6 +335,16 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             {r}
           </button>
         ))}
+        {hasOHLC && (
+          <div className="chart-style-toggle" role="group" aria-label="Chart style">
+            <button type="button" className={chartStyle === "candle" ? "active" : ""} onClick={() => setChartStyle("candle")}>
+              Candles
+            </button>
+            <button type="button" className={chartStyle === "line" ? "active" : ""} onClick={() => setChartStyle("line")}>
+              Line
+            </button>
+          </div>
+        )}
         {isZoomed && (
           <button type="button" className="chart-zoom-reset" onClick={resetZoom}>
             Reset zoom
@@ -368,7 +400,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
               />
             )}
 
-            {candleMode ? (
+            {showCandles ? (
               windowed.map((p, i) => {
                 const up = p.close >= (p.open ?? p.close);
                 const color = up ? "var(--green)" : "var(--red)";
@@ -419,7 +451,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             {hoverIndex != null && (
               <line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1={plotTop} y2={volumeBottom} className="crosshair" />
             )}
-            {hoverIndex != null && !candleMode && (
+            {hoverIndex != null && !showCandles && (
               <circle
                 cx={xFor(hoverIndex)}
                 cy={yFor(windowed[hoverIndex].close)}
