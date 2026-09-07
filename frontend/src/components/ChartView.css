@@ -103,13 +103,21 @@
 }
 
 .item-price .positive {
-  color: #10b981;
+  color: var(--green);
   font-weight: 500;
 }
 
 .item-price .negative {
-  color: #ef4444;
+  color: var(--red);
   font-weight: 500;
+}
+
+.item-price-label {
+  font-size: 0.65rem;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: -0.15rem;
 }
 
 /* Center Panel - Chart */

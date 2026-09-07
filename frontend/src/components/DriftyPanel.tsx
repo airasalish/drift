@@ -78,12 +78,16 @@ export function DriftyPanel({ item, watchlistId }: { item: WatchlistItem; watchl
                 <div className="data-item">
                   <span className="data-label">Today</span>
                   <span className={`data-value ${drifty.self_analysis.today_pct_change >= 0 ? 'positive' : 'negative'}`}>
-                    {drifty.self_analysis.today_pct_change >= 0 ? '+' : ''}{drifty.self_analysis.today_pct_change.toFixed(2)}%
+                    {/* today_pct_change is a raw fraction from the backend
+                        (0.025 == 2.5%), same convention as every other
+                        *_pct field in this app -- must be *100 before
+                        display, same as formatPct() does elsewhere. */}
+                    {drifty.self_analysis.today_pct_change >= 0 ? '+' : ''}{(drifty.self_analysis.today_pct_change * 100).toFixed(2)}%
                   </span>
                 </div>
                 <div className="data-item">
                   <span className="data-label">Normal move</span>
-                  <span className="data-value">{drifty.self_analysis.normal_daily_move.toFixed(2)}%</span>
+                  <span className="data-value">{(drifty.self_analysis.normal_daily_move * 100).toFixed(2)}%</span>
                 </div>
               </div>
             </div>

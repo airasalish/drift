@@ -70,11 +70,21 @@ export function ChartView({
                 <div className="item-price">
                   ${item.quote?.price?.toFixed(2) ?? 'N/A'}
                   {item.change_since_last_view_pct !== null && (
-                    <span className={item.change_since_last_view_pct >= 0 ? 'positive' : 'negative'}>
+                    <span
+                      className={item.change_since_last_view_pct >= 0 ? 'positive' : 'negative'}
+                      title="Change since you last looked at this stock, not today's change"
+                    >
                       {item.change_since_last_view_pct >= 0 ? '+' : ''}{(item.change_since_last_view_pct * 100).toFixed(2)}%
                     </span>
                   )}
                 </div>
+                {/* Matches the "since last view" label convention used
+                    everywhere else in the app (WatchlistRow, StockDrawer) --
+                    an unlabeled % next to a price reads as "today's change"
+                    by universal finance-app convention, which this isn't. */}
+                {item.change_since_last_view_pct !== null && (
+                  <div className="item-price-label">since last view</div>
+                )}
               </button>
             ))}
           </div>
