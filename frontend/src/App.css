@@ -3799,3 +3799,14 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 .command-kicker {
   color: var(--accent);
 }
+
+/* Charts view: the page's normal reading-width cap (1180px) was leaving
+   large dead margins on both sides on anything wider than a laptop --
+   exactly why the chart panel needed collapsing the watchlist sidebar to
+   find room in the first place. Charts isn't prose that benefits from a
+   narrow measure, so let it use the full width next to the rail instead
+   of fighting collapse toggles for space that was already free. Other
+   views keep the normal cap. */
+.page.page--wide {
+  max-width: none;
+}

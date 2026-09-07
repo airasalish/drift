@@ -240,7 +240,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         onSwitchWatchlist={switchWatchlist}
       />
 
-      <div className="page">
+      <div className={`page${view === "chart" ? " page--wide" : ""}`}>
         <Header
           username={username}
           onLogout={onLogout}
