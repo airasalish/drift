@@ -251,7 +251,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
         {change != null && (
           <div className="chart-change-row">
             <span className={`chart-change-pill ${isUp ? "up" : "down"}`}>
-              {Math.abs(change).toFixed(2)}%
+              {isUp ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
             </span>
             <span className={`chart-change-abs ${isUp ? "up" : "down"}`}>
               {isUp ? "+" : ""}
