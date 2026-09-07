@@ -17,13 +17,12 @@ function formatDate(raw: string) {
   return Number.isNaN(date.valueOf()) ? raw : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-// Simple, single-line-of-truth reference chart (area + line, dotted
-// baseline, hover crosshair) -- deliberately not a candlestick/toolbar
-// terminal. Matches the clean stock-chart pattern most people already
-// recognize (Google's finance widget) rather than a trading-platform
-// aesthetic this product never claimed to be. The previous version had
-// "Indicators" / "Alert" / "+" toolbar buttons that did nothing when
-// clicked -- removed rather than kept as decoration.
+// Real OHLC candlesticks + volume for any range with genuine daily bars
+// (1M/3M/6M/1Y/ALL), since the API already returns open/high/low/close per
+// day -- there's no reason to flatten that into a line. Falls back to a
+// simple area/line (with a synthesized two-point line for 1D, since this
+// app is daily-only and a single day has no OHLC history to draw candles
+// from) when full OHLC isn't available for every point in range.
 export function ChartPanel({ item }: { item: WatchlistItem }) {
   const [range, setRange] = useState<TimeRange>("1M");
   const [data, setData] = useState<Point[]>([]);
@@ -100,15 +99,32 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   // the same baseline the displayed change is measured against.
   const referenceValue = range === "1D" ? item.quote?.prev_close ?? first?.close ?? 0 : first?.close ?? 0;
 
-  const min = visible.length ? Math.min(...visible.map((p) => p.low ?? p.close), referenceValue) : 0;
-  const max = visible.length ? Math.max(...visible.map((p) => p.high ?? p.close), referenceValue) : 1;
+  // Candlesticks only make sense when every visible point has real
+  // open/high/low, and only for multi-day ranges -- 1D is a single day
+  // synthesized into a two-point line, not a bar.
+  const candleMode =
+    range !== "1D" &&
+    visible.length >= 2 &&
+    visible.every((p) => Number.isFinite(p.open) && Number.isFinite(p.high) && Number.isFinite(p.low));
+  const hasVolume = candleMode && visible.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
+
+  const min = visible.length
+    ? Math.min(...visible.map((p) => p.low ?? p.close), referenceValue)
+    : 0;
+  const max = visible.length
+    ? Math.max(...visible.map((p) => p.high ?? p.close), referenceValue)
+    : 1;
   const span = Math.max(max - min, 0.0001);
 
   const width = 900;
   const plotLeft = 8;
   const plotRight = 64;
   const plotTop = 16;
-  const plotBottom = 220;
+  // Candle mode reserves a band under the price plot for volume bars;
+  // line mode uses the full height, matching the original layout.
+  const plotBottom = candleMode && hasVolume ? 188 : 220;
+  const volumeTop = plotBottom + 14;
+  const volumeBottom = candleMode && hasVolume ? 250 : plotBottom;
   const plotWidth = width - plotLeft - plotRight;
   const plotHeight = plotBottom - plotTop;
   const yFor = (value: number) => plotTop + ((max - value) / span) * plotHeight;
@@ -123,6 +139,12 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const lineColor = isUp ? "var(--green)" : "var(--red)";
   const absoluteChange = active ? active.close - referenceValue : 0;
 
+  // Candle body width shrinks automatically as more bars are packed into
+  // the same plot width (e.g. "ALL" on a stock with years of history).
+  const candleWidth = Math.max(1.5, Math.min(14, (plotWidth / Math.max(visible.length, 1)) * 0.62));
+  const maxVolume = hasVolume ? Math.max(...visible.map((p) => p.volume ?? 0), 1) : 1;
+  const volumeHeight = (v: number) => ((v ?? 0) / maxVolume) * (volumeBottom - volumeTop);
+
   // Sparse date labels across the x-axis, ~5 evenly spaced -- not one
   // per data point, which would overlap on anything but a 1D view.
   const axisTicks = useMemo(() => {
@@ -131,6 +153,13 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
     const step = (visible.length - 1) / (count - 1);
     return Array.from({ length: count }, (_, i) => Math.round(i * step));
   }, [visible.length]);
+
+  // Right-edge price gridlines, standard on every real stock chart.
+  const priceTicks = useMemo(() => {
+    if (!visible.length) return [];
+    const count = 4;
+    return Array.from({ length: count + 1 }, (_, i) => min + (span * i) / count);
+  }, [visible.length, min, span]);
 
   return (
     <div className="chart-panel">
@@ -184,7 +213,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
         <div className="market-chart-wrap">
           <svg
             className="market-chart"
-            viewBox={`0 0 ${width} ${plotBottom + 34}`}
+            viewBox={`0 0 ${width} ${volumeBottom + 34}`}
             role="img"
             aria-label={`${item.symbol} price chart`}
             onMouseMove={(e) => {
@@ -202,6 +231,15 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
               </linearGradient>
             </defs>
 
+            {priceTicks.map((value, i) => (
+              <g key={i}>
+                <line x1={plotLeft} x2={width - plotRight} y1={yFor(value)} y2={yFor(value)} className="grid-line" />
+                <text x={width - plotRight + 8} y={yFor(value) + 4} className="axis-label">
+                  {value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </text>
+              </g>
+            ))}
+
             <line
               x1={plotLeft}
               x2={width - plotRight}
@@ -209,31 +247,67 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
               y2={yFor(referenceValue)}
               className="reference-line"
             />
-            <text x={width - plotRight + 8} y={yFor(referenceValue) + 4} className="reference-label">
-              {referenceValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-            </text>
 
-            <path d={areaPath} fill={`url(#chartFill-${item.symbol})`} />
-            <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" />
+            {candleMode ? (
+              visible.map((p, i) => {
+                const up = p.close >= (p.open ?? p.close);
+                const color = up ? "var(--green)" : "var(--red)";
+                const bodyTop = yFor(Math.max(p.open ?? p.close, p.close));
+                const bodyBottom = yFor(Math.min(p.open ?? p.close, p.close));
+                return (
+                  <g key={i} opacity={hoverIndex == null || hoverIndex === i ? 1 : 0.55}>
+                    <line x1={xFor(i)} x2={xFor(i)} y1={yFor(p.high ?? p.close)} y2={yFor(p.low ?? p.close)} stroke={color} strokeWidth="1" />
+                    <rect
+                      x={xFor(i) - candleWidth / 2}
+                      y={bodyTop}
+                      width={candleWidth}
+                      height={Math.max(1, bodyBottom - bodyTop)}
+                      fill={color}
+                    />
+                  </g>
+                );
+              })
+            ) : (
+              <>
+                <path d={areaPath} fill={`url(#chartFill-${item.symbol})`} />
+                <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" />
+              </>
+            )}
+
+            {hasVolume &&
+              visible.map((p, i) => {
+                const up = p.close >= (p.open ?? p.close);
+                return (
+                  <rect
+                    key={i}
+                    x={xFor(i) - candleWidth / 2}
+                    y={volumeBottom - volumeHeight(p.volume ?? 0)}
+                    width={candleWidth}
+                    height={volumeHeight(p.volume ?? 0)}
+                    fill={up ? "var(--green)" : "var(--red)"}
+                    opacity={hoverIndex == null || hoverIndex === i ? 0.5 : 0.25}
+                  />
+                );
+              })}
 
             {axisTicks.map((i) => (
-              <text key={i} x={xFor(i)} y={plotBottom + 22} className="axis-label" textAnchor="middle">
+              <text key={i} x={xFor(i)} y={volumeBottom + 22} className="axis-label" textAnchor="middle">
                 {formatDate(visible[i].date)}
               </text>
             ))}
 
             {hoverIndex != null && (
-              <>
-                <line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1={plotTop} y2={plotBottom} className="crosshair" />
-                <circle
-                  cx={xFor(hoverIndex)}
-                  cy={yFor(visible[hoverIndex].close)}
-                  r="4"
-                  fill={lineColor}
-                  stroke="var(--bg)"
-                  strokeWidth="2"
-                />
-              </>
+              <line x1={xFor(hoverIndex)} x2={xFor(hoverIndex)} y1={plotTop} y2={volumeBottom} className="crosshair" />
+            )}
+            {hoverIndex != null && !candleMode && (
+              <circle
+                cx={xFor(hoverIndex)}
+                cy={yFor(visible[hoverIndex].close)}
+                r="4"
+                fill={lineColor}
+                stroke="var(--bg)"
+                strokeWidth="2"
+              />
             )}
           </svg>
         </div>

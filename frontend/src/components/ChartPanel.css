@@ -95,6 +95,7 @@
 }
 .market-chart { display: block; width: 100%; height: 100%; min-height: 260px; overflow: visible; cursor: crosshair; }
 
+.grid-line { stroke: var(--border); stroke-width: 1; opacity: .5; }
 .reference-line { stroke: var(--faint); stroke-width: 1; stroke-dasharray: 3 3; }
 .reference-label { font-size: 10px; fill: var(--muted); font-family: Inter, system-ui, sans-serif; }
 .axis-label { font-size: 10px; fill: var(--muted); font-family: Inter, system-ui, sans-serif; }

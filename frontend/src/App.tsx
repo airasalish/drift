@@ -227,7 +227,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
 
         <section className="command-center-head">
           <div>
-            <span className="command-kicker">DRIFT / COMMAND CENTER</span>
+            <span className="command-kicker">{view === "chart" ? "CHARTS" : view === "history" ? "HISTORY" : "OVERVIEW"}</span>
             <h2>{greeting}{displayName ? `, ${displayName}` : ""}.</h2>
             <p>Here is what changed while you were away.</p>
           </div>
