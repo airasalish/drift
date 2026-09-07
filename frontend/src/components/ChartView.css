@@ -118,8 +118,15 @@
 }
 
 .item-symbol {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   font-size: 0.95rem;
+}
+.item-symbol .company-favicon {
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
 .attention-badge {

@@ -3800,13 +3800,21 @@ html, body, #root { background: #030505 !important; color: var(--text); }
   color: var(--accent);
 }
 
-/* Charts view: the page's normal reading-width cap (1180px) was leaving
-   large dead margins on both sides on anything wider than a laptop --
-   exactly why the chart panel needed collapsing the watchlist sidebar to
-   find room in the first place. Charts isn't prose that benefits from a
-   narrow measure, so let it use the full width next to the rail instead
-   of fighting collapse toggles for space that was already free. Other
-   views keep the normal cap. */
+/* The page's old reading-width cap (1180px) was leaving large dead
+   margins on both sides on anything wider than a laptop, on every view --
+   applied uniformly now instead of only Charts, so Overview and History
+   don't feel narrower than Charts for no reason. */
 .page.page--wide {
   max-width: none;
+}
+
+/* The selected rail icon was still pointing at an older --green token
+   (a muted #8dbca8 left over from an earlier theme pass) instead of the
+   --accent this theme actually uses for every other "active" state --
+   a near-miss of the real brand color, not an intentional variation. */
+.rail-nav-item.selected .rail-nav-icon {
+  color: var(--accent);
+}
+.rail-nav-icon svg {
+  display: block;
 }

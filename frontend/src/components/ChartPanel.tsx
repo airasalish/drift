@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { WatchlistItem } from "../types";
+import { CompanyFavicon } from "./CompanyFavicon";
 import "./ChartPanel.css";
 
 type TimeRange = "1D" | "1M" | "3M" | "6M" | "1Y" | "ALL";
@@ -272,7 +273,10 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   return (
     <div className="chart-panel">
       <div className="chart-symbol-row">
-        <span className="chart-symbol-badge">{item.symbol.slice(0, 2)}</span>
+        <span className="chart-symbol-badge">
+          {item.symbol.slice(0, 2)}
+          <CompanyFavicon domain={item.company_website} symbol={item.symbol} />
+        </span>
         <div>
           <strong>{item.symbol}</strong>
           <small>{item.company_name ?? "Tracked symbol"}</small>

@@ -6,6 +6,41 @@ import type { Watchlist, WatchlistItem } from "../types";
 import { BrandMark } from "./BrandMark";
 import "./QuickAccessRail.css";
 
+// Plain stroke-based line icons, matching the clean icon+label sidebar
+// row format (rounded active-state highlight, icon left, label right) --
+// hand-drawn rather than pulled from an icon library, since only four are
+// needed and it avoids a dependency for that.
+function IconOverview() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" />
+    </svg>
+  );
+}
+function IconCharts() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20V12M10 20V6M16 20v-9M3 20h18" />
+    </svg>
+  );
+}
+function IconHistory() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+function IconInsights() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 3 5 13h6l-1 8 8-11h-6l1-7Z" />
+    </svg>
+  );
+}
+
 // A persistent quick-jump list plus a real second destination (History),
 // not fake page navigation -- Drift doesn't get a "Markets" or
 // "Dashboards" section here because there's no real content behind one.
@@ -273,7 +308,7 @@ export function QuickAccessRail({
         aria-current={view === "watchlist" ? "page" : undefined}
         data-tooltip="Your tracked symbols, grouped by how much attention each one needs right now."
       >
-        <span className="rail-nav-icon" aria-hidden="true">⌂</span>
+        <span className="rail-nav-icon" aria-hidden="true"><IconOverview /></span>
         <span className="rail-nav-label">Overview</span>
       </button>
 
@@ -285,7 +320,7 @@ export function QuickAccessRail({
         aria-current={view === "chart" ? "page" : undefined}
         data-tooltip="Full-size price charts for any tracked symbol, with Drifty's analysis alongside."
       >
-        <span className="rail-nav-icon" aria-hidden="true">▤</span>
+        <span className="rail-nav-icon" aria-hidden="true"><IconCharts /></span>
         <span className="rail-nav-label">Charts</span>
       </button>
 
@@ -297,7 +332,7 @@ export function QuickAccessRail({
         aria-current={view === "history" ? "page" : undefined}
         data-tooltip="A timeline of everything Drift has flagged, and when you acknowledged it."
       >
-        <span className="rail-nav-icon" aria-hidden="true">◷</span>
+        <span className="rail-nav-icon" aria-hidden="true"><IconHistory /></span>
         <span className="rail-nav-label">History</span>
       </button>
 
@@ -307,7 +342,7 @@ export function QuickAccessRail({
         onClick={onShowInsights}
         data-tooltip="Jumps to the attention feed below: the exact rule and numbers behind each flagged symbol."
       >
-        <span className="rail-nav-icon" aria-hidden="true">⌁</span>
+        <span className="rail-nav-icon" aria-hidden="true"><IconInsights /></span>
         <span className="rail-nav-label">Insights</span>
       </button>
       {!collapsed && sorted.length > 0 && (

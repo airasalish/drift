@@ -19,6 +19,7 @@
   margin-bottom: 10px;
 }
 .chart-symbol-badge {
+  position: relative;
   display: grid;
   place-items: center;
   width: 27px;
@@ -29,6 +30,20 @@
   font-size: 10px;
   font-weight: 800;
   flex-shrink: 0;
+  overflow: hidden;
+}
+/* The real company logo, when one loads, sits on top of the letter
+   badge and covers it entirely -- the letters stay as the fallback
+   underneath rather than the two needing to coordinate who renders. */
+.chart-symbol-badge .company-favicon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 5px;
+  background: var(--bg);
+  box-sizing: border-box;
 }
 .chart-symbol-row strong { font-size: 14px; letter-spacing: .01em; }
 .chart-symbol-row small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }

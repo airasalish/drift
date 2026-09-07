@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { WatchlistItem } from '../types';
 import { ChartPanel } from './ChartPanel';
+import { CompanyFavicon } from './CompanyFavicon';
 import { DriftyPanel } from './DriftyPanel';
 import './ChartView.css';
 
@@ -95,7 +96,10 @@ export function ChartView({
                   data-symbol={item.symbol}
                 >
                   <div className="item-header">
-                    <span className="item-symbol">{item.symbol}</span>
+                    <span className="item-symbol">
+                      <CompanyFavicon domain={item.company_website} symbol={item.symbol} />
+                      {item.symbol}
+                    </span>
                     {item.has_attention && <span className="attention-badge" title="Flagged">●</span>}
                   </div>
                   <div className="item-price">
