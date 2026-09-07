@@ -3709,6 +3709,8 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 .workspace-shortcut .shortcut-copy small { white-space: normal; line-height: 1.4; }
 .drawer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
 .drawer-actions > button { width: 100%; min-height: 38px; padding: 9px 10px; line-height: 1.2; }
+.drawer-actions > button.primary-action { background: var(--accent); border-color: var(--accent); color: #07130f; box-shadow: 0 6px 18px rgba(98,230,173,.16); }
+.drawer-actions > button.primary-action:hover { background: var(--accent-bright); border-color: var(--accent-bright); }
 .drawer-actions .confirm-remove { grid-column: 1 / -1; justify-content: flex-end; min-height: 38px; }
 @media (max-width: 560px) {
   .beginner-help { order: 2; width: 100%; margin: -3px 0 2px; }

@@ -141,7 +141,7 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     available, and gracefully degrades to close-only data when OHLC is not available.
 
     Supported timeframes:
-    - "1D": latest daily session return, shown with recent daily bars for context
+    - "1D": current session with 5-minute OHLC bars when available
     - "5D": 5 days (daily granularity)
     - "1M": 1 month (daily granularity)
     - "3M": 3 months (daily granularity)
@@ -152,7 +152,7 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     - "ALL": All available data (daily granularity)
 
     Data Handling:
-    - All data is daily granularity (no intraday data)
+    - 1D uses 5-minute intraday data; longer ranges use daily data
     - NaN values are cleaned to None to prevent JSON encoding errors
     - Data points with missing close prices are skipped entirely
     - OHLC fields are optional and only included when available
@@ -193,10 +193,6 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     """
     # Map range names to yfinance period parameters
     period_map = {
-        # yfinance can return only one daily bar for period=1d, which cannot
-        # render a meaningful chart. Use real recent daily bars for the view;
-        # the frontend calculates the 1D return from the cached live quote and
-        # previous close, so this is never confused with a range return.
         "1D": "5d",
         "5D": "5d",
         "1M": "1mo",
@@ -217,7 +213,8 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
 
     try:
         ticker = yf.Ticker(symbol)
-        hist = ticker.history(period=period, interval="1d", auto_adjust=False)
+        interval = "5m" if range_name == "1D" else "1d"
+        hist = ticker.history(period="1d" if range_name == "1D" else period, interval=interval, auto_adjust=False)
 
         # Try to get currency info, but don't fail if unavailable
         try:
@@ -244,7 +241,7 @@ def fetch_chart_data(symbol: str, range_name: str) -> dict | None:
     for idx in range(len(hist)):
         date = hist.index[idx]
         try:
-            date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+            date_str = date.strftime("%Y-%m-%dT%H:%M:%S") if range_name == "1D" and hasattr(date, "strftime") else (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date))
         except (ValueError, TypeError):
             logger.warning("Failed to parse date for %s at index %d", symbol, idx)
             continue

@@ -211,7 +211,7 @@ export function StockDrawer({
         </div>
 
         <div className="drawer-actions">
-          <button onClick={() => onOpenChart(item)}>Open full chart</button>
+          <button className="primary-action" onClick={() => onOpenChart(item)}>Open full chart</button>
           <button onClick={() => onSeen(item.id)}>Mark as seen</button>
           <button className="ghost" onClick={() => onManageWatchlists(item.symbol, item.company_name ?? undefined)}>
             Manage watchlists

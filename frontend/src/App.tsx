@@ -202,6 +202,14 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     toggleBeginnerMode();
   }
 
+  function showInsights() {
+    setView("watchlist");
+    setDetailItem(null);
+    requestAnimationFrame(() => {
+      document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   return (
     <div className="app-shell">
       <QuickAccessRail
@@ -215,7 +223,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           setWatchlistQuery("");
         }}
         onShowHistory={handleShowHistory}
-        onShowInsights={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        onShowInsights={showInsights}
         watchlists={watchlists}
         activeWatchlistId={activeWatchlistId}
         onCreateWatchlist={createWatchlist}
@@ -235,7 +243,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           loading={loading}
           error={error}
           beginnerMode={beginnerMode}
-          onToggleBeginnerMode={toggleBeginnerMode}
+          onToggleBeginnerMode={openBeginnerMode}
           onRefresh={refresh}
         />
 
@@ -248,7 +256,7 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
           <div className="command-nav" aria-label="Workspace sections">
             <button type="button" className={view === "watchlist" ? "active" : ""} onClick={() => { setView("watchlist"); setDetailItem(null); }}>Overview</button>
             <button type="button" className={view === "chart" ? "active" : ""} onClick={() => { setView("chart"); setDetailItem(null); }}>Charts</button>
-            <button type="button" onClick={() => document.getElementById("attention-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Insights</button>
+            <button type="button" onClick={showInsights}>Insights</button>
           </div>
         </section>
 

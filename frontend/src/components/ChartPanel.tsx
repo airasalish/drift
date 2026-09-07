@@ -17,12 +17,9 @@ function formatDate(raw: string) {
   return Number.isNaN(date.valueOf()) ? raw : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-// Real OHLC candlesticks + volume for any range with genuine daily bars
-// (1M/3M/6M/1Y/ALL), since the API already returns open/high/low/close per
-// day -- there's no reason to flatten that into a line. Falls back to a
-// simple area/line (with a synthesized two-point line for 1D, since this
-// app is daily-only and a single day has no OHLC history to draw candles
-// from) when full OHLC isn't available for every point in range.
+// Real OHLC candlesticks + volume for daily and intraday ranges. The 1D view
+// requests 5-minute bars when the provider has them, and falls back to the
+// previous-close/current-price line only when intraday data is unavailable.
 export function ChartPanel({ item }: { item: WatchlistItem }) {
   const [range, setRange] = useState<TimeRange>("1M");
   const [data, setData] = useState<Point[]>([]);
@@ -62,12 +59,8 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   }, [item.symbol, range]);
 
   const fetchedVisible = useMemo(() => data.filter((point) => Number.isFinite(point.close)), [data]);
-  // This app deliberately fetches daily-granularity data only, never
-  // intraday (see PROJECT_BRIEF.md) -- so a "1D" range genuinely has just
-  // one data point from the backend, not enough to draw a line. Rather
-  // than show an empty chart under a perfectly good "+0.13% today"
-  // number, synthesize the one real two-point line that IS honestly
-  // available: yesterday's actual close to today's actual price.
+  // If intraday data is unavailable, synthesize an honest two-point line from
+  // yesterday's actual close to today's actual quote. Never invent OHLC bars.
   const visible = useMemo(() => {
     if (range !== "1D" || fetchedVisible.length >= 2) return fetchedVisible;
     if (item.quote?.prev_close == null || item.quote?.price == null) return fetchedVisible;
@@ -174,11 +167,10 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   // the same baseline the displayed change is measured against.
   const referenceValue = range === "1D" ? item.quote?.prev_close ?? first?.close ?? 0 : first?.close ?? 0;
 
-  // Candlesticks only make sense when every windowed point has real
-  // open/high/low, and only for multi-day ranges -- 1D is a single day
-  // synthesized into a two-point line, not a bar.
+  // Candlesticks are available for 1D when real intraday OHLC is returned.
+  // The fallback points intentionally remain a line because they have no
+  // honest open/high/low values.
   const candleMode =
-    range !== "1D" &&
     windowed.length >= 2 &&
     windowed.every((p) => Number.isFinite(p.open) && Number.isFinite(p.high) && Number.isFinite(p.low));
   const hasVolume = candleMode && windowed.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
