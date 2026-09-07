@@ -19,7 +19,8 @@ export function Landing() {
             <span>Drift</span>
           </div>
           <nav className="landing-nav">
-            <button onClick={() => navigate("/login")} className="nav-btn primary">Get started <span aria-hidden="true">→</span></button>
+            <button onClick={() => navigate("/login")} className="nav-btn">Log in</button>
+            <button onClick={() => navigate("/signup")} className="nav-btn primary">Sign up</button>
           </nav>
         </div>
       </header>
