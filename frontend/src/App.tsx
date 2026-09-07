@@ -188,6 +188,20 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
     });
   }
 
+  function focusWatchlistFilter() {
+    setView("watchlist");
+    setDetailItem(null);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus();
+    });
+  }
+
+  function openBeginnerMode() {
+    setView("watchlist");
+    setDetailItem(null);
+    toggleBeginnerMode();
+  }
+
   return (
     <div className="app-shell">
       <QuickAccessRail
@@ -258,10 +272,10 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
         <AddStockForm onAdd={openWatchlistPicker} />
 
         <div className="workspace-shortcuts" aria-label="Workspace shortcuts">
-          <button type="button" className="workspace-shortcut" onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="Filter tracked symbols"]')?.focus()}>
+          <button type="button" className="workspace-shortcut" onClick={focusWatchlistFilter}>
             <span className="shortcut-copy"><strong>Filter watchlist</strong><small>Find a tracked symbol quickly.</small></span>
           </button>
-          <button type="button" className="workspace-shortcut" onClick={toggleBeginnerMode}>
+          <button type="button" className="workspace-shortcut" onClick={openBeginnerMode}>
             <span className="shortcut-copy"><strong>Beginner mode</strong><small>{beginnerMode ? "Plain-language explanations are on." : "Use simpler explanations for the same signals."}</small></span>
           </button>
           <button type="button" className="workspace-shortcut" onClick={handleShowHistory}>
