@@ -179,16 +179,18 @@ export function QuickAccessRail({
     <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label="Watched symbols" data-tour="rail">
       <div className="rail-brand">
         <BrandMark />
-        <button
-          type="button"
-          className="rail-collapse-toggle"
-          onClick={onToggleCollapsed}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? "›" : "‹"}
-        </button>
+        {!collapsed && (
+          <button type="button" className="rail-collapse-toggle" onClick={onToggleCollapsed} aria-label="Collapse sidebar" title="Collapse sidebar">
+            <span aria-hidden="true">‹</span> Collapse
+          </button>
+        )}
       </div>
+
+      {collapsed && (
+        <button type="button" className="rail-expand-toggle" onClick={onToggleCollapsed} aria-label="Expand sidebar" title="Expand sidebar">
+          <span aria-hidden="true">›</span>
+        </button>
+      )}
 
       {/* Watchlist switcher: always reachable so "+ New watchlist" (inside
           the menu below) isn't locked behind already having a second one.
@@ -283,7 +285,7 @@ export function QuickAccessRail({
         aria-current={view === "chart" ? "page" : undefined}
         data-tooltip="Full-size price charts for any tracked symbol, with Drifty's analysis alongside."
       >
-        <span className="rail-nav-icon" aria-hidden="true">📈</span>
+        <span className="rail-nav-icon" aria-hidden="true">▤</span>
         <span className="rail-nav-label">Charts</span>
       </button>
 

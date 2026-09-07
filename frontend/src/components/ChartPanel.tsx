@@ -81,6 +81,16 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   // or range changes, but NOT on a background data refresh (same length),
   // so a live poll never yanks the user back out of a zoomed-in view.
   const chartWrapNodeRef = useRef<HTMLDivElement | null>(null);
+  // The SVG's viewBox is kept in sync with the wrap div's actual rendered
+  // pixel size (via ResizeObserver) instead of a fixed box -- a fixed
+  // viewBox letterboxes inside whatever taller/wider area flexbox
+  // actually gives the panel, leaving dead space above/below the chart
+  // that has nothing to do with the data. Matching the two exactly means
+  // the chart genuinely fills the panel, and CSS-sized text (font-size in
+  // ChartPanel.css) stays 1:1 with viewBox units instead of getting
+  // scaled oddly by a non-uniform stretch.
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [containerSize, setContainerSize] = useState({ width: 900, height: 260 });
   const visibleLengthRef = useRef(visible.length);
   visibleLengthRef.current = visible.length;
   const [zoomRange, setZoomRange] = useState<[number, number]>([0, Math.max(0, visible.length - 1)]);
@@ -129,8 +139,28 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const chartWrapRef = useCallback((node: HTMLDivElement | null) => {
     const listener = stableWheelListenerRef.current!;
     if (chartWrapNodeRef.current) chartWrapNodeRef.current.removeEventListener("wheel", listener);
+    resizeObserverRef.current?.disconnect();
     chartWrapNodeRef.current = node;
-    if (node) node.addEventListener("wheel", listener, { passive: false });
+    if (node) {
+      node.addEventListener("wheel", listener, { passive: false });
+      // Measure immediately on mount rather than only waiting on the
+      // observer's first callback -- ResizeObserver's initial firing isn't
+      // guaranteed to land within the same paint, and a synchronous
+      // getBoundingClientRect() here means the very first render already
+      // gets the real box instead of the fallback default.
+      const rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setContainerSize({ width: rect.width, height: rect.height });
+      }
+      const ro = new ResizeObserver((entries) => {
+        const r = entries[0]?.contentRect;
+        if (r && r.width > 0 && r.height > 0) {
+          setContainerSize({ width: r.width, height: r.height });
+        }
+      });
+      ro.observe(node);
+      resizeObserverRef.current = ro;
+    }
   }, []);
 
   // Zooming reshuffles which index in the windowed slice the cursor was
@@ -187,15 +217,21 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const span = Math.max(max - min, 0.0001);
   const referenceInRange = referenceValue >= min && referenceValue <= max;
 
-  const width = 900;
+  const width = Math.max(containerSize.width, 240);
+  const totalHeight = Math.max(containerSize.height, 160);
   const plotLeft = 8;
   const plotRight = 64;
   const plotTop = 16;
-  // Candle mode reserves a band under the price plot for volume bars;
-  // line mode uses the full height, matching the original layout.
-  const plotBottom = candleMode && hasVolume ? 188 : 220;
-  const volumeTop = plotBottom + 14;
-  const volumeBottom = candleMode && hasVolume ? 250 : plotBottom;
+  const axisLabelSpace = 26;
+  const usableHeight = Math.max(40, totalHeight - plotTop - axisLabelSpace);
+  // Candle mode reserves a band under the price plot for volume bars,
+  // sized as a share of whatever height is actually available; line mode
+  // uses the full usable height, matching the original layout.
+  const volumeGap = candleMode && hasVolume ? 14 : 0;
+  const volumeBandHeight = candleMode && hasVolume ? Math.max(36, usableHeight * 0.2) : 0;
+  const plotBottom = plotTop + Math.max(40, usableHeight - volumeGap - volumeBandHeight);
+  const volumeTop = plotBottom + volumeGap;
+  const volumeBottom = candleMode && hasVolume ? volumeTop + volumeBandHeight : plotBottom;
   const plotWidth = width - plotLeft - plotRight;
   const plotHeight = plotBottom - plotTop;
   const yFor = (value: number) => plotTop + ((max - value) / span) * plotHeight;
@@ -290,7 +326,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
         <div className="market-chart-wrap" ref={chartWrapRef} title="Scroll to zoom · double-click to reset">
           <svg
             className="market-chart"
-            viewBox={`0 0 ${width} ${volumeBottom + 34}`}
+            viewBox={`0 0 ${width} ${totalHeight}`}
             role="img"
             aria-label={`${item.symbol} price chart`}
             onMouseMove={(e) => {
@@ -371,7 +407,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
               })}
 
             {axisTicks.map((i) => (
-              <text key={i} x={xFor(i)} y={volumeBottom + 22} className="axis-label" textAnchor="middle">
+              <text key={i} x={xFor(i)} y={totalHeight - 8} className="axis-label" textAnchor="middle">
                 {formatDate(windowed[i].date)}
               </text>
             ))}

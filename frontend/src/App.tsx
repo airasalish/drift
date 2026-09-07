@@ -62,8 +62,12 @@ function App({ username, onLogout }: { username: string | null; onLogout: () => 
   // Collapses the persistent nav rail to free width for the chart --
   // session-only (not persisted), so a fresh page load always starts from
   // the normal layout and only narrows in response to an actual "go to
-  // Charts" action.
+  // Charts" action. Leaving Charts for any other view restores it, so the
+  // collapse never lingers somewhere it wasn't asked for.
   const [railCollapsed, setRailCollapsed] = useState(false);
+  useEffect(() => {
+    if (view !== "chart") setRailCollapsed(false);
+  }, [view]);
   const [tourOpen, setTourOpen] = useState(() => {
     try {
       return sessionStorage.getItem("drift_pending_tour") === "1";

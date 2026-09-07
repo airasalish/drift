@@ -3717,30 +3717,46 @@ html, body, #root { background: #030505 !important; color: var(--text); }
 }
 
 /* Collapsible nav rail: shrinks to an icon-only strip so Charts (or any
-   view) can use the freed width, with an always-visible toggle to bring
-   it back. Mirrors the same collapse pattern already used for the Charts
-   watchlist panel (chart-view-left), rather than inventing a new one. */
-.rail-brand {
-  justify-content: space-between;
-  align-items: center;
-}
+   view) can use the freed width, with a deliberately hard-to-miss toggle
+   both ways -- a labeled "‹ Collapse" row while expanded, and a large
+   accent-tinted button front-and-center while collapsed (not a small
+   icon buried next to the logo, which is easy to overlook entirely). */
 .rail-collapse-toggle {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--surface-2);
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid var(--border);
-  color: var(--muted);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 7px 0;
+}
+.rail-collapse-toggle:hover { color: var(--text); border-color: var(--accent); background: var(--surface-3); }
+
+.rail-expand-toggle {
+  width: 34px;
+  height: 34px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1;
-  padding: 0;
   flex-shrink: 0;
 }
-.rail-collapse-toggle:hover { color: var(--text); border-color: var(--accent); }
+.rail-expand-toggle:hover { background: var(--accent); color: #07130f; }
 
 .rail.collapsed {
   width: 52px;
@@ -3748,7 +3764,6 @@ html, body, #root { background: #030505 !important; color: var(--text); }
   padding-right: var(--sp-1, 6px);
 }
 .rail.collapsed .rail-brand { justify-content: center; }
-.rail.collapsed .rail-brand .brand-mark { display: none; }
 .rail.collapsed .rail-nav-label { display: none; }
 .rail.collapsed .rail-nav-item {
   justify-content: center;
