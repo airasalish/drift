@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { WatchlistItem } from "../types";
 import "./ChartPanel.css";
@@ -80,6 +80,82 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const last = visible[visible.length - 1];
   const first = visible[0];
 
+  // Scroll-wheel zoom into a sub-range of the plotted points, entirely
+  // local to the chart canvas -- a native, non-passive listener is used
+  // (rather than React's onWheel) so preventDefault() actually stops the
+  // browser's own page-scroll/pinch-zoom while the cursor is over the
+  // chart, instead of zooming the whole page. Resets whenever the symbol
+  // or range changes, but NOT on a background data refresh (same length),
+  // so a live poll never yanks the user back out of a zoomed-in view.
+  const chartWrapNodeRef = useRef<HTMLDivElement | null>(null);
+  const visibleLengthRef = useRef(visible.length);
+  visibleLengthRef.current = visible.length;
+  const [zoomRange, setZoomRange] = useState<[number, number]>([0, Math.max(0, visible.length - 1)]);
+
+  useEffect(() => {
+    setZoomRange([0, Math.max(0, visible.length - 1)]);
+  }, [item.symbol, range, visible.length]);
+
+  // Attached via a callback ref rather than useEffect(..., []) -- the wrap
+  // div is conditionally rendered behind loading/error/empty states, so on
+  // first paint it doesn't exist yet and an empty-deps effect would only
+  // ever see a null ref and never re-run once the chart actually mounts.
+  // A callback ref fires exactly when the DOM node itself appears/changes.
+  const handleWheelRef = useRef((_e: WheelEvent) => {});
+  handleWheelRef.current = (e: WheelEvent) => {
+    e.preventDefault();
+    const total = visibleLengthRef.current;
+    const node = chartWrapNodeRef.current;
+    if (total < 6 || !node) return;
+    setZoomRange(([s, endIdx]) => {
+      const count = endIdx - s + 1;
+      const minCount = Math.min(6, total);
+      const factor = e.deltaY < 0 ? 0.82 : 1.22;
+      const newCount = Math.max(minCount, Math.min(total, Math.round(count * factor)));
+      if (newCount === count) return [s, endIdx];
+      const rect = node.getBoundingClientRect();
+      const frac = rect.width ? Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) : 0.5;
+      const cursorIdx = s + frac * count;
+      let newStart = Math.round(cursorIdx - frac * newCount);
+      let newEnd = newStart + newCount - 1;
+      if (newStart < 0) {
+        newEnd -= newStart;
+        newStart = 0;
+      }
+      if (newEnd > total - 1) {
+        newStart -= newEnd - (total - 1);
+        newEnd = total - 1;
+      }
+      return [Math.max(0, newStart), newEnd];
+    });
+  };
+  const stableWheelListenerRef = useRef<((e: WheelEvent) => void) | null>(null);
+  if (!stableWheelListenerRef.current) {
+    stableWheelListenerRef.current = (e: WheelEvent) => handleWheelRef.current(e);
+  }
+  const chartWrapRef = useCallback((node: HTMLDivElement | null) => {
+    const listener = stableWheelListenerRef.current!;
+    if (chartWrapNodeRef.current) chartWrapNodeRef.current.removeEventListener("wheel", listener);
+    chartWrapNodeRef.current = node;
+    if (node) node.addEventListener("wheel", listener, { passive: false });
+  }, []);
+
+  // Zooming reshuffles which index in the windowed slice the cursor was
+  // last over -- clear it rather than let a stale hoverIndex point past
+  // the end of the new (shorter) windowed array.
+  useEffect(() => {
+    setHoverIndex(null);
+  }, [zoomRange]);
+
+  const isZoomed = zoomRange[1] - zoomRange[0] + 1 < visible.length;
+  const resetZoom = () => setZoomRange([0, Math.max(0, visible.length - 1)]);
+  const windowed = useMemo(() => {
+    const end = Math.min(zoomRange[1], Math.max(0, visible.length - 1));
+    const start = Math.min(zoomRange[0], end);
+    return visible.slice(start, end + 1);
+  }, [visible, zoomRange]);
+  const active = hoverIndex != null ? windowed[hoverIndex] : last;
+
   // Daily change (today's quote vs. yesterday's real close) is independent
   // of whatever range is selected; range return is first-to-last of
   // whichever timeframe is picked. Only one is ever shown at a time, and
@@ -91,7 +167,6 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
       : null;
   const rangeChange = first && last ? ((last.close - first.close) / first.close) * 100 : null;
   const change = range === "1D" ? dailyChange : rangeChange;
-  const active = hoverIndex != null ? visible[hoverIndex] : last;
 
   // The dotted reference line: previous close for the 1D view (matches
   // the daily-change number above it), or the range's own starting price
@@ -99,22 +174,26 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   // the same baseline the displayed change is measured against.
   const referenceValue = range === "1D" ? item.quote?.prev_close ?? first?.close ?? 0 : first?.close ?? 0;
 
-  // Candlesticks only make sense when every visible point has real
+  // Candlesticks only make sense when every windowed point has real
   // open/high/low, and only for multi-day ranges -- 1D is a single day
   // synthesized into a two-point line, not a bar.
   const candleMode =
     range !== "1D" &&
-    visible.length >= 2 &&
-    visible.every((p) => Number.isFinite(p.open) && Number.isFinite(p.high) && Number.isFinite(p.low));
-  const hasVolume = candleMode && visible.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
+    windowed.length >= 2 &&
+    windowed.every((p) => Number.isFinite(p.open) && Number.isFinite(p.high) && Number.isFinite(p.low));
+  const hasVolume = candleMode && windowed.some((p) => Number.isFinite(p.volume) && (p.volume ?? 0) > 0);
 
-  const min = visible.length
-    ? Math.min(...visible.map((p) => p.low ?? p.close), referenceValue)
+  // The reference line only pins the y-axis range when showing the full
+  // series -- once zoomed into a sub-range, the axis autoscales to what's
+  // actually visible instead of being stretched to an off-screen baseline.
+  const min = windowed.length
+    ? Math.min(...windowed.map((p) => p.low ?? p.close), ...(isZoomed ? [] : [referenceValue]))
     : 0;
-  const max = visible.length
-    ? Math.max(...visible.map((p) => p.high ?? p.close), referenceValue)
+  const max = windowed.length
+    ? Math.max(...windowed.map((p) => p.high ?? p.close), ...(isZoomed ? [] : [referenceValue]))
     : 1;
   const span = Math.max(max - min, 0.0001);
+  const referenceInRange = referenceValue >= min && referenceValue <= max;
 
   const width = 900;
   const plotLeft = 8;
@@ -128,11 +207,11 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const plotWidth = width - plotLeft - plotRight;
   const plotHeight = plotBottom - plotTop;
   const yFor = (value: number) => plotTop + ((max - value) / span) * plotHeight;
-  const xFor = (index: number) => plotLeft + (index / Math.max(visible.length - 1, 1)) * plotWidth;
+  const xFor = (index: number) => plotLeft + (index / Math.max(windowed.length - 1, 1)) * plotWidth;
 
-  const linePath = visible.map((p, i) => `${i === 0 ? "M" : "L"}${xFor(i).toFixed(1)},${yFor(p.close).toFixed(1)}`).join(" ");
-  const areaPath = visible.length
-    ? `${linePath} L${xFor(visible.length - 1).toFixed(1)},${plotBottom} L${xFor(0).toFixed(1)},${plotBottom} Z`
+  const linePath = windowed.map((p, i) => `${i === 0 ? "M" : "L"}${xFor(i).toFixed(1)},${yFor(p.close).toFixed(1)}`).join(" ");
+  const areaPath = windowed.length
+    ? `${linePath} L${xFor(windowed.length - 1).toFixed(1)},${plotBottom} L${xFor(0).toFixed(1)},${plotBottom} Z`
     : "";
 
   const isUp = (change ?? 0) >= 0;
@@ -140,26 +219,27 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
   const absoluteChange = active ? active.close - referenceValue : 0;
 
   // Candle body width shrinks automatically as more bars are packed into
-  // the same plot width (e.g. "ALL" on a stock with years of history).
-  const candleWidth = Math.max(1.5, Math.min(14, (plotWidth / Math.max(visible.length, 1)) * 0.62));
-  const maxVolume = hasVolume ? Math.max(...visible.map((p) => p.volume ?? 0), 1) : 1;
+  // the same plot width (e.g. "ALL" on a stock with years of history, or
+  // zooming back out after zooming in).
+  const candleWidth = Math.max(1.5, Math.min(14, (plotWidth / Math.max(windowed.length, 1)) * 0.62));
+  const maxVolume = hasVolume ? Math.max(...windowed.map((p) => p.volume ?? 0), 1) : 1;
   const volumeHeight = (v: number) => ((v ?? 0) / maxVolume) * (volumeBottom - volumeTop);
 
   // Sparse date labels across the x-axis, ~5 evenly spaced -- not one
   // per data point, which would overlap on anything but a 1D view.
   const axisTicks = useMemo(() => {
-    if (visible.length < 2) return [];
-    const count = Math.min(5, visible.length);
-    const step = (visible.length - 1) / (count - 1);
+    if (windowed.length < 2) return [];
+    const count = Math.min(5, windowed.length);
+    const step = (windowed.length - 1) / (count - 1);
     return Array.from({ length: count }, (_, i) => Math.round(i * step));
-  }, [visible.length]);
+  }, [windowed.length]);
 
   // Right-edge price gridlines, standard on every real stock chart.
   const priceTicks = useMemo(() => {
-    if (!visible.length) return [];
+    if (!windowed.length) return [];
     const count = 4;
     return Array.from({ length: count + 1 }, (_, i) => min + (span * i) / count);
-  }, [visible.length, min, span]);
+  }, [windowed.length, min, span]);
 
   return (
     <div className="chart-panel">
@@ -201,6 +281,11 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             {r}
           </button>
         ))}
+        {isZoomed && (
+          <button type="button" className="chart-zoom-reset" onClick={resetZoom}>
+            Reset zoom
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -210,7 +295,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
       ) : visible.length < 2 ? (
         <div className="chart-empty">No chart data available for this symbol.</div>
       ) : (
-        <div className="market-chart-wrap">
+        <div className="market-chart-wrap" ref={chartWrapRef} title="Scroll to zoom · double-click to reset">
           <svg
             className="market-chart"
             viewBox={`0 0 ${width} ${volumeBottom + 34}`}
@@ -219,10 +304,11 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             onMouseMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               const px = ((e.clientX - rect.left) / rect.width) * width;
-              const idx = Math.round(((px - plotLeft) / plotWidth) * (visible.length - 1));
-              setHoverIndex(Math.max(0, Math.min(visible.length - 1, idx)));
+              const idx = Math.round(((px - plotLeft) / plotWidth) * (windowed.length - 1));
+              setHoverIndex(Math.max(0, Math.min(windowed.length - 1, idx)));
             }}
             onMouseLeave={() => setHoverIndex(null)}
+            onDoubleClick={resetZoom}
           >
             <defs>
               <linearGradient id={`chartFill-${item.symbol}`} x1="0" y1="0" x2="0" y2="1">
@@ -240,16 +326,18 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
               </g>
             ))}
 
-            <line
-              x1={plotLeft}
-              x2={width - plotRight}
-              y1={yFor(referenceValue)}
-              y2={yFor(referenceValue)}
-              className="reference-line"
-            />
+            {referenceInRange && (
+              <line
+                x1={plotLeft}
+                x2={width - plotRight}
+                y1={yFor(referenceValue)}
+                y2={yFor(referenceValue)}
+                className="reference-line"
+              />
+            )}
 
             {candleMode ? (
-              visible.map((p, i) => {
+              windowed.map((p, i) => {
                 const up = p.close >= (p.open ?? p.close);
                 const color = up ? "var(--green)" : "var(--red)";
                 const bodyTop = yFor(Math.max(p.open ?? p.close, p.close));
@@ -275,7 +363,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             )}
 
             {hasVolume &&
-              visible.map((p, i) => {
+              windowed.map((p, i) => {
                 const up = p.close >= (p.open ?? p.close);
                 return (
                   <rect
@@ -292,7 +380,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
 
             {axisTicks.map((i) => (
               <text key={i} x={xFor(i)} y={volumeBottom + 22} className="axis-label" textAnchor="middle">
-                {formatDate(visible[i].date)}
+                {formatDate(windowed[i].date)}
               </text>
             ))}
 
@@ -302,7 +390,7 @@ export function ChartPanel({ item }: { item: WatchlistItem }) {
             {hoverIndex != null && !candleMode && (
               <circle
                 cx={xFor(hoverIndex)}
-                cy={yFor(visible[hoverIndex].close)}
+                cy={yFor(windowed[hoverIndex].close)}
                 r="4"
                 fill={lineColor}
                 stroke="var(--bg)"
