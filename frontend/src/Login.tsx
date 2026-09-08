@@ -15,6 +15,19 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The backend sleeps after inactivity (Render free tier) and can take
+  // 30-60s to wake on the first request. Most logins resolve in well under
+  // a second, so this only appears once busy has actually dragged on --
+  // it shouldn't flash for a normal fast login.
+  const [waking, setWaking] = useState(false);
+  useEffect(() => {
+    if (!busy) {
+      setWaking(false);
+      return;
+    }
+    const id = setTimeout(() => setWaking(true), 1500);
+    return () => clearTimeout(id);
+  }, [busy]);
   // React 18 StrictMode intentionally mounts effects twice in dev, which
   // fired two concurrent POST /api/auth/demo requests on every "Try the
   // demo" click -- one usually succeeded, but the race could leave the
@@ -95,6 +108,9 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
           </button>
         </form>
 
+        {waking && !error && (
+          <p className="login-waking" role="status">Waking up the server — this can take up to a minute on the first load…</p>
+        )}
         {error && <p className="login-error" role="alert">{error}</p>}
 
         <div className="login-links">

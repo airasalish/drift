@@ -289,6 +289,17 @@
   line-height: 1.4;
 }
 
+.login-waking {
+  margin: 14px 0 0;
+  padding: 10px 11px;
+  border: 1px solid #3d4a63;
+  border-radius: 8px;
+  background: #191d28;
+  color: #a6bcef;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .login-links {
   display: flex;
   flex-direction: column;
