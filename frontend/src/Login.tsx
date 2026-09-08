@@ -116,8 +116,8 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
 
         {wakingFor !== null && !error && (
           <p className="login-waking" role="status">
-            Waking up the server ({wakingFor}s) — free-tier hosting sleeps after inactivity, first request wakes it back up.
-            {wakingFor >= 20 && " Taking a while? Refresh the page once."}
+            Waking up the server ({wakingFor}s) — the backend is on a free-tier instance that spins down after idling and cold-boots on the first request.
+            {wakingFor >= 20 && " Taking a while? Refresh once."}
           </p>
         )}
         {error && <p className="login-error" role="alert">{error}</p>}
