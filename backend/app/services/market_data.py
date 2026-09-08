@@ -60,6 +60,7 @@ def domain_from_website(website: str | None) -> str | None:
 # this map still tries the real lookup first and just shows no logo if
 # that also comes up empty, same as before.
 KNOWN_DOMAINS: dict[str, str] = {
+    # Demo watchlist seed
     "NVDA": "nvidia.com",
     "TSLA": "tesla.com",
     "EA": "ea.com",
@@ -69,6 +70,53 @@ KNOWN_DOMAINS: dict[str, str] = {
     "NYKAA.NS": "nykaa.com",
     "IRCTC.NS": "irctc.co.in",
     "SWIGGY.NS": "swiggy.com",
+    # Other widely-recognized tickers someone poking at the demo is likely
+    # to type in -- not exhaustive, just common enough to be worth not
+    # depending on Yahoo's mood for.
+    "AAPL": "apple.com",
+    "MSFT": "microsoft.com",
+    "GOOGL": "abc.xyz",
+    "GOOG": "abc.xyz",
+    "AMZN": "amazon.com",
+    "META": "meta.com",
+    "NFLX": "netflix.com",
+    "DIS": "disney.com",
+    "KO": "coca-cola.com",
+    "PEP": "pepsico.com",
+    "MCD": "mcdonalds.com",
+    "SBUX": "starbucks.com",
+    "NKE": "nike.com",
+    "BA": "boeing.com",
+    "JPM": "jpmorganchase.com",
+    "V": "visa.com",
+    "MA": "mastercard.com",
+    "PYPL": "paypal.com",
+    "INTC": "intel.com",
+    "AMD": "amd.com",
+    "ORCL": "oracle.com",
+    "IBM": "ibm.com",
+    "CSCO": "cisco.com",
+    "ADBE": "adobe.com",
+    "CRM": "salesforce.com",
+    "UBER": "uber.com",
+    "ABNB": "airbnb.com",
+    "SNAP": "snap.com",
+    "SPOT": "spotify.com",
+    "HMC": "honda.com",
+    "TM": "toyota.com",
+    "F": "ford.com",
+    "GM": "gm.com",
+    "SONY": "sony.com",
+    "BABA": "alibaba.com",
+    "RELIANCE.NS": "ril.com",
+    "TCS.NS": "tcs.com",
+    "INFY.NS": "infosys.com",
+    "HDFCBANK.NS": "hdfcbank.com",
+    "ICICIBANK.NS": "icicibank.com",
+    "SBIN.NS": "sbi.co.in",
+    "ITC.NS": "itcportal.com",
+    "TATAMOTORS.NS": "tatamotors.com",
+    "WIPRO.NS": "wipro.com",
 }
 
 
