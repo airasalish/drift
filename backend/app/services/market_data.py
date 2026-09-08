@@ -51,17 +51,40 @@ def domain_from_website(website: str | None) -> str | None:
     return host or None
 
 
+# yfinance's `.info` (used below) hits Yahoo's quoteSummary endpoint, a
+# separate and far more rate-limited/blocked target for datacenter IPs
+# (Render, AWS, etc.) than the chart endpoint `.history()` uses -- prices
+# come through fine while this silently returns {} in production. Known,
+# stable tickers get a hardcoded fallback so their logo doesn't depend on
+# whichever way Yahoo is treating our host's IP that day; a symbol not in
+# this map still tries the real lookup first and just shows no logo if
+# that also comes up empty, same as before.
+KNOWN_DOMAINS: dict[str, str] = {
+    "NVDA": "nvidia.com",
+    "TSLA": "tesla.com",
+    "EA": "ea.com",
+    "DKNG": "draftkings.com",
+    "RBLX": "roblox.com",
+    "ETERNAL.NS": "zomato.com",
+    "NYKAA.NS": "nykaa.com",
+    "IRCTC.NS": "irctc.co.in",
+    "SWIGGY.NS": "swiggy.com",
+}
+
+
 def lookup_company_website(symbol: str) -> str | None:
-    """Best-effort domain from yfinance Ticker.info. Never raises; a miss
-    is None and the add path proceeds with ticker-only display.
+    """Best-effort domain from yfinance Ticker.info, falling back to
+    KNOWN_DOMAINS for tickers we already know. Never raises; a miss is
+    None and the add path proceeds with ticker-only display.
     """
     try:
         info = yf.Ticker(symbol).info or {}
         website = info.get("website") or info.get("websiteUrl")
-        return domain_from_website(website if isinstance(website, str) else None)
+        domain = domain_from_website(website if isinstance(website, str) else None)
     except Exception:
         logger.exception("website lookup failed for %s", symbol)
-        return None
+        domain = None
+    return domain or KNOWN_DOMAINS.get(symbol.upper())
 
 
 def fetch_symbol_stats(symbol: str) -> dict | None:
