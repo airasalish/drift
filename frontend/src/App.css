@@ -846,13 +846,25 @@ section h2 {
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
+  max-width: 100%;
 }
 
+/* A long company name (e.g. "FSN E-Commerce Ventures (Nykaa)") would
+   otherwise wrap onto multiple lines and, since this is a flex item
+   squeezed by .dc-symbol's min-width: 0, visually overflow past its own
+   box -- painting underneath the sparkline instead of pushing it aside.
+   Truncating with an ellipsis keeps it on one line and inside its
+   allotted space; min-width: 0 is required for a flex item to actually
+   shrink and truncate instead of forcing its content's full width. */
 .dc-company {
   font-weight: 500;
   color: var(--muted);
   font-size: 13px;
   letter-spacing: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dc-head-right {

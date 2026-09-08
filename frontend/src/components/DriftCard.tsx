@@ -1,6 +1,5 @@
 import { CompanyFavicon } from "./CompanyFavicon";
 import { simplifyRuleMessage } from "../lib/beginner";
-import { Sparkline } from "../Sparkline";
 import { formatPct, formatPrice, pctClass } from "../format";
 import type { WatchlistItem } from "../types";
 
@@ -42,7 +41,6 @@ export function DriftCard({
           {item.company_name && <span className="dc-company"> · {item.company_name}</span>}
         </span>
         <div className="dc-head-right">
-          <Sparkline values={item.quote?.spark ?? []} markerValue={item.price_at_last_view} width={80} height={28} />
           <span className="dc-chevron" aria-hidden>
             ›
           </span>
