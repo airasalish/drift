@@ -18,15 +18,21 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
   // The backend sleeps after inactivity (Render free tier) and can take
   // 30-60s to wake on the first request. Most logins resolve in well under
   // a second, so this only appears once busy has actually dragged on --
-  // it shouldn't flash for a normal fast login.
-  const [waking, setWaking] = useState(false);
+  // it shouldn't flash for a normal fast login. Counts elapsed seconds
+  // rather than counting down to a fixed number: cold-start time varies,
+  // and a countdown that hits 0 while still loading would look broken.
+  const [wakingFor, setWakingFor] = useState<number | null>(null);
   useEffect(() => {
     if (!busy) {
-      setWaking(false);
+      setWakingFor(null);
       return;
     }
-    const id = setTimeout(() => setWaking(true), 1500);
-    return () => clearTimeout(id);
+    const startedAt = Date.now();
+    const id = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      setWakingFor(elapsed >= 2 ? elapsed : null);
+    }, 500);
+    return () => clearInterval(id);
   }, [busy]);
   // React 18 StrictMode intentionally mounts effects twice in dev, which
   // fired two concurrent POST /api/auth/demo requests on every "Try the
@@ -108,8 +114,10 @@ export function Login({ onLoggedIn, isDemo = false }: { onLoggedIn: () => void; 
           </button>
         </form>
 
-        {waking && !error && (
-          <p className="login-waking" role="status">Waking up the server — this can take up to a minute on the first load…</p>
+        {wakingFor !== null && !error && (
+          <p className="login-waking" role="status">
+            Waking up the server — {wakingFor}s so far, this can take up to a minute on the first load…
+          </p>
         )}
         {error && <p className="login-error" role="alert">{error}</p>}
 
