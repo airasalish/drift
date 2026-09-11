@@ -163,6 +163,8 @@ FastAPI + SQLAlchemy ─── SQLite or PostgreSQL
 
 The backend refreshes market data through a shared cache rather than fetching the same symbol independently for every request. The market-data layer, change-detection rules, API routes, and presentation layer are kept separate so the core behavior remains testable and explainable.
 
+Every non-obvious choice behind this shape, and the real bugs found along the way, is written down with dates and reasoning in [ENGINEERING_DECISIONS.md](ENGINEERING_DECISIONS.md) — 20+ entries covering why change detection is rule-based instead of ML, why an LLM layer was considered and declined, why polling is popularity-weighted, and production issues that were hit and fixed (a CORS misconfiguration, an incomplete NaN fix, a currency-column bug).
+
 ## Project structure
 
 ```text
@@ -192,7 +194,31 @@ cd frontend
 npm run build
 ```
 
-The backend test suite covers change detection, market data behavior, authentication, watchlist CRUD, templates, charts, history, and related-stock behavior.
+**121 backend tests across 6 files**, all passing:
+
+```bash
+cd backend
+python -m pytest -q
+```
+
+| File | Covers |
+|---|---|
+| `test_change_detection.py` | The rule engine: abnormal move, volume spike, 52-week context, benchmark comparison |
+| `test_drifty_intelligence.py` | Self/peer/market attention scoring and its agreement with the rule engine |
+| `test_watchlist_crud.py` | Watchlist and symbol lifecycle, auth boundaries |
+| `test_watchlist_features.py` | Charts, history, related-stock suggestions |
+| `test_market_data.py` | Market-data fetch behavior, stale/failed-fetch handling |
+| `test_demo_user.py` | The seeded demo account and its reset path |
+
+## Known limitations, on purpose
+
+Built the solution that could be defended, not the one that looks complete from a distance:
+
+- **Single market-data source (yfinance).** No fallback provider yet — a failed fetch is shown as visibly stale, never silently swapped for cached-as-current data, but there's no second source to fail over to. The data layer sits behind an interface specifically so one could be added without touching change-detection logic.
+- **One fixed benchmark (Nifty 50)** for every symbol, not smart-matched to a stock's home exchange — a real simplification for a mixed US/India watchlist, disclosed rather than assumed correct.
+- **Polling is popularity-weighted, not load-tested at real scale.** Each symbol is fetched once per interval and fanned out to every watcher, never once per user, but this hasn't been proven under production-scale concurrent load.
+- **Moving-average crossovers and any news/sentiment signal are deliberately out of scope (v2).** MVP is price-move + volume-spike + 52-week-cross rules only; the remaining time went to resilience and edge cases instead of a fourth rule type.
+- **No automated accessibility or cross-browser testing.** Manually checked, not covered by the test suite above.
 
 ## Scope
 
